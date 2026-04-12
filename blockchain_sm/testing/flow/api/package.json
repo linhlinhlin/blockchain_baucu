@@ -1,0 +1,19 @@
+{
+  "name": "holihu-flow-api",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Wallet-login API with Postgres for ElectionFactoryV1 and ElectionV1 flow testing.",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js"
+  },
+  "dependencies": {
+    "@openzeppelin/merkle-tree": "^1.0.8",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.7",
+    "ethers": "^6.15.0",
+    "express": "^4.21.2",
+    "pg": "^8.16.3",
+    "viem": "^2.29.2"
+  }
+}

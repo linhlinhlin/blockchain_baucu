@@ -1,0 +1,20 @@
+node_modules
+.env
+
+# Hardhat
+/artifacts
+/cache
+/typechain-types
+
+# Coverage
+/coverage
+/coverage.json
+
+# Foundry
+/cache_forge
+/out_forge
+
+# Local temp files
+/tmp-*.json
+/tmp
+/deployments

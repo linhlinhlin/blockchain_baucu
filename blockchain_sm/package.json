@@ -1,0 +1,44 @@
+{
+  "name": "holihu-election-contracts",
+  "version": "2.0.0",
+  "private": true,
+  "description": "Clean EVM application contracts for the HoLiHu election system.",
+  "license": "MIT",
+  "scripts": {
+    "clean": "hardhat clean",
+    "compile": "hardhat compile",
+    "test": "hardhat test ./test/ElectionFactoryV1.test.js",
+    "test:flow": "hardhat test ./test/flow/SimpleElectionFlow.test.js",
+    "test:foundry": "node ./scripts/runFoundryTests.js",
+    "analyze:slither": "node ./scripts/runSlitherAnalysis.js",
+    "validate": "npm run test && npm run test:foundry && npm run analyze:slither",
+    "check:sepolia": "node ./scripts/checkSepoliaReadiness.js",
+    "build:election": "node ./scripts/buildElectionPackage.js",
+    "create:election:input": "node ./scripts/createElectionFromInput.js",
+    "generate:quick-election": "node ./scripts/generateQuickElectionInput.js",
+    "generate:metamask-election": "node ./scripts/generateMetaMaskElectionInput.js",
+    "build:vote": "hardhat run ./scripts/buildVotePackage.js",
+    "deploy:factory": "hardhat run ./scripts/deployElectionFactory.js",
+    "deploy:flow:election": "hardhat run ./scripts/flow/deploySimpleElectionFlow.js",
+    "seed:flow:elections": "hardhat run ./scripts/flow/seedSimpleFlowElections.js",
+    "create:election": "hardhat run ./scripts/createElection.js",
+    "fund:test-voters": "hardhat run ./scripts/fundElectionVoters.js",
+    "commit:vote": "hardhat run ./scripts/commitVote.js",
+    "reveal:vote": "hardhat run ./scripts/revealVote.js",
+    "finalize:election": "hardhat run ./scripts/finalizeElection.js",
+    "verify:factory": "hardhat run ./scripts/verifyFactoryV2.js",
+    "verify:election": "hardhat run ./scripts/verifyElectionV2.js",
+    "build:eligibility": "node ./scripts/buildEligibilityTree.js"
+  },
+  "devDependencies": {
+    "@nomicfoundation/hardhat-toolbox": "^5.0.0",
+    "@types/node": "^22.13.9",
+    "dotenv": "^16.4.7",
+    "hardhat": "^2.22.18",
+    "typescript": "^5.8.2"
+  },
+  "dependencies": {
+    "@openzeppelin/contracts-v5": "npm:@openzeppelin/contracts@^5.6.1",
+    "@openzeppelin/merkle-tree": "^1.0.8"
+  }
+}

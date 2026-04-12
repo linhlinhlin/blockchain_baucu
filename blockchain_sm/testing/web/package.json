@@ -1,0 +1,19 @@
+{
+  "name": "holihu-testing-web",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Minimal web client for testing HoLiHu election contracts",
+  "scripts": {
+    "dev": "vite --host 0.0.0.0 --port 3000",
+    "build": "vite build"
+  },
+  "dependencies": {
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "viem": "^2.29.2"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^4.3.4",
+    "vite": "^6.2.2"
+  }
+}

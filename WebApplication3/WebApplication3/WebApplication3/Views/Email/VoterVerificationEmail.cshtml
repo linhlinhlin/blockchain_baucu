@@ -1,0 +1,175 @@
+﻿@model WebApplication3.Models.OtpModel
+@{
+    Layout = null;
+}
+<!DOCTYPE html>
+<html lang="@ViewData["Language"]">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <title>@ViewData["EmailTitle"]</title>
+    <!--[if mso]>
+    <noscript>
+    <xml>
+    <o:OfficeDocumentSettings>
+    <o:PixelsPerInch>96</o:PixelsPerInch>
+    </o:OfficeDocumentSettings>
+    </xml>
+    </noscript>
+    <![endif]-->
+    <style>
+        @@media only screen and (max-width: 600px) {
+            .section-padding {
+                padding-left: 10px !important;
+                padding-right: 10px !important;
+            }
+
+            .button {
+                width: 100% !important;
+            }
+        }
+    </style>
+</head>
+<body style="margin: 0; padding: 0; background-color: #f4f4f4; font-family: Arial, sans-serif; -webkit-font-smoothing: antialiased; font-size: 16px; line-height: 1.4; -ms-text-size-adjust: 100%; -webkit-text-size-adjust: 100%;">
+    <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" style="table-layout: fixed;">
+        <tr>
+            <td align="center" style="padding: 0;">
+                <table role="presentation" align="center" border="0" cellpadding="0" cellspacing="0" width="600" style="background-color: #ffffff; margin: 0 auto; max-width: 600px; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
+                    <!-- Header -->
+                    <tr>
+                        <td align="center" style="padding: 30px 0; background-color: #007bff;">
+                            <img src="https://i.postimg.cc/W4spdM3n/logo-2.png" alt="HoLiHu Logo" style="display: block; height: 125px; width: auto; max-width: 100%;">
+                        </td>
+                    </tr>
+                    <!-- Blue Gradient Line -->
+                    <tr>
+                        <td style="padding: 0;">
+                            <img src="https://ci3.googleusercontent.com/meips/ADKq_NYdZ75rCQHEXYOXoBZWl7ryQLKSdGuTZLG_SLR9_DIDl637OdRhWq5uTYqs7UpEh451qYsQo-hznN3ssW9owQ5tkmrcBZFg82vwyC7L0D1w8eJDQR8-wV0WUDszhJ1AXcR1mPRT8ZyPDn0MxQucu_k=s0-d-e1-ft#https://cdn.oreillystatic.com/oreilly/email/odot-template/em_gradient_line_ocean_600x4.png" alt="" style="display: block; width: 100%; height: 4px;">
+                        </td>
+                    </tr>
+                    <!-- Content -->
+                    <tr>
+                        <td style="padding: 40px 30px;">
+                            <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%">
+                                <tr>
+                                    <td style="padding: 0 0 30px 0; text-align: center;">
+                                        <h1 style="margin: 0; font-size: 28px; line-height: 36px; color: #333333; font-weight: bold;">
+                                            @ViewData["Heading"]
+                                        </h1>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td style="padding: 0 0 20px 0;">
+                                        <p style="margin: 0; font-size: 18px; line-height: 28px; color: #333333;">
+                                            @ViewData["Greeting"] <strong>@Html.Raw(Model.Email)</strong>,
+                                        </p>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td style="padding: 0 0 20px 0;">
+                                        <p style="margin: 0; font-size: 16px; line-height: 24px; color: #555555;">
+                                            @ViewData["Intro"]
+                                        </p>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td style="padding: 20px 0; text-align: center;">
+                                        <a href="@ViewData["ButtonUrl"]" style="display: inline-block; padding: 12px 24px; background-color: #007bff; color: #ffffff; text-decoration: none; font-weight: bold; border-radius: 4px; font-size: 16px;" class="button">
+                                            @ViewData["ButtonText"]
+                                        </a>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td style="padding: 20px 0 0 0;">
+                                        <p style="margin: 0; font-size: 16px; line-height: 24px; color: #555555;">
+                                            @Html.Raw(ViewData["WalletMsg"])
+                                        </p>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td style="padding: 20px 0 0 0;">
+                                        <p style="margin: 0; font-size: 16px; line-height: 24px; color: #555555;">
+                                            @Html.Raw(ViewData["ExpiryNotice"])
+                                        </p>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td style="padding: 20px 0 0 0;">
+                                        <p style="margin: 0; font-size: 16px; line-height: 24px; color: #dc3545; font-weight: 500;">
+                                            @ViewData["Warning"]
+                                        </p>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td style="padding: 20px 0 0 0;">
+                                        <p style="margin: 0; font-size: 16px; line-height: 24px; color: #555555;">
+                                            @ViewData["IgnoreMessage"]
+                                        </p>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td style="padding: 30px 0 0 0;">
+                                        <p style="margin: 0; font-size: 16px; line-height: 24px; color: #333333;">
+                                            @ViewData["Closing"]<br>
+                                            <strong>@ViewData["Team"]</strong>
+                                        </p>
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+                    <!-- Footer -->
+                    <tr>
+                        <td style="padding: 30px; background-color: #f8f9fa; text-align: center;">
+                            <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%">
+                                <tr>
+                                    <td style="padding: 0 0 20px 0;">
+                                        <!-- Social Media Icons -->
+                                        <table role="presentation" border="0" cellpadding="0" cellspacing="0" style="margin: 0 auto;">
+                                            <tr>
+                                                <td style="padding: 0 10px;">
+                                                    <a href="@Url.Action("SocialMedia", "Home", new { platform = "twitter" })" target="_blank" style="text-decoration: none;">
+                                                        <img src="https://ci3.googleusercontent.com/meips/ADKq_NaT3wQwh2ffhmrztT9rdwNEEUUnr7k7aRxSCGseU7CUHTV3HGvWA2MZkt5gR2LxCenVxcxJVS0kwCAjr1IyvCXs--J5XFtYITrDzH11J_3iESBwNJikWw8yOUkbvMa4fuwZfg=s0-d-e1-ft#https://cdn.oreillystatic.com/oreilly/email/odot-template/em_icon_twitter.png" alt="Twitter" width="24" height="24" style="display: block; border: 0;">
+                                                    </a>
+                                                </td>
+                                                <td style="padding: 0 10px;">
+                                                    <a href="@Url.Action("SocialMedia", "Home", new { platform = "linkedin" })" target="_blank" style="text-decoration: none;">
+                                                        <img src="https://ci3.googleusercontent.com/meips/ADKq_NbeSwOnoiwPBpcYUp8696nEycquBQot0c0Mc7S6BZ3dBPggbu7GPV63f-K1_Mw5Mdy-Wgrtlk1-Ie9UWQ2-reB-DCVjUNRplGsnQFRgEJI3mpBEtsGzoRwq6zCr0UgV68t9E5Y=s0-d-e1-ft#https://cdn.oreillystatic.com/oreilly/email/odot-template/em_icon_linkedIn.png" alt="LinkedIn" width="24" height="24" style="display: block; border: 0;">
+                                                    </a>
+                                                </td>
+                                                <td style="padding: 0 10px;">
+                                                    <a href="@Url.Action("SocialMedia", "Home", new { platform = "youtube" })" target="_blank" style="text-decoration: none;">
+                                                        <img src="https://ci3.googleusercontent.com/meips/ADKq_Nan8zUDoVMy5jxvempRhZkB3mqRkM1ve0Kk9uJHHzvOoFzsqvmCJqwbHIvI0-1I3Kj9XCHFz8EVlTOiByrLD5osinA9ss-87kTv5FnKS5NL37Hw5DYP_RKkx7yr4U2e-BKdSw=s0-d-e1-ft#https://cdn.oreillystatic.com/oreilly/email/odot-template/em_icon_youtube.png" alt="YouTube" width="24" height="24" style="display: block; border: 0;">
+                                                    </a>
+                                                </td>
+                                            </tr>
+                                        </table>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td style="padding: 0;">
+                                        <!-- Footer Text -->
+                                        <p style="margin: 0 0 10px 0; font-size: 14px; line-height: 22px; color: #666666;">
+                                            &copy; @DateTime.Now.Year HoLiHu. @ViewData["Rights"]
+                                        </p>
+                                        <p style="margin: 0 0 10px 0; font-size: 14px; line-height: 22px; color: #666666;">
+                                            <a href="@Url.Action("Index", "Home", new { area = "" })" style="color: #007bff; text-decoration: none;">holihu.online</a> |
+                                            <a href="@Url.Action("Privacy", "Home", new { area = "" })" style="color: #007bff; text-decoration: none;">@ViewData["Privacy"]</a> |
+                                            <a href="@Url.Action("Terms", "Home", new { area = "" })" style="color: #007bff; text-decoration: none;">@ViewData["Terms"]</a>
+                                        </p>
+                                        <p style="margin: 0; font-size: 12px; line-height: 18px; color: #999999;">
+                                            @ViewData["AutomatedMessage"]<br>
+                                            @ViewData["SupportMessage"]
+                                        </p>
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
+</body>
+</html>

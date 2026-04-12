@@ -1,0 +1,77 @@
+# ──────────────────────────────────────────────
+#  ROOT .gitignore  –  HoLiHu Voting System
+# ──────────────────────────────────────────────
+
+# ===== SECRETS (NEVER commit these) =====
+# Backend – override appsettings with env vars or dotnet user-secrets
+WebApplication3/**/appsettings.Development.json
+WebApplication3/**/appsettings.Production.json
+WebApplication3/**/appsettings.Secrets.json
+# Smart contracts env
+blockchain_sm/.env
+# Frontend env with real values
+frontend/.env
+frontend/.env.backup
+frontend/.env.local
+frontend/.env.*.local
+
+# ===== .NET / Visual Studio =====
+**/obj/
+**/bin/
+**/.vs/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+.vscode/
+*.db
+*.sqlite
+*.vsidx
+
+# ===== Node / npm =====
+**/node_modules/
+**/dist/
+**/.next/
+**/out/
+**/build/
+**/.turbo/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# ===== Hardhat / Foundry =====
+blockchain_sm/artifacts/
+blockchain_sm/cache/
+blockchain_sm/cache_forge/
+blockchain_sm/out_forge/
+blockchain_sm/typechain-types/
+blockchain_sm/ignition/deployments/
+blockchain_sm/coverage/
+blockchain_sm/coverage.json
+blockchain_sm/tmp/
+blockchain_sm/deployments/
+blockchain_sm/legacy/scripts/
+
+# ===== Local runtime / temp =====
+tmp/
+.claude/
+**/*.log
+**/App_Data/
+blockchain_sm/.git.nested-backup/
+frontend/.git.nested-backup/
+frontend/localhost*.pem
+frontend/db*.json
+frontend/build/
+WebApplication3/**/publish/
+WebApplication3/**/app/
+WebApplication3/**/app.zip
+WebApplication3/**/Logs/
+WebApplication3/**/Properties/PublishProfiles/
+WebApplication3/**/Properties/ServiceDependencies/
+
+# ===== OS =====
+.DS_Store
+Thumbs.db
+desktop.ini
+*.rar

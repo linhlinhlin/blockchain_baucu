@@ -1,0 +1,50 @@
+services:
+  db:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: holihu_flow
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_USER: postgres
+    ports:
+      - "5433:5432"
+    volumes:
+      - flow-db-data:/var/lib/postgresql/data
+      - ./db/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+
+  api:
+    build:
+      context: ../..
+      dockerfile: testing/flow/api/Dockerfile
+    env_file:
+      - ../../.env
+    environment:
+      API_PORT: 3201
+      APP_ORIGIN: http://localhost:3200
+      AUTH_MESSAGE_URI: http://localhost:3200
+      DATABASE_URL: postgres://postgres:postgres@db:5432/holihu_flow
+      ELECTION_ARTIFACT_PATH: /app/artifacts/contracts/ElectionV1.sol/ElectionV1.json
+      FACTORY_ARTIFACT_PATH: /app/artifacts/contracts/ElectionFactoryV1.sol/ElectionFactoryV1.json
+      FLOW_DEPLOYMENTS_DIR: /app/deployments/sepolia
+      FLOW_MIGRATIONS_PATH: /app/db/init.sql
+      RPC_URL: https://ethereum-sepolia-rpc.publicnode.com
+    volumes:
+      - ../../deployments/sepolia:/app/deployments/sepolia
+    ports:
+      - "3201:3201"
+    depends_on:
+      - db
+
+  web:
+    build:
+      context: ../..
+      dockerfile: testing/flow/web/Dockerfile
+    environment:
+      VITE_API_BASE_URL: http://localhost:3201
+      VITE_RPC_URL: https://ethereum-sepolia-rpc.publicnode.com
+    ports:
+      - "3200:3200"
+    depends_on:
+      - api
+
+volumes:
+  flow-db-data:

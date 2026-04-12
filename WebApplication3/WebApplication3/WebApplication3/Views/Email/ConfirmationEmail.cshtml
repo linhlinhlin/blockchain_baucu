@@ -1,0 +1,148 @@
+﻿@model WebApplication3.Controllers.ContactRequest
+@{
+    Layout = null;
+}
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <title>@ViewData["EmailTitle"]</title>
+    <!--[if mso]>
+    <noscript>
+    <xml>
+    <o:OfficeDocumentSettings>
+    <o:PixelsPerInch>96</o:PixelsPerInch>
+    </o:OfficeDocumentSettings>
+    </xml>
+    </noscript>
+    <![endif]-->
+    <style>
+        @@media only screen and (max-width: 600px) {
+            .section-padding {
+                padding-left: 10px !important;
+                padding-right: 10px !important;
+            }
+        }
+    </style>
+</head>
+<body style="margin: 0; padding: 0; background-color: #f4f4f4; font-family: Arial, sans-serif; -webkit-font-smoothing: antialiased; font-size: 16px; line-height: 1.4; -ms-text-size-adjust: 100%; -webkit-text-size-adjust: 100%;">
+    <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" style="table-layout: fixed;">
+        <tr>
+            <td align="center" style="padding: 0;">
+                <table role="presentation" align="center" border="0" cellpadding="0" cellspacing="0" width="600" style="background-color: #ffffff; margin: 0 auto; max-width: 600px; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
+                    <!-- Header -->
+                    <tr>
+                        <td align="center" style="padding: 30px 0; background-color: #007bff;">
+                            <img src="https://i.postimg.cc/W4spdM3n/logo-2.png" alt="HoLiHu Logo" style="display: block; height: 125px; width: auto; max-width: 100%;">
+                        </td>
+                    </tr>
+                    <!-- Blue Gradient Line -->
+                    <tr>
+                        <td style="padding: 0;">
+                            <img src="https://ci3.googleusercontent.com/meips/ADKq_NYdZ75rCQHEXYOXoBZWl7ryQLKSdGuTZLG_SLR9_DIDl637OdRhWq5uTYqs7UpEh451qYsQo-hznN3ssW9owQ5tkmrcBZFg82vwyC7L0D1w8eJDQR8-wV0WUDszhJ1AXcR1mPRT8ZyPDn0MxQucu_k=s0-d-e1-ft#https://cdn.oreillystatic.com/oreilly/email/odot-template/em_gradient_line_ocean_600x4.png" alt="" style="display: block; width: 100%; height: 4px;">
+                        </td>
+                    </tr>
+                    <!-- Content -->
+                    <tr>
+                        <td style="padding: 40px 30px;" class="section-padding">
+                            <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%">
+                                <tr>
+                                    <td style="padding: 0 0 20px 0;">
+                                        <p style="margin: 0; font-size: 18px; line-height: 28px; color: #333333;">
+                                            Kính gửi <strong>@ViewData["Ten"]</strong>,
+                                        </p>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td style="padding: 0 0 20px 0;">
+                                        <p style="margin: 0; font-size: 16px; line-height: 24px; color: #555555;">
+                                            Chúng tôi xác nhận đã nhận được yêu cầu hỗ trợ của bạn gửi vào ngày <strong>@ViewData["NgayGui"]</strong> với lý do <strong>@ViewData["LyDo"]</strong>. Đội ngũ Holihu đang xem xét và sẽ phản hồi trong thời gian sớm nhất.
+                                        </p>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td style="padding: 20px 0;">
+                                        <p style="margin: 0; font-size: 16px; line-height: 24px; color: #555555;">
+                                            Nếu bạn có thêm thông tin bổ sung hoặc cần cập nhật yêu cầu, vui lòng phản hồi trực tiếp email này hoặc liên hệ với chúng tôi qua các kênh hỗ trợ sau:
+                                        </p>
+                                        <ul style="margin: 10px 0 0 20px; padding-left: 20px; font-size: 16px; line-height: 24px; color: #555555;">
+                                            <li><strong>Email hỗ trợ:</strong> <a href="mailto:hungkhp888@gmail.com" style="color: #007bff; text-decoration: none;">hungkhp888@gmail.com</a></li>
+                                            <li><strong>Hotline:</strong> 0123456789</li>
+                                            <li><strong>Website:</strong> <a href="https://holihu.online" style="color: #007bff; text-decoration: none;">holihu.online</a></li>
+                                        </ul>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td style="padding: 20px 0 0 0;">
+                                        <p style="margin: 0; font-size: 16px; line-height: 24px; color: #555555;">
+                                            Cảm ơn bạn đã tin tưởng Holihu. Chúng tôi luôn sẵn sàng hỗ trợ bạn.
+                                        </p>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td style="padding: 30px 0 0 0;">
+                                        <p style="margin: 0; font-size: 16px; line-height: 24px; color: #333333;">
+                                            Trân trọng,<br>
+                                            <strong>Đội ngũ hỗ trợ Holihu</strong>
+                                        </p>
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+                    <!-- Footer -->
+                    <tr>
+                        <td style="padding: 30px; background-color: #f8f9fa; text-align: center;">
+                            <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%">
+                                <tr>
+                                    <td style="padding: 0 0 20px 0;">
+                                        <!-- Social Media Icons -->
+                                        <table role="presentation" border="0" cellpadding="0" cellspacing="0" style="margin: 0 auto;">
+                                            <tr>
+                                                <td style="padding: 0 10px;">
+                                                    <a href="https://twitter.com/holihu" target="_blank" style="text-decoration: none;">
+                                                        <img src="https://cdn.oreillystatic.com/oreilly/email/odot-template/em_icon_twitter.png" alt="Twitter" width="24" height="24" style="display: block; border: 0;">
+                                                    </a>
+                                                </td>
+                                                <td style="padding: 0 10px;">
+                                                    <a href="https://linkedin.com/company/holihu" target="_blank" style="text-decoration: none;">
+                                                        <img src="https://cdn.oreillystatic.com/oreilly/email/odot-template/em_icon_linkedIn.png" alt="LinkedIn" width="24" height="24" style="display: block; border: 0;">
+                                                    </a>
+                                                </td>
+                                                <td style="padding: 0 10px;">
+                                                    <a href="https://youtube.com/holihu" target="_blank" style="text-decoration: none;">
+                                                        <img src="https://cdn.oreillystatic.com/oreilly/email/odot-template/em_icon_youtube.png" alt="YouTube" width="24" height="24" style="display: block; border: 0;">
+                                                    </a>
+                                                </td>
+                                            </tr>
+                                        </table>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td style="padding: 0;">
+                                        <!-- Footer Text -->
+                                        <p style="margin: 0 0 10px 0; font-size: 14px; line-height: 22px; color: #666666;">
+                                            © @DateTime.Now.Year Holihu. Mọi quyền được bảo lưu.
+                                        </p>
+                                        <p style="margin: 0 0 10px 0; font-size: 14px; line-height: 22px; color: #666666;">
+                                            <a href="https://www.holihu.online" style="color: #007bff; text-decoration: none;">www.holihu.online</a> |
+                                            <a href="https://www.holihu.online/privacy" style="color: #007bff; text-decoration: none;">Chính sách bảo mật</a> |
+                                            <a href="https://www.holihu.online/terms" style="color: #007bff; text-decoration: none;">Điều khoản dịch vụ</a>
+                                        </p>
+                                        <p style="margin: 0; font-size: 12px; line-height: 18px; color: #999999;">
+                                            Đây là email tự động, vui lòng không trả lời thư này.<br>
+                                            Nếu cần hỗ trợ, liên hệ: <a href="mailto:support@holihu.com" style="color: #007bff; text-decoration: none;">support@holihu.com</a> | 0123456789
+                                        </p>
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
+</body>
+</html>

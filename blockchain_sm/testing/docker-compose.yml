@@ -1,0 +1,22 @@
+services:
+  api:
+    build:
+      context: ..
+      dockerfile: testing/api/Dockerfile
+    environment:
+      API_PORT: 3001
+      RPC_URL: https://ethereum-sepolia-rpc.publicnode.com
+    ports:
+      - "3001:3001"
+
+  web:
+    build:
+      context: ..
+      dockerfile: testing/web/Dockerfile
+    environment:
+      VITE_API_BASE_URL: http://localhost:3001
+      VITE_RPC_URL: https://ethereum-sepolia-rpc.publicnode.com
+    ports:
+      - "3000:3000"
+    depends_on:
+      - api

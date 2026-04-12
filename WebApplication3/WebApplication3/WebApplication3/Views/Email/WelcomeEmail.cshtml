@@ -1,0 +1,184 @@
+﻿@model WebApplication3.Controllers.SubscribeRequest
+@{
+    Layout = null;
+}
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <title>@ViewData["EmailTitle"]</title>
+    <!--[if mso]>
+    <noscript>
+    <xml>
+    <o:OfficeDocumentSettings>
+    <o:PixelsPerInch>96</o:PixelsPerInch>
+    </o:OfficeDocumentSettings>
+    </xml>
+    </noscript>
+    <![endif]-->
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            -webkit-font-smoothing: antialiased;
+            -ms-text-size-adjust: 100%;
+            -webkit-text-size-adjust: 100%;
+        }
+
+        .gradient-bg {
+            background: linear-gradient(135deg, #0A1F44 0%, #00DDEB 100%);
+        }
+
+        .cyber-text {
+            color: #E0E0E0;
+            text-shadow: 0 0 5px rgba(0, 221, 235, 0.5);
+        }
+
+        .minimal-btn {
+            display: inline-block;
+            padding: 10px 20px;
+            border: 1px solid #00DDEB;
+            color: #00DDEB;
+            text-decoration: none;
+            border-radius: 4px;
+            font-weight: bold;
+        }
+
+        @@media only screen and (max-width: 600px) {
+            .container {
+                width: 100% !important;
+            }
+
+            .content {
+                padding: 20px !important;
+            }
+
+            h1 {
+                font-size: 24px !important;
+            }
+
+            p {
+                font-size: 14px !important;
+            }
+        }
+    </style>
+</head>
+<body style="background-color: #1A1A1A; color: #E0E0E0;">
+    <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" style="table-layout: fixed;">
+        <tr>
+            <td align="center" style="padding: 20px 0;">
+                <table role="presentation" class="container" border="0" cellpadding="0" cellspacing="0" width="600" style="max-width: 600px; background-color: #0A1F44; border-radius: 12px; overflow: hidden; box-shadow: 0 0 20px rgba(0, 221, 235, 0.3);">
+                    <!-- Header -->
+                    <tr>
+                        <td align="center" class="gradient-bg" style="padding: 40px 0;">
+                            <img src="https://i.postimg.cc/W4spdM3n/logo-2.png" alt="HoLiHu Logo" style="display: block; height: 100px; width: auto; max-width: 100%; filter: drop-shadow(0 0 10px #00DDEB);">
+                            <h1 style="margin-top: 20px; font-size: 32px; font-weight: bold; color: #E0E0E0; text-transform: uppercase; letter-spacing: 2px;" class="cyber-text">
+                                Chào mừng đến với Holihu
+                            </h1>
+                        </td>
+                    </tr>
+                    <!-- Content -->
+                    <tr>
+                        <td class="content" style="padding: 40px 30px; background-color: #0A1F44;">
+                            <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%">
+                                <tr>
+                                    <td style="padding: 0 0 20px 0;">
+                                        <p style="font-size: 16px; line-height: 24px; color: #E0E0E0;">
+                                            Bạn đã chính thức gia nhập <strong>Hệ sinh thái Bầu cử Blockchain Holihu</strong> vào ngày <strong>@ViewData["NgayDangKy"]</strong>.
+                                        </p>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td style="padding: 0 0 20px 0;">
+                                        <p style="font-size: 16px; line-height: 24px; color: #E0E0E0;">
+                                            Holihu không chỉ là một nền tảng – đó là tương lai của sự minh bạch, quyền lực phân tán và công nghệ tiên phong. Với blockchain làm cốt lõi, chúng tôi kiến tạo một thế giới nơi mỗi lá phiếu là bất biến, mỗi tiếng nói đều được lắng nghe.
+                                        </p>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td style="padding: 0 0 20px 0;">
+                                        <p style="font-size: 16px; line-height: 24px; color: #E0E0E0;">
+                                            Bằng cách đăng ký, bạn sẽ nhận được:
+                                        </p>
+                                        <ul style="margin: 10px 0 0 20px; padding-left: 20px; font-size: 16px; line-height: 24px; color: #E0E0E0;">
+                                            <li>Các bản cập nhật độc quyền về tính năng mới.</li>
+                                            <li>Tin tức nóng hổi từ hệ sinh thái blockchain Holihu.</li>
+                                            <li>Cơ hội tham gia các sự kiện và thử nghiệm beta.</li>
+                                        </ul>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td align="center" style="padding: 20px 0;">
+                                        <a href="https://holihu.online" class="minimal-btn" style="background: transparent;">Khám phá ngay</a>
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+                    <!-- Divider -->
+                    <tr>
+                        <td style="padding: 0;">
+                            <table width="100%" style="background: linear-gradient(90deg, transparent, #00DDEB, transparent); height: 2px;"></table>
+                        </td>
+                    </tr>
+                    <!-- Footer -->
+                    <tr>
+                        <td style="padding: 30px; background-color: #0A1F44; text-align: center;">
+                            <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%">
+                                <tr>
+                                    <td style="padding: 0 0 20px 0;">
+                                        <p style="font-size: 14px; line-height: 22px; color: #E0E0E0; font-style: italic;">
+                                            "Tương lai không chờ đợi – nó được mã hóa bởi chính chúng ta."
+                                        </p>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td style="padding: 0 0 20px 0;">
+                                        <table role="presentation" border="0" cellpadding="0" cellspacing="0" style="margin: 0 auto;">
+                                            <tr>
+                                                <td style="padding: 0 10px;">
+                                                    <a href="https://twitter.com/holihu" target="_blank" style="text-decoration: none;">
+                                                        <img src="https://cdn.oreillystatic.com/oreilly/email/odot-template/em_icon_twitter.png" alt="Twitter" width="24" height="24" style="display: block; filter: brightness(150%);">
+                                                    </a>
+                                                </td>
+                                                <td style="padding: 0 10px;">
+                                                    <a href="https://linkedin.com/company/holihu" target="_blank" style="text-decoration: none;">
+                                                        <img src="https://cdn.oreillystatic.com/oreilly/email/odot-template/em_icon_linkedIn.png" alt="LinkedIn" width="24" height="24" style="display: block; filter: brightness(150%);">
+                                                    </a>
+                                                </td>
+                                                <td style="padding: 0 10px;">
+                                                    <a href="https://youtube.com/holihu" target="_blank" style="text-decoration: none;">
+                                                        <img src="https://cdn.oreillystatic.com/oreilly/email/odot-template/em_icon_youtube.png" alt="YouTube" width="24" height="24" style="display: block; filter: brightness(150%);">
+                                                    </a>
+                                                </td>
+                                            </tr>
+                                        </table>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>
+                                        <p style="font-size: 12px; line-height: 18px; color: #A0A0A0;">
+                                            © @DateTime.Now.Year Holihu. All rights reserved.<br>
+                                            <a href="https://holihu.online" style="color: #00DDEB; text-decoration: none;">holihu.online</a> |
+                                            <a href="https://holihu.online/privacy" style="color: #00DDEB; text-decoration: none;">Privacy</a> |
+                                            <a href="https://holihu.online/terms" style="color: #00DDEB; text-decoration: none;">Terms</a><br>
+                                            Đây là email tự động. Để hỗ trợ, liên hệ: <a href="mailto:support@holihu.com" style="color: #00DDEB; text-decoration: none;">support@holihu.com</a>
+                                        </p>
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
+</body>
+</html>

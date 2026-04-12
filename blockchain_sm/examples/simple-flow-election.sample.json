@@ -1,0 +1,24 @@
+{
+  "admin": "0x0000000000000000000000000000000000000001",
+  "title": "Class President Demo",
+  "description": "Simple direct-vote election for wallet-login flow testing.",
+  "startAt": 1775403000,
+  "endAt": 1775489400,
+  "candidates": [
+    {
+      "candidateId": "0xa78697861efd80458c65ed6d500cc63eb6f7d118994845620906d75d0288fd77",
+      "displayName": "Tran Minh",
+      "walletAddress": ""
+    },
+    {
+      "candidateId": "0x4c55db39e44e56638231ffce2f39e78de7c6870ae3ef26f33820f9d1fd32fd1e",
+      "displayName": "Le Anh",
+      "walletAddress": ""
+    },
+    {
+      "candidateId": "0x6ab86ef14d7cf5f1ae4972ff8336a840eeefeb3104b0fca7a7f8fb1f2ee2eab8",
+      "displayName": "Pham Nhi",
+      "walletAddress": ""
+    }
+  ]
+}

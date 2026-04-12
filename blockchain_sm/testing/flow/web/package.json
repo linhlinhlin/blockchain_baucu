@@ -1,0 +1,19 @@
+{
+  "name": "holihu-flow-web",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Wallet-login frontend for ElectionFactoryV1 and ElectionV1 commit-reveal flow testing.",
+  "scripts": {
+    "dev": "vite --host 0.0.0.0 --port 3200",
+    "build": "vite build"
+  },
+  "dependencies": {
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "viem": "^2.29.2"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^4.3.4",
+    "vite": "^6.2.2"
+  }
+}

@@ -1,0 +1,29 @@
+{
+  "admin": "0x15d34AAf54267DB7D7c367839AAf71A00a2C6A65",
+  "electionURI": "ipfs://replace-with-final-manifest-cid",
+  "schedule": {
+    "commitStart": "2030-05-01T01:00:00Z",
+    "commitEnd": "2030-05-02T01:00:00Z",
+    "revealEnd": "2030-05-03T01:00:00Z"
+  },
+  "candidates": [
+    {
+      "id": "candidate:SV001",
+      "name": "Nguyen Van A"
+    },
+    {
+      "id": "candidate:SV002",
+      "name": "Tran Thi B"
+    }
+  ],
+  "voters": [
+    "0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC",
+    "0x90F79bf6EB2c4f870365E785982E1f101E93b906"
+  ],
+  "manifest": {
+    "electionKey": "class-president-2030-demo",
+    "title": "Bau cu lop truong demo 2030",
+    "organization": "HoLiHu",
+    "description": "Sample manifest used to generate the canonical election package."
+  }
+}
