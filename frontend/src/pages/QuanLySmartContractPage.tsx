@@ -783,6 +783,19 @@ export default function QuanLySmartContractPage() {
 
           <div className={panelClasses()}>
             <div className="space-y-3">
+              {!getEthereum() && (
+                <div role="alert" className="rounded-[16px] border border-amber-300 bg-amber-50 p-3 text-xs text-amber-700">
+                  Chưa phát hiện MetaMask. Cần ví MetaMask để kết nối và bỏ phiếu on-chain.{' '}
+                  <a
+                    href="https://metamask.io/download/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="font-semibold underline"
+                  >
+                    Cài MetaMask
+                  </a>
+                </div>
+              )}
               <button type="button" onClick={() => void connectWallet()} className={`${commandButtonClasses('dark')} w-full`}>
                 <Wallet className="h-4 w-4" />
                 {connectedAccount ? 'Đổi / kết nối lại MetaMask' : 'Kết nối MetaMask'}

@@ -14,6 +14,8 @@
 | **M2+L5** | `ModalOTP.tsx` | `role="dialog"` `aria-modal` `aria-labelledby` + Escape đóng + autofocus title id; padding `p-6 sm:p-8` (mobile). |
 | **M5+L2** | `CuocBauCuCuaNguoiDungPage.tsx` | Hint "chưa có ví MetaMask"; `aria-label="Tìm ballot"` cho ô search. |
 | **M6+L4** | `QuanLySmartContractPage.tsx` | `YesNoBadge` (icon CheckCircle2/XCircle + nhãn + `aria-label`, không chỉ màu) cho Đủ điều kiện/Đã commit/Đã reveal; Việt hoá nhãn; `formatUnix` "n/a"→"Chưa thiết lập". |
+| **H4** | `QuanLySmartContractPage.tsx` | Banner `role="alert"` khi không phát hiện MetaMask + link cài đặt (recovery path). |
+| **M3** | `QuetMaQRPage.tsx` | Bỏ Radix `ToastProvider`/`Toast` cục bộ, dùng `toast.success` (react-hot-toast) nhất quán toàn app. |
 
 ## Verify
 
@@ -23,7 +25,8 @@
 
 ## Follow-up (ghi nhận trung thực — không làm để giữ surgical/low-risk)
 
-- **H4**: banner "MetaMask chưa cài" với link tải — hiện lỗi đã hiển thị qua toast+message (đủ tối thiểu); banner CTA chuyên dụng là polish.
-- **M3/M7**: `QuetMaQRPage` còn dùng Radix Toast cục bộ + theme gray (không clay) — visual refactor lớn hơn, rủi ro hơn, tách follow-up.
+- **M7**: `QuetMaQRPage` còn theme gray (chưa clay tokens) — visual refactor lớn, rủi ro regression cao, tách follow-up có kiểm thử UI.
 - **L1/L3**: localize toàn bộ heading kỹ thuật ("Action rail"/"Viewer state"…) & dời cảnh báo vote-secret S4 ra vị trí to/đúng lúc — polish rộng.
+
+(H4, M3 đã hoàn tất trong đợt này — xem bảng trên.)
 - Full `tsc`/`vite build` xác nhận bundle vẫn cần Node LTS (Đợt 4/S19, host đang Node 25).

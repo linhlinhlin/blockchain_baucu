@@ -17,14 +17,7 @@ import { fetchCuocBauCuById } from '../store/slice/cuocBauCuByIdSlice';
 import { guiOtp, xacMinhOtp } from '../store/slice/maOTPSlice';
 import type { RootState, AppDispatch } from '../store/store';
 import { Loader2 } from 'lucide-react';
-import {
-  ToastProvider,
-  Toast,
-  ToastTitle,
-  ToastDescription,
-  ToastClose,
-  ToastViewport,
-} from '../components/ui/Toast';
+import toast from 'react-hot-toast';
 import { clearState } from '../store/slice/phieuMoiPhienBauCuSlice';
 
 type QRDataType = 'TEXT' | 'URL' | 'EMAIL' | 'PHONE' | 'SMS' | 'WIFI' | 'VCARD' | 'OTHER';
@@ -64,7 +57,6 @@ const QuetMaQRPage: React.FC = () => {
   const [isValidating, setIsValidating] = useState(true);
   const [otpError, setOtpError] = useState<string | null>(null);
   const [isOtpModalOpen, setIsOtpModalOpen] = useState(false);
-  const [toastMessage, setToastMessage] = useState<string | null>(null);
 
   const dispatch = useDispatch<AppDispatch>();
   const navigate = useNavigate();
@@ -413,7 +405,7 @@ const QuetMaQRPage: React.FC = () => {
     if (token) {
       try {
         await dispatch(thamGiaPhienBauCu({ token, sdt })).unwrap();
-        setToastMessage('Tham gia phiên bầu cử thành công!');
+        toast.success('Tham gia phiên bầu cử thành công!');
         setIsOtpModalOpen(false);
         setTimeout(() => {
           navigate(`/app/elections/${phieuMoi?.cuocBauCuId}`);
@@ -433,8 +425,7 @@ const QuetMaQRPage: React.FC = () => {
   };
 
   return (
-    <ToastProvider>
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
         <Card className="w-full max-w-md bg-white border border-gray-200 shadow-sm">
           <CardHeader className="border-b border-gray-200">
             <div className="flex items-center space-x-4">
@@ -577,19 +568,7 @@ const QuetMaQRPage: React.FC = () => {
           error={otpError}
         />
 
-        {toastMessage && (
-          <Toast variant="default" className="bg-green-500 text-white">
-            <div className="flex items-center">
-              <CheckCircle className="mr-2 h-5 w-5" />
-              <ToastTitle>Thành công</ToastTitle>
-            </div>
-            <ToastDescription>{toastMessage}</ToastDescription>
-            <ToastClose />
-          </Toast>
-        )}
-        <ToastViewport />
       </div>
-    </ToastProvider>
   );
 };
 
