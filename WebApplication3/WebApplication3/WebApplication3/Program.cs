@@ -6,7 +6,9 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using Microsoft.AspNetCore.RateLimiting;
 using System.Text;
+using System.Threading.RateLimiting;
 using WebApplication3;
 using WebApplication3.Controllers;
 using WebApplication3.Data;
@@ -221,28 +223,41 @@ builder.Services.AddHttpClient("Pinata", client =>
     client.DefaultRequestHeaders.Add("pinata_secret_api_key", builder.Configuration["Pinata:ApiSecret"]);
 });
 
-// Đăng ký CORS cho phép kết nối với React App
+// S10 (spec 002): allowed origins tu config/env, KHONG hardcode origin production/azure.
+// Cau hinh: Cors:AllowedOrigins (mang) qua appsettings/env (Cors__AllowedOrigins__0=...).
+var corsOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>();
+if (corsOrigins is null || corsOrigins.Length == 0)
+{
+    corsOrigins = new[]
+    {
+        "http://localhost:3000", "https://localhost:3000",
+        "http://127.0.0.1:3000", "https://127.0.0.1:3000",
+    };
+}
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowReactApp", policy =>
     {
-        policy.WithOrigins(
-             "http://localhost:3000",
-             "https://localhost:3000",
-             "http://127.0.0.1:3000",
-             "https://127.0.0.1:3000",
-             "http://localhost:3200",
-             "https://localhost:3200",
-             "http://127.0.0.1:3200",
-             "https://127.0.0.1:3200",
-             "https://holihu.online",
-             "https://app.holihu.online", // Nếu frontend chạy trên subdomain
-             "https://webapplication320250413035557-eebmacambhenb2ha.australiacentral-01.azurewebsites.net" // Thêm Azure domain nếu cần
-         )// Cho phép cả subdomain
-                 .AllowAnyMethod()
+        policy.WithOrigins(corsOrigins)
+                .AllowAnyMethod()
                 .AllowAnyHeader()
                 .AllowCredentials();
     });
+});
+
+// S6 (spec 002): rate-limit endpoint nhay cam (voter-invites/*) chong spam/brute-force.
+builder.Services.AddRateLimiter(options =>
+{
+    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+    options.AddPolicy("voter-invites", httpContext =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            partitionKey: httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+            factory: _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = 20,
+                Window = TimeSpan.FromMinutes(1),
+                QueueLimit = 0,
+            }));
 });
 
 // Đọc cấu hình JWT từ appsettings.json
@@ -337,6 +352,7 @@ if (!builder.Configuration.GetValue<bool>("AppSettings:DisableHttpsRedirection")
 }
 app.UseStaticFiles(); // Phục vụ file tĩnh
 app.UseRouting();
+app.UseRateLimiter(); // S6: sau UseRouting de policy theo endpoint hoat dong
 app.UseCors("AllowReactApp"); // Đặt sau UseRouting() và trước Authentication
 app.UseAuthentication(); // Middleware Authentication
 app.UseAuthorization(); // Middleware Authorization

@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using Nethereum.Util;
 using WebApplication3.Services;
 
@@ -270,6 +271,7 @@ public sealed class ElectionV1Controller : ControllerBase
     }
 
     [AllowAnonymous]
+    [EnableRateLimiting("voter-invites")]
     [HttpPost("voter-invites/{token}/send-otp")]
     public async Task<IActionResult> SendVoterInviteOtp(string token, CancellationToken cancellationToken)
     {
@@ -288,6 +290,7 @@ public sealed class ElectionV1Controller : ControllerBase
     }
 
     [AllowAnonymous]
+    [EnableRateLimiting("voter-invites")]
     [HttpPost("voter-invites/groups/{groupKey}/send-otp")]
     public async Task<IActionResult> SendVoterInviteOtpByIdentity(
         string groupKey,
@@ -309,6 +312,7 @@ public sealed class ElectionV1Controller : ControllerBase
     }
 
     [AllowAnonymous]
+    [EnableRateLimiting("voter-invites")]
     [HttpPost("voter-invites/{token}/verify-otp")]
     public IActionResult VerifyVoterInviteOtp(string token, [FromBody] ElectionV1OtpVerifyRequest request)
     {
@@ -327,6 +331,7 @@ public sealed class ElectionV1Controller : ControllerBase
     }
 
     [Authorize]
+    [EnableRateLimiting("voter-invites")]
     [HttpPost("voter-invites/{token}/prepare-wallet-bind")]
     public IActionResult PrepareWalletBind(string token, [FromBody] ElectionV1PrepareWalletBindingRequest request)
     {
@@ -345,6 +350,7 @@ public sealed class ElectionV1Controller : ControllerBase
     }
 
     [Authorize]
+    [EnableRateLimiting("voter-invites")]
     [HttpPost("voter-invites/{token}/bind-wallet")]
     public IActionResult BindVoterWallet(string token, [FromBody] ElectionV1BindWalletRequest request)
     {

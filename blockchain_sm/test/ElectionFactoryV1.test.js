@@ -29,6 +29,8 @@ describe("ElectionFactoryV1", function () {
       commitEnd: Number(now + 110n),
       revealEnd: Number(now + 210n),
       candidateIds: [candidateA, candidateB],
+      minReveals: 0,
+      enforceQuorum: false,
     };
 
     return {
@@ -238,5 +240,62 @@ describe("ElectionFactoryV1", function () {
       election,
       "InvalidPhase"
     );
+  });
+
+  it("S9 enforceQuorum=true: revert finalize khi reveal < minReveals", async function () {
+    const { creator, factory, config } = await deployFixture();
+    const quorumConfig = { ...config, minReveals: 1, enforceQuorum: true };
+
+    const createTx = await factory.connect(creator).createElection(quorumConfig);
+    const createReceipt = await createTx.wait();
+    const createEvent = createReceipt.logs
+      .map((log) => {
+        try {
+          return factory.interface.parseLog(log);
+        } catch {
+          return null;
+        }
+      })
+      .find((parsed) => parsed && parsed.name === "ElectionCreated");
+    const election = await ethers.getContractAt("ElectionV1", createEvent.args.electionAddress);
+
+    expect(await election.minReveals()).to.equal(1n);
+    expect(await election.enforceQuorum()).to.equal(true);
+
+    await ethers.provider.send("evm_setNextBlockTimestamp", [quorumConfig.revealEnd + 1]);
+    await ethers.provider.send("evm_mine");
+
+    await expect(election.finalizeElection()).to.be.revertedWithCustomError(
+      election,
+      "QuorumNotReached"
+    );
+    expect(await election.finalized()).to.equal(false);
+  });
+
+  it("S9 enforceQuorum=false: finalize set lowTurnout khi reveal < minReveals", async function () {
+    const { creator, factory, config } = await deployFixture();
+    const quorumConfig = { ...config, minReveals: 5, enforceQuorum: false };
+
+    const createTx = await factory.connect(creator).createElection(quorumConfig);
+    const createReceipt = await createTx.wait();
+    const createEvent = createReceipt.logs
+      .map((log) => {
+        try {
+          return factory.interface.parseLog(log);
+        } catch {
+          return null;
+        }
+      })
+      .find((parsed) => parsed && parsed.name === "ElectionCreated");
+    const election = await ethers.getContractAt("ElectionV1", createEvent.args.electionAddress);
+
+    await ethers.provider.send("evm_setNextBlockTimestamp", [quorumConfig.revealEnd + 1]);
+    await ethers.provider.send("evm_mine");
+
+    await expect(election.finalizeElection())
+      .to.emit(election, "LowTurnout")
+      .withArgs(0n, 5n);
+    expect(await election.finalized()).to.equal(true);
+    expect(await election.lowTurnout()).to.equal(true);
   });
 });

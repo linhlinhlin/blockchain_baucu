@@ -32,6 +32,9 @@ contract ElectionFactoryV1 is Ownable {
         uint64 commitEnd;
         uint64 revealEnd;
         bytes32[] candidateIds;
+        // S9 (spec 002): 0 / false ⇒ tương thích ngược (hành vi cũ).
+        uint256 minReveals;
+        bool enforceQuorum;
     }
 
     uint256 public electionCount;
@@ -68,7 +71,9 @@ contract ElectionFactoryV1 is Ownable {
             config.commitStart,
             config.commitEnd,
             config.revealEnd,
-            config.candidateIds
+            config.candidateIds,
+            config.minReveals,
+            config.enforceQuorum
         );
 
         unchecked {

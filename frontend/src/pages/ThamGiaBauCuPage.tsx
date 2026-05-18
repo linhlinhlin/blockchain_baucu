@@ -1,6 +1,7 @@
 'use client';
 
 import type React from 'react';
+import { sanitizeHtml } from '../utils/sanitizeHtml';
 import { useState, useEffect, useCallback, useMemo, useReducer, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
@@ -2195,7 +2196,7 @@ const ThamGiaBauCu: React.FC = () => {
                         <div className="max-h-[50vh] overflow-y-auto p-4 bg-gray-50/70 dark:bg-gray-900/50 rounded-lg border border-gray-200/50 dark:border-gray-700/50 backdrop-blur-sm scrollbar-thin scrollbar-thumb-blue-500 scrollbar-track-gray-200 dark:scrollbar-track-gray-700">
                           <div
                             className="prose prose-blue dark:prose-invert max-w-none"
-                            dangerouslySetInnerHTML={{ __html: dieuLeCuocBauCu.noiDung }}
+                            dangerouslySetInnerHTML={{ __html: sanitizeHtml(dieuLeCuocBauCu.noiDung) }}
                           />
                         </div>
                       </div>

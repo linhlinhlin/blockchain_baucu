@@ -32,11 +32,14 @@ contract ElectionV1 is Ownable {
     error AlreadyFinalized();
     error AlreadyCanceled();
     error CancellationWindowClosed();
+    error QuorumNotReached(uint256 totalReveals, uint256 minReveals);
 
     event VoteCommitted(address indexed voter, bytes32 commitment);
     event VoteRevealed(address indexed voter, bytes32 indexed candidateId);
     event ElectionFinalized(uint256 totalCommits, uint256 totalReveals);
     event ElectionCanceled(bytes32 indexed reasonHash);
+    // S9 (spec 002): turnout tường minh.
+    event LowTurnout(uint256 totalReveals, uint256 minReveals);
 
     string public electionURI;
     bytes32 public immutable electionMetadataHash;
@@ -52,10 +55,15 @@ contract ElectionV1 is Ownable {
     mapping(address voter => bytes32 commitment) public commitments;
     mapping(address voter => bool revealed) public hasRevealed;
 
+    // S9 (spec 002): ngưỡng turnout tối thiểu + cách xử lý khi không đạt.
+    uint256 public immutable minReveals;
+    bool public immutable enforceQuorum;
+
     uint256 public totalCommits;
     uint256 public totalReveals;
     bool public finalized;
     bool public canceled;
+    bool public lowTurnout;
     bytes32 public cancellationReasonHash;
 
     constructor(
@@ -66,7 +74,9 @@ contract ElectionV1 is Ownable {
         uint64 commitStart_,
         uint64 commitEnd_,
         uint64 revealEnd_,
-        bytes32[] memory candidateIds_
+        bytes32[] memory candidateIds_,
+        uint256 minReveals_,
+        bool enforceQuorum_
     ) Ownable(electionAdmin) {
         if (electionAdmin == address(0)) revert InvalidAdmin();
         if (bytes(electionUri_).length == 0 || electionMetadataHash_ == bytes32(0)) {
@@ -87,6 +97,8 @@ contract ElectionV1 is Ownable {
         commitStart = commitStart_;
         commitEnd = commitEnd_;
         revealEnd = revealEnd_;
+        minReveals = minReveals_;
+        enforceQuorum = enforceQuorum_;
 
         uint256 candidatesLength = candidateIds_.length;
         for (uint256 i = 0; i < candidatesLength; i++) {
@@ -188,6 +200,14 @@ contract ElectionV1 is Ownable {
 
         Phase phase = currentPhase();
         if (phase != Phase.Ended) revert InvalidPhase(phase);
+
+        // S9: kiểm turnout. enforceQuorum=true ⇒ revert; false ⇒ chỉ gắn cờ.
+        // minReveals=0 (mặc định) ⇒ điều kiện không bao giờ đúng ⇒ tương thích ngược.
+        if (totalReveals < minReveals) {
+            if (enforceQuorum) revert QuorumNotReached(totalReveals, minReveals);
+            lowTurnout = true;
+            emit LowTurnout(totalReveals, minReveals);
+        }
 
         finalized = true;
         emit ElectionFinalized(totalCommits, totalReveals);

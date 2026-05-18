@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import { sanitizeHtml } from '../utils/sanitizeHtml';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import {
@@ -992,7 +993,7 @@ const XemChiTietCuocBauCuPage: React.FC = () => {
                             {dieuLeCuocBauCu.tieuDe}
                           </h2>
                           <div className="prose prose-blue dark:prose-invert max-w-none">
-                            <div dangerouslySetInnerHTML={{ __html: dieuLeCuocBauCu.noiDung }} />
+                            <div dangerouslySetInnerHTML={{ __html: sanitizeHtml(dieuLeCuocBauCu.noiDung) }} />
                           </div>
                         </div>
 

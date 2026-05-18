@@ -346,6 +346,18 @@ public sealed class ElectionV1RosterService
             throw new InvalidOperationException("Can xac thuc OTP truoc khi lien ket vi.");
         }
 
+        // S13 (spec 002): gan invite voi tai khoan dau tien; tai khoan khac khong the chiem slot.
+        if (invite.ClaimedByUserId.HasValue && invite.ClaimedByUserId.Value != userId)
+        {
+            throw new InvalidOperationException("Loi moi nay da duoc lien ket voi tai khoan khac.");
+        }
+        if (!invite.ClaimedByUserId.HasValue)
+        {
+            invite.ClaimedByUserId = userId;
+            draft.UpdatedAt = DateTimeOffset.UtcNow;
+            SaveDraft(draft);
+        }
+
         var normalizedWallet = NormalizeAddress(walletAddress);
         var message = BuildWalletBindingMessage(draft, invite, normalizedWallet, userId);
         return new ElectionV1WalletBindingChallengeDto
@@ -367,6 +379,12 @@ public sealed class ElectionV1RosterService
         if (!invite.OtpVerifiedAt.HasValue)
         {
             throw new InvalidOperationException("Can xac thuc OTP truoc khi lien ket vi.");
+        }
+
+        // S13 (spec 002): chi tai khoan da claim invite moi duoc bind.
+        if (invite.ClaimedByUserId.HasValue && invite.ClaimedByUserId.Value != userId)
+        {
+            throw new InvalidOperationException("Loi moi nay da duoc lien ket voi tai khoan khac.");
         }
 
         if (string.Equals(draft.Status, "deployed", StringComparison.OrdinalIgnoreCase))
@@ -860,14 +878,16 @@ public sealed class ElectionV1RosterService
 
     private static bool StudentCodeMatches(string? inviteStudentCode, string? requestedStudentCode)
     {
-        if (string.IsNullOrWhiteSpace(requestedStudentCode))
+        // S7 (spec 002): roster khong luu ma SV -> dinh danh bang email (khong noi long them).
+        if (string.IsNullOrWhiteSpace(inviteStudentCode))
         {
             return true;
         }
 
-        if (string.IsNullOrWhiteSpace(inviteStudentCode))
+        // Roster CO ma SV -> bat buoc request phai co va khop chinh xac (khong coi trong la khop).
+        if (string.IsNullOrWhiteSpace(requestedStudentCode))
         {
-            return true;
+            return false;
         }
 
         return string.Equals(
