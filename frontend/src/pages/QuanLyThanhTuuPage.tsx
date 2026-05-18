@@ -229,35 +229,8 @@ export default function QuanLyThanhTuuPage() {
   const userInfo = useSelector((state: RootState) => state.dangNhapTaiKhoan?.taiKhoan);
   const walletInfo = useSelector((state: RootState) => state.viBlockchain?.data);
 
-  // State cho dark mode
-  const [darkMode, setDarkMode] = useState(() => {
-    if (typeof window !== 'undefined' && window.localStorage) {
-      const savedMode = localStorage.getItem('darkMode');
-      return savedMode
-        ? JSON.parse(savedMode)
-        : window.matchMedia('(prefers-color-scheme: dark)').matches;
-    }
-    return false;
-  });
-
-  // Toggle Dark Mode
-  const toggleDarkMode = () => {
-    setDarkMode(!darkMode);
-  };
-
-  // Lưu dark mode vào localStorage
-  useEffect(() => {
-    if (typeof window !== 'undefined' && window.localStorage) {
-      localStorage.setItem('darkMode', JSON.stringify(darkMode));
-
-      // Áp dụng class dark vào document
-      if (darkMode) {
-        document.documentElement.classList.add('dark');
-      } else {
-        document.documentElement.classList.remove('dark');
-      }
-    }
-  }, [darkMode]);
+  // Dark mode disabled — always light
+  const darkMode = false;
 
   // Update account info from userInfo
   useEffect(() => {
@@ -717,12 +690,7 @@ export default function QuanLyThanhTuuPage() {
 
   // Trạng thái tải trang
   if (isLoading && !isConnected) {
-    return (
-      <>
-        <ThemeToggle darkMode={darkMode} toggleDarkMode={toggleDarkMode} />
-        <LoadingSpinner />
-      </>
-    );
+    return <LoadingSpinner />;
   }
 
   return (

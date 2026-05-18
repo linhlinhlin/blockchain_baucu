@@ -1,4 +1,3 @@
-﻿using AutoMapper;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Collections.Generic;
@@ -27,7 +26,6 @@ namespace WebApplication3.Controllers
     public class TaiKhoanController : ControllerBase
     {
         private readonly ApplicationDbContext _context;
-        private readonly IMapper _mapper;
         private readonly JwtService _jwtService;
         private readonly JwtSettings _jwtSettings;
         private readonly IConfiguration _configuration;
@@ -35,25 +33,26 @@ namespace WebApplication3.Controllers
         private readonly BlockchainService _blockchainService;
         private readonly RecaptchaService _recaptchaService; // Thêm RecaptchaService
         private readonly ILogger<TaiKhoanController> _logger;
+        private readonly DevelopmentAuthStore _developmentAuthStore;
 
         public TaiKhoanController(
             ApplicationDbContext context,
-            IMapper mapper,
             JwtService jwtService,
             IOptions<JwtSettings> jwtSettings,
             IConfiguration configuration,
             CryptoService cryptoService,
             BlockchainService blockchainService,
+            DevelopmentAuthStore developmentAuthStore,
             RecaptchaService recaptchaService, // Inject RecaptchaService
             ILogger<TaiKhoanController> logger)
         {
             _context = context;
-            _mapper = mapper;
             _jwtService = jwtService;
             _jwtSettings = jwtSettings.Value;
             _configuration = configuration;
             _cryptoService = cryptoService;
             _blockchainService = blockchainService;
+            _developmentAuthStore = developmentAuthStore;
             _recaptchaService = recaptchaService;
             _logger = logger;
         }
@@ -63,7 +62,18 @@ namespace WebApplication3.Controllers
             return _configuration.GetValue<bool>("DevelopmentAuthSettings:Enabled");
         }
 
-        private IActionResult TaoPhanHoiDangNhapDevelopment(DevelopmentAuthUser user, int successStatusCode = 200)
+        private CookieOptions TaoCookieRefreshToken(DateTime? expiresAtUtc = null)
+        {
+            return new CookieOptions
+            {
+                HttpOnly = true,
+                Secure = Request.IsHttps,
+                SameSite = Request.IsHttps ? SameSiteMode.None : SameSiteMode.Lax,
+                Expires = expiresAtUtc
+            };
+        }
+
+        private async Task<IActionResult> TaoPhanHoiDangNhapDevelopmentAsync(DevelopmentAuthUser user, int successStatusCode = 200)
         {
             var vaiTro = new VaiTroDTO
             {
@@ -105,13 +115,17 @@ namespace WebApplication3.Controllers
             var accessToken = _jwtService.GenerateAccessToken(claims);
             var refreshToken = _jwtService.GenerateRefreshToken();
 
-            Response.Cookies.Append("refreshToken", refreshToken, new CookieOptions
-            {
-                HttpOnly = true,
-                Secure = Request.IsHttps,
-                SameSite = Request.IsHttps ? SameSiteMode.None : SameSiteMode.Lax,
-                Expires = DateTime.UtcNow.AddDays(_jwtSettings.RefreshTokenExpirationDays)
-            });
+            Response.Cookies.Append(
+                "refreshToken",
+                refreshToken,
+                TaoCookieRefreshToken(DateTime.UtcNow.AddDays(_jwtSettings.RefreshTokenExpirationDays)));
+
+            await _developmentAuthStore.StoreRefreshSessionAsync(
+                user.Id,
+                refreshToken,
+                DateTime.UtcNow.AddDays(_jwtSettings.RefreshTokenExpirationDays),
+                HttpContext.Connection.RemoteIpAddress?.ToString(),
+                Request.Headers["User-Agent"].ToString());
 
             return StatusCode(successStatusCode, new
             {
@@ -146,13 +160,13 @@ namespace WebApplication3.Controllers
 
                 if (IsDevelopmentAuthEnabled())
                 {
-                    var localUser = DevelopmentAuthStore.ValidateCredentials(model.TenDangNhap, model.MatKhau);
+                    var localUser = await _developmentAuthStore.ValidateCredentialsAsync(model.TenDangNhap, model.MatKhau);
                     if (localUser == null)
                     {
                         return Unauthorized(new { success = false, message = "Tên đăng nhập hoặc mật khẩu không đúng." });
                     }
 
-                    return TaoPhanHoiDangNhapDevelopment(localUser);
+                    return await TaoPhanHoiDangNhapDevelopmentAsync(localUser);
                 }
 
                 var recaptchaEnabled = _configuration.GetValue<bool>("RecaptchaSettings:Enabled");
@@ -211,6 +225,69 @@ namespace WebApplication3.Controllers
         {
             try
             {
+                if (!Request.Cookies.TryGetValue("refreshToken", out string? developmentRefreshToken) || string.IsNullOrEmpty(developmentRefreshToken))
+                {
+                    return Unauthorized("Không tìm thấy Refresh Token.");
+                }
+
+                if (IsDevelopmentAuthEnabled())
+                {
+                    var session = await _developmentAuthStore.FindSessionByRefreshTokenAsync(developmentRefreshToken);
+                    if (session == null)
+                    {
+                        return Unauthorized("Refresh Token không hợp lệ.");
+                    }
+
+                    if (session.ExpiresAtUtc < DateTime.UtcNow)
+                    {
+                        await _developmentAuthStore.RevokeRefreshSessionAsync(developmentRefreshToken);
+                        return Unauthorized("Refresh Token đã hết hạn, vui lòng đăng nhập lại.");
+                    }
+
+                    var roleDevelopment = new VaiTroDTO
+                    {
+                        Id = 0,
+                        TenVaiTro = session.User.VaiTro
+                    };
+
+                    var userDevelopment = new TaiKhoan
+                    {
+                        Id = session.User.Id,
+                        TenDangNhap = session.User.TenDangNhap,
+                        Email = session.User.Email,
+                        TrangThai = session.User.TrangThai,
+                        NgayThamGia = session.User.NgayThamGia,
+                        LanDangNhapCuoi = session.User.LanDangNhapCuoi,
+                        TenHienThi = session.User.TenHienThi,
+                        IsMetaMask = session.User.IsMetaMask
+                    };
+
+                    var walletsDevelopment = string.IsNullOrWhiteSpace(session.User.DiaChiVi)
+                        ? new List<ViBlockchain>()
+                        : new List<ViBlockchain>
+                        {
+                            new ViBlockchain
+                            {
+                                ViId = 0,
+                                TaiKhoanId = session.User.Id,
+                                DiaChiVi = session.User.DiaChiVi!,
+                                LoaiVi = 1,
+                                TrangThai = true,
+                                IsPrimaryWallet = true,
+                                NguonTao = "development_auth",
+                                ThoiGianTao = DateTime.UtcNow
+                            }
+                        };
+
+                    var newAccessTokenDevelopment = _jwtService.GenerateAccessToken(
+                        TaoClaimsNguoiDung(userDevelopment, roleDevelopment, walletsDevelopment));
+                    return Ok(new
+                    {
+                        AccessToken = newAccessTokenDevelopment,
+                        User = TaoUserDto(userDevelopment, roleDevelopment, walletsDevelopment)
+                    });
+                }
+
                 // Lấy Refresh Token từ Cookie
                 if (!Request.Cookies.TryGetValue("refreshToken", out string? refreshToken) || string.IsNullOrEmpty(refreshToken))
                 {
@@ -332,6 +409,19 @@ namespace WebApplication3.Controllers
         {
             try
             {
+                if (!Request.Cookies.TryGetValue("refreshToken", out string? developmentRefreshToken) || string.IsNullOrEmpty(developmentRefreshToken))
+                {
+                    return Unauthorized("Không tìm thấy Refresh Token.");
+                }
+
+                if (IsDevelopmentAuthEnabled())
+                {
+                    await _developmentAuthStore.RevokeRefreshSessionAsync(developmentRefreshToken);
+                    Response.Cookies.Delete("refreshToken", TaoCookieRefreshToken());
+
+                    return Ok(new { message = "Đăng xuất thành công!" });
+                }
+
                 // 🔹 Lấy Refresh Token từ Cookie
                 if (!Request.Cookies.TryGetValue("refreshToken", out string? refreshToken) || string.IsNullOrEmpty(refreshToken))
                 {
@@ -368,12 +458,7 @@ namespace WebApplication3.Controllers
                 await _context.SaveChangesAsync();
 
                 // 🔹 Xóa Refresh Token khỏi cookie
-                Response.Cookies.Delete("refreshToken", new CookieOptions
-                {
-                    HttpOnly = true,  // Ngăn JavaScript đọc token
-                    Secure = true,    // Chỉ hoạt động trên HTTPS
-                    SameSite = SameSiteMode.Strict // Ngăn chặn CSRF
-                });
+                Response.Cookies.Delete("refreshToken", TaoCookieRefreshToken());
 
                 return Ok(new { message = "Đăng xuất thành công!" });
             }
@@ -392,6 +477,12 @@ namespace WebApplication3.Controllers
             if (string.IsNullOrEmpty(model.RefreshToken))
             {
                 return BadRequest("Refresh token is required.");
+            }
+
+            if (IsDevelopmentAuthEnabled())
+            {
+                await _developmentAuthStore.RevokeRefreshSessionAsync(model.RefreshToken);
+                return NoContent();
             }
 
             var users = await _context.TaiKhoan
@@ -430,7 +521,7 @@ namespace WebApplication3.Controllers
         {
             if (IsDevelopmentAuthEnabled())
             {
-                var users = DevelopmentAuthStore.Search(tenDangNhap, id)
+                var users = (await _developmentAuthStore.SearchAsync(tenDangNhap, id))
                     .Skip((page - 1) * pageSize)
                     .Take(pageSize)
                     .Select(user => new
@@ -475,7 +566,7 @@ namespace WebApplication3.Controllers
                                    where ur.TaiKhoanId == taiKhoan.Id
                                    select new VaiTroDTO { TenVaiTro = r.TenVaiTro }).ToListAsync();
 
-                var taiKhoanDTO = _mapper.Map<TaiKhoanNoRefreshTokenDTO>(taiKhoan);
+                var taiKhoanDTO = MapTaiKhoanNoRefreshTokenDto(taiKhoan);
                 taiKhoanDTO.VaiTro = roles;
                 taiKhoanDTOs.Add(taiKhoanDTO);
             }
@@ -504,7 +595,7 @@ namespace WebApplication3.Controllers
                                    where ur.TaiKhoanId == taiKhoan.Id
                                    select new VaiTroDTO { TenVaiTro = r.TenVaiTro }).ToListAsync();
 
-                var taiKhoanDTO = _mapper.Map<TaiKhoanNoRefreshTokenDTO>(taiKhoan);
+                var taiKhoanDTO = MapTaiKhoanNoRefreshTokenDto(taiKhoan);
                 taiKhoanDTO.VaiTro = roles;
                 taiKhoanDTOs.Add(taiKhoanDTO);
             }
@@ -538,13 +629,13 @@ namespace WebApplication3.Controllers
 
                     try
                     {
-                        var user = DevelopmentAuthStore.Register(
+                        var user = await _developmentAuthStore.RegisterAsync(
                             model.TenDangNhap,
                             model.Email,
                             model.MatKhau,
                             TaoTenHienThi(model));
 
-                        return TaoPhanHoiDangNhapDevelopment(user, 201);
+                        return await TaoPhanHoiDangNhapDevelopmentAsync(user, 201);
                     }
                     catch (InvalidOperationException ex)
                     {
@@ -775,13 +866,10 @@ namespace WebApplication3.Controllers
                 await _context.SaveChangesAsync();
                 await transaction.CommitAsync();
 
-                Response.Cookies.Append("refreshToken", refreshToken, new CookieOptions
-                {
-                    HttpOnly = true,
-                    Secure = Request.IsHttps,
-                    SameSite = Request.IsHttps ? SameSiteMode.None : SameSiteMode.Lax,
-                    Expires = DateTime.UtcNow.AddDays(_jwtSettings.RefreshTokenExpirationDays)
-                });
+                Response.Cookies.Append(
+                    "refreshToken",
+                    refreshToken,
+                    TaoCookieRefreshToken(DateTime.UtcNow.AddDays(_jwtSettings.RefreshTokenExpirationDays)));
 
                 return StatusCode(successStatusCode, new
                 {
@@ -816,6 +904,20 @@ namespace WebApplication3.Controllers
                     .Where(value => !string.IsNullOrWhiteSpace(value)));
 
             return string.IsNullOrWhiteSpace(tenDayDu) ? model.TenDangNhap : tenDayDu;
+        }
+
+        private static TaiKhoanNoRefreshTokenDTO MapTaiKhoanNoRefreshTokenDto(TaiKhoan taiKhoan)
+        {
+            return new TaiKhoanNoRefreshTokenDTO
+            {
+                Id = taiKhoan.Id,
+                Email = taiKhoan.Email,
+                TrangThai = taiKhoan.TrangThai,
+                NgayThamGia = taiKhoan.NgayThamGia,
+                TenDangNhap = taiKhoan.TenDangNhap,
+                HoTen = taiKhoan.TenHienThi,
+                RefreshTokenExpiryTime = taiKhoan.RefreshTokenExpiryTime
+            };
         }
 
 
@@ -952,8 +1054,8 @@ namespace WebApplication3.Controllers
 
             if (IsDevelopmentAuthEnabled())
             {
-                var developmentUser = DevelopmentAuthStore.LoginWithMetaMask(model.DiaChiVi);
-                return TaoPhanHoiDangNhapDevelopment(developmentUser);
+                var developmentUser = await _developmentAuthStore.LoginWithMetaMaskAsync(model.DiaChiVi);
+                return await TaoPhanHoiDangNhapDevelopmentAsync(developmentUser);
             }
 
             var wallet = await _context.ViBlockchain

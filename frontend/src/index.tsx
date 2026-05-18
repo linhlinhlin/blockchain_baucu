@@ -6,6 +6,8 @@ import { store } from './store/store';
 import { AppRoutes } from './routes/AppRoutes';
 import './styles/globals.css';
 
+document.documentElement.lang = 'vi';
+
 const root = ReactDOM.createRoot(document.getElementById('root') as HTMLElement);
 root.render(
   <Provider store={store}>

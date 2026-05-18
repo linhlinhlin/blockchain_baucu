@@ -348,7 +348,7 @@ export default function Main() {
                   </NavLink>
 
                   <NavLink
-                    to="/app/ket-qua-bau-cu"
+                    to="/app/user-elections"
                     className="group rounded-xl border border-[#334155]/50 bg-gradient-to-br from-[#1E293B]/50 to-[#1E293B]/30 p-6 transition hover:border-blue-500/30 hover:shadow-[0_0_20px_rgba(59,130,246,0.1)]"
                   >
                     <div className="flex items-start">

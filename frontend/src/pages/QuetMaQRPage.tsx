@@ -260,7 +260,19 @@ const QuetMaQRPage: React.FC = () => {
           console.log('URL params:', Array.from(url.searchParams.entries()));
 
           const tokenParam = url.searchParams.get('token');
+          const groupKeyParam = url.searchParams.get('groupKey');
+          const isElectionV1Invite = url.pathname.includes('/verify-voter');
+          if (groupKeyParam && isElectionV1Invite) {
+            navigate(`/verify-voter?groupKey=${encodeURIComponent(groupKeyParam)}`);
+            return;
+          }
+
           if (tokenParam) {
+            if (isElectionV1Invite) {
+              navigate(`/verify-voter?token=${encodeURIComponent(tokenParam)}`);
+              return;
+            }
+
             setToken(tokenParam);
             console.log('Token found:', tokenParam);
 
@@ -281,6 +293,11 @@ const QuetMaQRPage: React.FC = () => {
 
             if (possibleToken && possibleToken.length > 10) {
               console.log('Trying alternative token from path:', possibleToken);
+              if (isElectionV1Invite) {
+                navigate(`/verify-voter?token=${encodeURIComponent(possibleToken)}`);
+                return;
+              }
+
               setToken(possibleToken);
 
               dispatch(xacThucPhieuMoi(possibleToken))
@@ -398,11 +415,11 @@ const QuetMaQRPage: React.FC = () => {
 
   return (
     <ToastProvider>
-      <div className="min-h-screen bg-gray-900 flex items-center justify-center p-4">
-        <Card className="w-full max-w-md bg-gray-800 border-gray-700">
-          <CardHeader className="border-b border-gray-700">
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+        <Card className="w-full max-w-md bg-white border border-gray-200 shadow-sm">
+          <CardHeader className="border-b border-gray-200">
             <div className="flex items-center space-x-4">
-              <CardTitle className="text-xl font-semibold text-white">Quét mã QR</CardTitle>
+              <CardTitle className="text-xl font-semibold text-gray-900">Quét mã QR</CardTitle>
             </div>
           </CardHeader>
           <CardContent className="p-4">
@@ -476,28 +493,28 @@ const QuetMaQRPage: React.FC = () => {
               </div>
             )}
             {scannedData && (
-              <div className="mt-4 p-4 bg-gray-700 rounded-lg border border-gray-600">
-                <h3 className="font-semibold mb-2 text-white">Thông tin mã QR:</h3>
-                <p className="mb-2 text-gray-300">
-                  <strong className="text-white">Loại:</strong> {scannedData.type}
+              <div className="mt-4 p-4 bg-gray-50 rounded-lg border border-gray-200">
+                <h3 className="font-semibold mb-2 text-gray-900">Thông tin mã QR:</h3>
+                <p className="mb-2 text-gray-600">
+                  <strong className="text-gray-900">Loại:</strong> {scannedData.type}
                 </p>
-                <p className="mb-4 break-words text-gray-300">
-                  <strong className="text-white">Nội dung:</strong> {scannedData.content}
+                <p className="mb-4 break-words text-gray-600">
+                  <strong className="text-gray-900">Nội dung:</strong> {scannedData.content}
                 </p>
                 {token && !isValidating && !error && (
                   <div className="space-y-4">
                     {cuocBauCu && (
                       <div className="mb-4">
-                        <p className="text-gray-300">
-                          <strong className="text-white">Tên cuộc bầu cử:</strong>{' '}
+                        <p className="text-gray-600">
+                          <strong className="text-gray-900">Tên cuộc bầu cử:</strong>{' '}
                           {cuocBauCu.tenCuocBauCu}
                         </p>
-                        <p className="text-gray-300">
-                          <strong className="text-white">Ngày bắt đầu:</strong>{' '}
+                        <p className="text-gray-600">
+                          <strong className="text-gray-900">Ngày bắt đầu:</strong>{' '}
                           {cuocBauCu.ngayBatDau}
                         </p>
-                        <p className="text-gray-300">
-                          <strong className="text-white">Ngày kết thúc:</strong>{' '}
+                        <p className="text-gray-600">
+                          <strong className="text-gray-900">Ngày kết thúc:</strong>{' '}
                           {cuocBauCu.ngayKetThuc}
                         </p>
                       </div>
@@ -524,7 +541,7 @@ const QuetMaQRPage: React.FC = () => {
               </div>
             )}
             {error && (
-              <div className="mt-4 text-red-400 flex items-center p-4 bg-red-900/20 rounded-lg">
+              <div className="mt-4 text-red-600 flex items-center p-4 bg-red-50 border border-red-200 rounded-lg">
                 <AlertTriangle className="mr-2 h-4 w-4" />
                 {error}
               </div>

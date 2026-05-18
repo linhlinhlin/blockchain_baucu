@@ -22,6 +22,7 @@ import { HiOutlineCube } from 'react-icons/hi';
 import type { AppDispatch, RootState } from '../store/store';
 import { useGoogleReCaptcha } from 'react-google-recaptcha-v3';
 import { useWeb3 } from '../context/Web3Context';
+import { BrowserProvider } from 'ethers';
 // Thêm import mới
 import { clearAllAccessCache, resetSecurityState } from '../utils/authUtils';
 import { isRecaptchaEnabled } from '../config/runtimeFlags';
@@ -48,7 +49,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ onClose, onRecaptchaVerify }) => 
   const [recaptchaToken, setRecaptchaToken] = useState<string | null>(null);
   const dispatch = useDispatch<AppDispatch>();
   const navigate = useNavigate();
-  const { connectWallet, isConnecting, currentAccount, signMessage } = useWeb3();
+  const { connectWallet, isConnecting, currentAccount } = useWeb3();
   const theme = 'dark';
   interface DangNhapTaiKhoanState {
     dangTai: boolean;
@@ -210,7 +211,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ onClose, onRecaptchaVerify }) => 
           duration: 3000,
         });
         onClose();
-        navigate('/main');
+        navigate('/app');
       } else {
         setError((result.payload as string) || 'Tên đăng nhập hoặc mật khẩu không chính xác');
       }
@@ -276,7 +277,9 @@ const LoginForm: React.FC<LoginFormProps> = ({ onClose, onRecaptchaVerify }) => 
       const nonce = `Đăng nhập vào Blockchain Voting\nNonce: ${Date.now()}${Math.random()
         .toString(36)
         .substring(2)}`;
-      const signature = await signMessage(nonce);
+      const provider = new BrowserProvider(window.ethereum);
+      const signer = await provider.getSigner(walletAddress);
+      const signature = await signer.signMessage(nonce);
 
       // Đóng toast loading
       if (!signature) {
@@ -314,7 +317,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ onClose, onRecaptchaVerify }) => 
           duration: 3000,
         });
         onClose();
-        navigate('/main');
+        navigate('/app');
       } else {
         throw new Error((result.payload as string) || 'Đăng nhập với MetaMask thất bại.');
       }
@@ -468,6 +471,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ onClose, onRecaptchaVerify }) => 
                         name="username"
                         type="text"
                         required
+                        autoComplete="username"
                         className={`block w-full pl-10 pr-3 py-2 border ${
                           theme === 'dark'
                             ? 'bg-[#263238] border-[#455A64] text-white focus:border-[#0288D1]'
@@ -502,6 +506,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ onClose, onRecaptchaVerify }) => 
                         name="password"
                         type={showPassword ? 'text' : 'password'}
                         required
+                        autoComplete="current-password"
                         className={`block w-full pl-10 pr-10 py-2 border ${
                           theme === 'dark'
                             ? 'bg-[#263238] border-[#455A64] text-white focus:border-[#0288D1]'
@@ -544,12 +549,14 @@ const LoginForm: React.FC<LoginFormProps> = ({ onClose, onRecaptchaVerify }) => 
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, y: -10 }}
                         transition={{ duration: 0.3 }}
+                        role="alert"
                         className={`rounded-lg p-3 ${
                           theme === 'dark' ? 'bg-red-900/30' : 'bg-red-50'
                         }`}
                       >
                         <div className="flex items-center">
                           <FaExclamationCircle
+                            aria-hidden="true"
                             className={`h-5 w-5 ${
                               theme === 'dark' ? 'text-red-400' : 'text-red-500'
                             }`}
@@ -672,12 +679,14 @@ const LoginForm: React.FC<LoginFormProps> = ({ onClose, onRecaptchaVerify }) => 
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, y: -10 }}
                       transition={{ duration: 0.3 }}
+                      role="alert"
                       className={`rounded-lg p-3 mb-6 ${
                         theme === 'dark' ? 'bg-red-900/30' : 'bg-red-50'
                       }`}
                     >
                       <div className="flex items-center">
                         <FaExclamationCircle
+                          aria-hidden="true"
                           className={`h-5 w-5 ${
                             theme === 'dark' ? 'text-red-400' : 'text-red-500'
                           }`}

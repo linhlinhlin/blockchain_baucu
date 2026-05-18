@@ -167,6 +167,160 @@ export interface ElectionV1CreateGroupResponse {
   detail?: ElectionV1GroupDetail | null;
 }
 
+export interface ElectionV1RosterVoterInput {
+  fullName: string;
+  email: string;
+  studentCode?: string | null;
+}
+
+export interface ElectionV1CreateRosterDraftRequest {
+  adminWalletAddress: string;
+  title: string;
+  description?: string | null;
+  groupKey?: string | null;
+  commitStart: string;
+  commitEnd: string;
+  revealEnd: string;
+  positions: ElectionV1CreatePositionRequest[];
+  voters: ElectionV1RosterVoterInput[];
+}
+
+export interface ElectionV1RosterInvite {
+  inviteId: string;
+  fullName: string;
+  email: string;
+  studentCode?: string | null;
+  inviteUrl: string;
+  qrPayload: string;
+  otpVerified: boolean;
+  walletAddress?: string | null;
+  claimedByUserId?: number | null;
+  walletBoundAt?: string | null;
+}
+
+export interface ElectionV1RosterDraftPosition {
+  positionId: string;
+  title: string;
+  description?: string | null;
+  ballotOrder: number;
+  candidates: ElectionV1Candidate[];
+}
+
+export interface ElectionV1RosterDeployment {
+  deployedAt: string;
+  includedVoterCount: number;
+  groupKey: string;
+  created: ElectionV1CreateResult[];
+}
+
+export interface ElectionV1RosterDraft {
+  groupKey: string;
+  sharedInviteUrl?: string | null;
+  title: string;
+  description?: string | null;
+  adminWalletAddress: string;
+  commitStart: string;
+  commitEnd: string;
+  revealEnd: string;
+  status: string;
+  createdAt: string;
+  updatedAt: string;
+  totalInviteCount: number;
+  otpVerifiedCount: number;
+  walletBoundCount: number;
+  includedVoterCount: number;
+  positions: ElectionV1RosterDraftPosition[];
+  invites: ElectionV1RosterInvite[];
+  deployment?: ElectionV1RosterDeployment | null;
+}
+
+export interface ElectionV1CreateRosterDraftResponse {
+  message: string;
+  draft: ElectionV1RosterDraft;
+}
+
+export interface ElectionV1RosterInvitePosition {
+  positionId: string;
+  title: string;
+  description?: string | null;
+  candidateNames: string[];
+}
+
+export interface ElectionV1RosterInviteResolve {
+  groupKey: string;
+  ballotTitle: string;
+  ballotDescription?: string | null;
+  inviteId: string;
+  fullName: string;
+  emailMasked: string;
+  studentCode?: string | null;
+  commitStart: string;
+  commitEnd: string;
+  revealEnd: string;
+  positions: ElectionV1RosterInvitePosition[];
+  otpVerified: boolean;
+  walletBound: boolean;
+  walletAddress?: string | null;
+  status: string;
+  groupDeployed: boolean;
+  inviteUrl: string;
+}
+
+export interface ElectionV1RosterPublicInvite {
+  groupKey: string;
+  ballotTitle: string;
+  ballotDescription?: string | null;
+  commitStart: string;
+  commitEnd: string;
+  revealEnd: string;
+  positions: ElectionV1RosterInvitePosition[];
+  status: string;
+  groupDeployed: boolean;
+  sharedInviteUrl: string;
+  totalInviteCount: number;
+  otpVerifiedCount: number;
+  walletBoundCount: number;
+}
+
+export interface ElectionV1OtpDispatchResponse {
+  message: string;
+  deliveryMode: string;
+  emailMasked: string;
+  expiresAt?: string | null;
+  devOtpCode?: string | null;
+  inviteToken?: string | null;
+  inviteId?: string | null;
+}
+
+export interface ElectionV1OtpVerifyResponse {
+  message: string;
+  otpVerified: boolean;
+}
+
+export interface ElectionV1PrepareWalletBindingResponse {
+  walletAddress: string;
+  message: string;
+}
+
+export interface ElectionV1BindWalletResponse {
+  message: string;
+  groupKey: string;
+  inviteId: string;
+  walletAddress: string;
+  claimedByUserId: number;
+}
+
+export interface ElectionV1DeployRosterDraftResponse {
+  message: string;
+  created: {
+    message: string;
+    groupKey: string;
+    includedVoterCount: number;
+    created: ElectionV1CreateResult[];
+  };
+  detail?: ElectionV1GroupDetail | null;
+}
+
 function isNotFoundError(error: unknown) {
   return (error as any)?.response?.status === 404;
 }
@@ -382,4 +536,79 @@ export async function createElectionV1Group(payload: ElectionV1CreateGroupReques
         : null,
     };
   }
+}
+
+export async function createElectionV1RosterDraft(payload: ElectionV1CreateRosterDraftRequest) {
+  const response = await apiClient.post<ElectionV1CreateRosterDraftResponse>('/api/election-v1/roster-drafts', payload);
+  return response.data;
+}
+
+export async function getElectionV1RosterDraft(groupKey: string) {
+  const response = await apiClient.get<ElectionV1RosterDraft>(`/api/election-v1/roster-drafts/${encodeURIComponent(groupKey)}`);
+  return response.data;
+}
+
+export async function deployElectionV1RosterDraft(groupKey: string) {
+  const response = await apiClient.post<ElectionV1DeployRosterDraftResponse>(
+    `/api/election-v1/roster-drafts/${encodeURIComponent(groupKey)}/deploy`,
+    {},
+  );
+  return response.data;
+}
+
+export async function resolveElectionV1VoterInvite(token: string) {
+  const response = await apiClient.get<ElectionV1RosterInviteResolve>('/api/election-v1/voter-invites/resolve', {
+    params: { token },
+  });
+  return response.data;
+}
+
+export async function resolveElectionV1VoterInviteGroup(groupKey: string) {
+  const response = await apiClient.get<ElectionV1RosterPublicInvite>(
+    `/api/election-v1/voter-invites/groups/${encodeURIComponent(groupKey)}`,
+  );
+  return response.data;
+}
+
+export async function sendElectionV1InviteOtp(token: string) {
+  const response = await apiClient.post<ElectionV1OtpDispatchResponse>(
+    `/api/election-v1/voter-invites/${encodeURIComponent(token)}/send-otp`,
+    {},
+  );
+  return response.data;
+}
+
+export async function sendElectionV1InviteOtpByIdentity(
+  groupKey: string,
+  payload: { email: string; studentCode?: string | null },
+) {
+  const response = await apiClient.post<ElectionV1OtpDispatchResponse>(
+    `/api/election-v1/voter-invites/groups/${encodeURIComponent(groupKey)}/send-otp`,
+    payload,
+  );
+  return response.data;
+}
+
+export async function verifyElectionV1InviteOtp(token: string, otp: string) {
+  const response = await apiClient.post<ElectionV1OtpVerifyResponse>(
+    `/api/election-v1/voter-invites/${encodeURIComponent(token)}/verify-otp`,
+    { otp },
+  );
+  return response.data;
+}
+
+export async function prepareElectionV1WalletBinding(token: string, walletAddress: string) {
+  const response = await apiClient.post<ElectionV1PrepareWalletBindingResponse>(
+    `/api/election-v1/voter-invites/${encodeURIComponent(token)}/prepare-wallet-bind`,
+    { walletAddress },
+  );
+  return response.data;
+}
+
+export async function bindElectionV1InviteWallet(token: string, walletAddress: string, signature: string) {
+  const response = await apiClient.post<ElectionV1BindWalletResponse>(
+    `/api/election-v1/voter-invites/${encodeURIComponent(token)}/bind-wallet`,
+    { walletAddress, signature },
+  );
+  return response.data;
 }

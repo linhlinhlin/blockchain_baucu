@@ -224,7 +224,7 @@ const ThamGiaBauCu: React.FC = () => {
     tokenURI: string;
   } | null>(null);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
-  const [isDarkMode, setIsDarkMode] = useState<boolean>(false);
+  const isDarkMode = false;
   const [hasRules, setHasRules] = useState<boolean | null>(null);
   const [isMobile, setIsMobile] = useState<boolean>(false);
   const [verificationStep, setVerificationStep] = useState<number>(0);
@@ -381,31 +381,6 @@ const ThamGiaBauCu: React.FC = () => {
     }
   }, [selectedCandidate, dispatch, blockchainAddresses]);
 
-  useEffect(() => {
-    const isDark =
-      localStorage.getItem('darkMode') === 'true' ||
-      window.matchMedia('(prefers-color-scheme: dark)').matches;
-    setIsDarkMode(isDark);
-
-    if (isDark) {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-    }
-
-    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
-    const handleChange = (e: MediaQueryListEvent) => {
-      setIsDarkMode(e.matches);
-      if (e.matches) {
-        document.documentElement.classList.add('dark');
-      } else {
-        document.documentElement.classList.remove('dark');
-      }
-    };
-
-    mediaQuery.addEventListener('change', handleChange);
-    return () => mediaQuery.removeEventListener('change', handleChange);
-  }, []);
 
   useEffect(() => {
     const checkIfMobile = () => {

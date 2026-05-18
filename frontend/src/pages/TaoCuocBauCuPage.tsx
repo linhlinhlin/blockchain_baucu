@@ -1,86 +1,69 @@
-import { useMemo, useState, type FormEvent } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { ArrowRight, Plus, ShieldCheck, Trash2, Users, Vote, Wallet } from 'lucide-react';
+import { useEffect, useMemo, useState, type FormEvent } from 'react';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import {
+  ArrowRight,
+  CheckCircle2,
+  CircleAlert,
+  ClipboardList,
+  Plus,
+  QrCode,
+  ShieldCheck,
+  Trash2,
+  Users,
+  Vote,
+  Wallet,
+  XCircle,
+} from 'lucide-react';
 import { useSelector } from 'react-redux';
-import { createElectionV1Group } from '../api/electionV1Api';
+import {
+  createElectionV1Group,
+  createElectionV1RosterDraft,
+  deployElectionV1RosterDraft,
+  getElectionV1RosterDraft,
+  type ElectionV1CreateRosterDraftRequest,
+  type ElectionV1RosterDraft,
+} from '../api/electionV1Api';
+import QRCodeGenerator from '../components/QRCodeGenerator';
 import { useWeb3 } from '../context/Web3Context';
 import type { RootState } from '../store/store';
+import {
+  buildCreateFlowRequirements,
+  createCandidateDraft,
+  createPositionDraft,
+  getDuplicateWalletEntries,
+  getFirstInvalidRequirement,
+  getInvalidCandidateWallets,
+  getInvalidRosterRows,
+  getInvalidWalletEntries,
+  getScheduleState,
+  normalizePositions,
+  parseRosterEntries,
+  shortenAddress,
+  splitWalletEntries,
+  toDateTimeLocalValue,
+  type CandidateDraft,
+  type PositionDraft,
+  type Requirement,
+  type RosterMode,
+} from '../utils/electionCreateFlow';
 
-type CandidateDraft = {
-  id: string;
-  displayName: string;
-  walletAddress: string;
-};
-
-type PositionDraft = {
-  id: string;
-  title: string;
-  description: string;
-  candidates: CandidateDraft[];
-};
-
-function panelClasses() {
-  return 'rounded-3xl border border-white/10 bg-slate-950/70 p-5 shadow-[0_24px_60px_rgba(2,6,23,0.35)] backdrop-blur-xl md:p-6';
+function panelClasses(extra = '') {
+  return `clay-panel p-5 md:p-6 ${extra}`.trim();
 }
 
-function inputClasses() {
-  return 'w-full rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-3 text-sm text-white outline-none transition placeholder:text-slate-500 focus:border-orange-400/70 focus:bg-white/[0.06]';
+function inputClasses(extra = '') {
+  return `clay-input min-h-11 px-4 py-3 text-sm ${extra}`.trim();
 }
 
-function actionButtonClasses(tone: 'accent' | 'dark' | 'outline') {
+function actionButtonClasses(tone: 'accent' | 'outline' = 'outline') {
   const base =
-    'inline-flex items-center justify-center gap-2 rounded-2xl px-4 py-3 text-sm font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-300/80 disabled:cursor-not-allowed disabled:opacity-40';
+    'clay-button inline-flex min-h-11 items-center justify-center gap-2 px-4 py-3 text-sm font-semibold focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--clay-primary-focus)] disabled:cursor-not-allowed disabled:opacity-65';
 
   if (tone === 'accent') {
-    return `${base} bg-orange-500 text-slate-950 hover:-translate-y-0.5 hover:bg-orange-400`;
+    return `${base} clay-button--blueberry`;
   }
 
-  if (tone === 'outline') {
-    return `${base} border border-white/15 bg-white/5 text-slate-100 hover:-translate-y-0.5 hover:bg-white/10`;
-  }
-
-  return `${base} bg-slate-900 text-white hover:-translate-y-0.5 hover:bg-slate-800`;
-}
-
-function toDateTimeLocalValue(date: Date) {
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2, '0');
-  const hours = String(date.getHours()).padStart(2, '0');
-  const minutes = String(date.getMinutes()).padStart(2, '0');
-  return `${year}-${month}-${day}T${hours}:${minutes}`;
-}
-
-function splitWalletEntries(value: string) {
-  return value
-    .split(/[\s,;\n\r]+/)
-    .map((item) => item.trim())
-    .filter(Boolean);
-}
-
-function createCandidateDraft(index: number): CandidateDraft {
-  return {
-    id: `candidate-${Date.now()}-${Math.random()}-${index}`,
-    displayName: '',
-    walletAddress: '',
-  };
-}
-
-function createPositionDraft(index: number): PositionDraft {
-  return {
-    id: `position-${Date.now()}-${Math.random()}-${index}`,
-    title: '',
-    description: '',
-    candidates: [createCandidateDraft(1), createCandidateDraft(2)],
-  };
-}
-
-function slugify(value: string) {
-  return value
-    .trim()
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/(^-|-$)/g, '');
+  return `${base} clay-button--matcha`;
 }
 
 function getErrorMessage(error: unknown) {
@@ -94,24 +77,135 @@ function getErrorMessage(error: unknown) {
   if (maybeError instanceof Error) {
     return maybeError.message;
   }
-  return 'Co loi khong xac dinh khi tao nhom bau cu.';
+  return 'Có lỗi không xác định khi tạo nhóm bầu cử.';
 }
 
 function messagePanelClasses(message: string) {
   const normalized = message.toLowerCase();
-  if (normalized.includes('thanh cong') || normalized.includes('success')) {
-    return 'border-emerald-400/40 bg-emerald-500/10 text-emerald-50';
+  if (
+    normalized.includes('thành công') ||
+    normalized.includes('đã tạo') ||
+    normalized.includes('đã deploy')
+  ) {
+    return 'border-[rgba(0,102,204,0.24)] bg-[var(--clay-primary-light)] text-[var(--clay-text)]';
   }
-  if (normalized.includes('loi') || normalized.includes('error') || normalized.includes('fail')) {
-    return 'border-rose-400/40 bg-rose-500/10 text-rose-50';
+  if (
+    normalized.includes('lỗi') ||
+    normalized.includes('error') ||
+    normalized.includes('fail') ||
+    normalized.includes('không') ||
+    normalized.includes('chưa') ||
+    normalized.includes('cần')
+  ) {
+    return 'border-[rgba(191,72,0,0.24)] bg-[#fff4ed] text-[var(--clay-text)]';
   }
-  return 'border-cyan-400/30 bg-cyan-500/10 text-cyan-50';
+  return 'border-[var(--clay-border)] bg-[var(--clay-surface-soft)] text-[var(--clay-text)]';
+}
+
+function MetricCard({
+  label,
+  value,
+  title,
+  mono = false,
+}: {
+  label: string;
+  value: string;
+  title?: string;
+  mono?: boolean;
+}) {
+  return (
+    <article className="min-w-0 rounded-[18px] border border-[var(--clay-border)] bg-white p-4">
+      <p className="clay-label">{label}</p>
+      <p
+        className={`mt-2 truncate text-lg font-semibold tracking-[-0.01em] text-black ${mono ? 'clay-mono text-base' : ''}`}
+        title={title ?? value}
+        translate={mono ? 'no' : undefined}
+      >
+        {value}
+      </p>
+    </article>
+  );
+}
+
+function RequirementList({ requirements }: { requirements: Requirement[] }) {
+  return (
+    <ul className="mt-3 space-y-2" aria-live="polite">
+      {requirements.map((requirement) => (
+        <li
+          key={requirement.id}
+          className="grid grid-cols-[auto_1fr] items-start gap-2 text-sm leading-6 text-[var(--clay-muted)]"
+        >
+          <span
+            className={`mt-0.5 inline-flex h-5 w-5 items-center justify-center rounded-full ${
+              requirement.ok
+                ? 'bg-[var(--clay-primary-light)] text-[var(--clay-primary)]'
+                : 'bg-[#fff4ed] text-[var(--clay-pomegranate)]'
+            }`}
+            aria-hidden="true"
+          >
+            {requirement.ok ? (
+              <CheckCircle2 className="h-3.5 w-3.5" />
+            ) : (
+              <XCircle className="h-3.5 w-3.5" />
+            )}
+          </span>
+          <span>
+            <span className="sr-only">{requirement.ok ? 'Đã đạt: ' : 'Chưa đạt: '}</span>
+            {requirement.label}
+          </span>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+function FieldError({ message }: { message: string }) {
+  return (
+    <p className="mt-2 flex items-start gap-2 text-sm text-[var(--clay-pomegranate)]">
+      <CircleAlert className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
+      {message}
+    </p>
+  );
+}
+
+function SummaryRow({
+  label,
+  value,
+  fullValue,
+}: {
+  label: string;
+  value: string | number;
+  fullValue?: string | null;
+}) {
+  return (
+    <div className="grid grid-cols-[minmax(0,0.8fr)_minmax(0,1fr)] items-center gap-4">
+      <span className="text-[var(--clay-muted)]">{label}</span>
+      <span className="min-w-0 truncate text-right text-black" title={fullValue ?? String(value)}>
+        {value}
+      </span>
+    </div>
+  );
+}
+
+function buildSharedRosterInviteUrl(draft: ElectionV1RosterDraft) {
+  if (draft.sharedInviteUrl) {
+    return draft.sharedInviteUrl;
+  }
+
+  const origin = typeof window === 'undefined' ? 'http://localhost:3000' : window.location.origin;
+  return `${origin}/verify-voter?groupKey=${encodeURIComponent(draft.groupKey)}`;
 }
 
 export default function TaoCuocBauCuPage() {
   const navigate = useNavigate();
-  const { currentAccount, connectWallet, ensureNetworkAndToken, isNetworkConnected, isMetaMaskInstalled } =
-    useWeb3();
+  const [searchParams] = useSearchParams();
+  const {
+    currentAccount,
+    connectWallet,
+    ensureNetworkAndToken,
+    isNetworkConnected,
+    isMetaMaskInstalled,
+  } = useWeb3();
   const currentUser = useSelector((state: RootState) => state.dangNhapTaiKhoan.taiKhoan);
   const accessToken = useSelector((state: RootState) => state.dangNhapTaiKhoan.accessToken);
 
@@ -119,67 +213,163 @@ export default function TaoCuocBauCuPage() {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [groupKey, setGroupKey] = useState('');
-  const [commitStart, setCommitStart] = useState(toDateTimeLocalValue(new Date(now.getTime() + 60 * 60 * 1000)));
+  const [commitStart, setCommitStart] = useState(
+    toDateTimeLocalValue(new Date(now.getTime() + 60 * 60 * 1000)),
+  );
   const [commitEnd, setCommitEnd] = useState(
     toDateTimeLocalValue(new Date(now.getTime() + 25 * 60 * 60 * 1000)),
   );
   const [revealEnd, setRevealEnd] = useState(
     toDateTimeLocalValue(new Date(now.getTime() + 49 * 60 * 60 * 1000)),
   );
+  const [voterMode, setVoterMode] = useState<RosterMode>('wallets');
   const [voterWalletsInput, setVoterWalletsInput] = useState('');
-  const [positions, setPositions] = useState<PositionDraft[]>([createPositionDraft(1), createPositionDraft(2)]);
+  const [rosterInput, setRosterInput] = useState('');
+  const [positions, setPositions] = useState<PositionDraft[]>([
+    createPositionDraft(1),
+    createPositionDraft(2),
+  ]);
   const [submitting, setSubmitting] = useState(false);
-  const [message, setMessage] = useState('San sang tao mot ballot gom nhieu chuc vu tren Sepolia.');
+  const [submitAttempted, setSubmitAttempted] = useState(false);
+  const [activeDraft, setActiveDraft] = useState<ElectionV1RosterDraft | null>(null);
+  const [message, setMessage] = useState('Sẵn sàng tạo một ballot gồm nhiều chức vụ trên Sepolia.');
+  const draftKeyFromUrl = searchParams.get('draft')?.trim() ?? '';
 
-  const parsedVoterWallets = useMemo(() => splitWalletEntries(voterWalletsInput), [voterWalletsInput]);
-  const scheduleIsValid = useMemo(() => {
-    const commitStartValue = Date.parse(commitStart);
-    const commitEndValue = Date.parse(commitEnd);
-    const revealEndValue = Date.parse(revealEnd);
-    return (
-      !Number.isNaN(commitStartValue) &&
-      !Number.isNaN(commitEndValue) &&
-      !Number.isNaN(revealEndValue) &&
-      commitStartValue < commitEndValue &&
-      commitEndValue < revealEndValue
-    );
-  }, [commitEnd, commitStart, revealEnd]);
-
-  const normalizedPositions = useMemo(
-    () =>
-      positions
-        .map((position, positionIndex) => ({
-          ...position,
-          title: position.title.trim(),
-          description: position.description.trim(),
-          candidates: position.candidates
-            .map((candidate, candidateIndex) => ({
-              ...candidate,
-              displayName: candidate.displayName.trim(),
-              walletAddress: candidate.walletAddress.trim(),
-              sourceId: `candidate:${slugify(candidate.displayName || `candidate-${candidateIndex + 1}`)}:${candidateIndex + 1}`,
-            }))
-            .filter((candidate) => candidate.displayName.length > 0),
-          positionId: `position:${slugify(position.title || `position-${positionIndex + 1}`)}:${positionIndex + 1}`,
-        }))
-        .filter((position) => position.title.length > 0),
-    [positions],
+  const parsedVoterWallets = useMemo(
+    () => splitWalletEntries(voterWalletsInput),
+    [voterWalletsInput],
   );
+  const invalidVoterWallets = useMemo(
+    () => getInvalidWalletEntries(parsedVoterWallets),
+    [parsedVoterWallets],
+  );
+  const duplicateVoterWallets = useMemo(
+    () => getDuplicateWalletEntries(parsedVoterWallets),
+    [parsedVoterWallets],
+  );
+  const parsedRosterVoters = useMemo(() => parseRosterEntries(rosterInput), [rosterInput]);
+  const invalidRosterRows = useMemo(
+    () => getInvalidRosterRows(parsedRosterVoters),
+    [parsedRosterVoters],
+  );
+  const scheduleState = useMemo(
+    () => getScheduleState(commitStart, commitEnd, revealEnd),
+    [commitEnd, commitStart, revealEnd],
+  );
+  const normalizedPositions = useMemo(() => normalizePositions(positions), [positions]);
+  const invalidCandidateWallets = useMemo(
+    () => getInvalidCandidateWallets(normalizedPositions),
+    [normalizedPositions],
+  );
+  const requirements = useMemo(
+    () =>
+      buildCreateFlowRequirements({
+        accessToken,
+        currentAccount,
+        isNetworkConnected,
+        voterMode,
+        title,
+        scheduleIsValid: scheduleState.isValid,
+        positions: normalizedPositions,
+        invalidCandidateWalletCount: invalidCandidateWallets.length,
+        voterWalletCount: parsedVoterWallets.length,
+        invalidVoterWalletCount: invalidVoterWallets.length,
+        duplicateVoterWalletCount: duplicateVoterWallets.length,
+        rosterVoterCount: parsedRosterVoters.length,
+        invalidRosterRowCount: invalidRosterRows.length,
+      }),
+    [
+      accessToken,
+      currentAccount,
+      duplicateVoterWallets.length,
+      invalidCandidateWallets.length,
+      invalidRosterRows.length,
+      invalidVoterWallets.length,
+      isNetworkConnected,
+      normalizedPositions,
+      parsedRosterVoters.length,
+      parsedVoterWallets.length,
+      scheduleState.isValid,
+      title,
+      voterMode,
+    ],
+  );
+  const firstInvalidRequirement = useMemo(
+    () => getFirstInvalidRequirement(requirements),
+    [requirements],
+  );
+  const isReadyToSubmit = !firstInvalidRequirement;
+  const showInlineErrors = submitAttempted;
 
-  const allPositionsValid = normalizedPositions.length > 0 && normalizedPositions.every((position) => position.candidates.length >= 2);
+  useEffect(() => {
+    if (!draftKeyFromUrl || !accessToken) {
+      return;
+    }
 
-  const canSubmit =
-    Boolean(accessToken) &&
-    Boolean(currentAccount) &&
-    isNetworkConnected &&
-    title.trim().length > 0 &&
-    parsedVoterWallets.length > 0 &&
-    scheduleIsValid &&
-    allPositionsValid &&
-    !submitting;
+    if (activeDraft?.groupKey === draftKeyFromUrl) {
+      return;
+    }
+
+    let active = true;
+
+    async function loadDraft() {
+      try {
+        const draft = await getElectionV1RosterDraft(draftKeyFromUrl);
+        if (!active) {
+          return;
+        }
+
+        setActiveDraft(draft);
+        setVoterMode('roster');
+        setGroupKey(draft.groupKey);
+        setTitle(draft.title);
+        setDescription(draft.description || '');
+        setCommitStart(toDateTimeLocalValue(new Date(draft.commitStart)));
+        setCommitEnd(toDateTimeLocalValue(new Date(draft.commitEnd)));
+        setRevealEnd(toDateTimeLocalValue(new Date(draft.revealEnd)));
+        setPositions(
+          draft.positions.map((position, positionIndex) => ({
+            id: `${position.positionId}-${positionIndex + 1}`,
+            title: position.title,
+            description: position.description || '',
+            candidates: position.candidates.map((candidate, candidateIndex) => ({
+              id: `${position.positionId}-candidate-${candidateIndex + 1}`,
+              displayName: candidate.displayName,
+              walletAddress: candidate.walletAddress || '',
+            })),
+          })),
+        );
+        setMessage(`Đã nạp lại bản nháp roster xác thực ${draft.groupKey}.`);
+      } catch (error) {
+        if (active) {
+          setMessage(getErrorMessage(error));
+        }
+      }
+    }
+
+    void loadDraft();
+
+    return () => {
+      active = false;
+    };
+  }, [accessToken, activeDraft?.groupKey, draftKeyFromUrl]);
+
+  function focusRequirement(requirement: Requirement) {
+    if (!requirement.targetId) {
+      return;
+    }
+
+    window.requestAnimationFrame(() => {
+      const target = document.getElementById(requirement.targetId);
+      target?.focus({ preventScroll: false });
+      target?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    });
+  }
 
   function updatePosition(id: string, patch: Partial<PositionDraft>) {
-    setPositions((current) => current.map((item) => (item.id === id ? { ...item, ...patch } : item)));
+    setPositions((current) =>
+      current.map((item) => (item.id === id ? { ...item, ...patch } : item)),
+    );
   }
 
   function addPosition() {
@@ -187,10 +377,16 @@ export default function TaoCuocBauCuPage() {
   }
 
   function removePosition(id: string) {
-    setPositions((current) => (current.length <= 1 ? current : current.filter((item) => item.id !== id)));
+    setPositions((current) =>
+      current.length <= 1 ? current : current.filter((item) => item.id !== id),
+    );
   }
 
-  function updateCandidate(positionId: string, candidateId: string, patch: Partial<CandidateDraft>) {
+  function updateCandidate(
+    positionId: string,
+    candidateId: string,
+    patch: Partial<CandidateDraft>,
+  ) {
     setPositions((current) =>
       current.map((position) =>
         position.id !== positionId
@@ -212,7 +408,10 @@ export default function TaoCuocBauCuPage() {
           ? position
           : {
               ...position,
-              candidates: [...position.candidates, createCandidateDraft(position.candidates.length + 1)],
+              candidates: [
+                ...position.candidates,
+                createCandidateDraft(position.candidates.length + 1),
+              ],
             },
       ),
     );
@@ -231,58 +430,125 @@ export default function TaoCuocBauCuPage() {
     );
   }
 
-  async function ensureWalletReady() {
-    if (!isMetaMaskInstalled) {
-      throw new Error('May hien tai chua co MetaMask.');
-    }
-
-    const account = currentAccount ?? (await connectWallet());
-    if (!account) {
-      throw new Error('Chua ket noi duoc vi MetaMask.');
-    }
-
-    const ready = await ensureNetworkAndToken();
-    if (!ready) {
-      throw new Error('Vi chua o dung mang Sepolia.');
-    }
-
-    return account;
-  }
-
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    setSubmitAttempted(true);
+
+    const invalidRequirement = getFirstInvalidRequirement(requirements);
+    if (invalidRequirement) {
+      setMessage(`Cần hoàn tất: ${invalidRequirement.label}.`);
+      focusRequirement(invalidRequirement);
+      return;
+    }
+
     setSubmitting(true);
 
     try {
-      const adminWalletAddress = await ensureWalletReady();
-      const payload = {
-        adminWalletAddress,
-        title: title.trim(),
-        description: description.trim() || null,
-        groupKey: groupKey.trim() || null,
-        commitStart: new Date(commitStart).toISOString(),
-        commitEnd: new Date(commitEnd).toISOString(),
-        revealEnd: new Date(revealEnd).toISOString(),
-        voterWalletAddresses: parsedVoterWallets,
-        positions: normalizedPositions.map((position) => ({
-          positionId: position.positionId,
-          title: position.title,
-          description: position.description || null,
-          candidates: position.candidates.map((candidate) => ({
-            displayName: candidate.displayName,
-            sourceId: candidate.sourceId,
-            walletAddress: candidate.walletAddress || null,
-          })),
-        })),
-      };
+      if (!currentAccount) {
+        throw new Error('Chưa kết nối được ví MetaMask.');
+      }
 
-      const response = await createElectionV1Group(payload);
-      const firstElectionAddress = response.created.created[0]?.address;
-      setMessage(`Tao nhom bau cu thanh cong: ${response.created.groupKey}`);
-      if (firstElectionAddress) {
-        navigate(`/app/quan-ly-smart-contract?group=${response.created.groupKey}&election=${firstElectionAddress}`);
+      if (voterMode === 'wallets') {
+        if (!isMetaMaskInstalled) {
+          throw new Error('Máy hiện tại chưa có MetaMask.');
+        }
+
+        const ready = await ensureNetworkAndToken();
+        if (!ready) {
+          throw new Error('Ví chưa ở đúng mạng Sepolia.');
+        }
+      }
+
+      const basePositions = normalizedPositions.map((position) => ({
+        positionId: position.positionId,
+        title: position.title,
+        description: position.description || null,
+        candidates: position.candidates.map((candidate) => ({
+          displayName: candidate.displayName,
+          sourceId: candidate.sourceId,
+          walletAddress: candidate.walletAddress || null,
+        })),
+      }));
+
+      if (voterMode === 'wallets') {
+        const response = await createElectionV1Group({
+          adminWalletAddress: currentAccount,
+          title: title.trim(),
+          description: description.trim() || null,
+          groupKey: groupKey.trim() || null,
+          commitStart: new Date(commitStart).toISOString(),
+          commitEnd: new Date(commitEnd).toISOString(),
+          revealEnd: new Date(revealEnd).toISOString(),
+          voterWalletAddresses: parsedVoterWallets,
+          positions: basePositions,
+        });
+        const firstElectionAddress = response.created.created[0]?.address;
+        setMessage(`Tạo nhóm bầu cử thành công: ${response.created.groupKey}`);
+        if (firstElectionAddress) {
+          navigate(
+            `/app/quan-ly-smart-contract?group=${response.created.groupKey}&election=${firstElectionAddress}`,
+          );
+        } else {
+          navigate('/app/quan-ly-smart-contract');
+        }
       } else {
-        navigate('/app/quan-ly-smart-contract');
+        const payload: ElectionV1CreateRosterDraftRequest = {
+          adminWalletAddress: currentAccount,
+          title: title.trim(),
+          description: description.trim() || null,
+          groupKey: groupKey.trim() || null,
+          commitStart: new Date(commitStart).toISOString(),
+          commitEnd: new Date(commitEnd).toISOString(),
+          revealEnd: new Date(revealEnd).toISOString(),
+          positions: basePositions,
+          voters: parsedRosterVoters.map((voter) => ({
+            fullName: voter.fullName,
+            email: voter.email,
+            studentCode: voter.studentCode || null,
+          })),
+        };
+        const response = await createElectionV1RosterDraft(payload);
+        setActiveDraft(response.draft);
+        setMessage(
+          `Đã tạo bản nháp roster xác thực ${response.draft.groupKey}. Gửi QR chung cho cử tri, sau đó deploy ballot khi đã bind ví.`,
+        );
+        navigate(`/app/tao-phien-bau-cu?draft=${encodeURIComponent(response.draft.groupKey)}`, {
+          replace: true,
+        });
+      }
+    } catch (error) {
+      setMessage(getErrorMessage(error));
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  async function handleDeployVerifiedRoster() {
+    if (!activeDraft) {
+      return;
+    }
+
+    setSubmitting(true);
+    try {
+      const response = await deployElectionV1RosterDraft(activeDraft.groupKey);
+      const refreshedDraft = {
+        ...activeDraft,
+        status: 'deployed',
+        includedVoterCount: response.created.includedVoterCount,
+        deployment: {
+          deployedAt: new Date().toISOString(),
+          includedVoterCount: response.created.includedVoterCount,
+          groupKey: response.created.groupKey,
+          created: response.created.created,
+        },
+      };
+      setActiveDraft(refreshedDraft);
+      setMessage(`Đã deploy ballot từ roster đã xác thực ${response.created.groupKey}.`);
+      const firstElectionAddress = response.created.created[0]?.address;
+      if (firstElectionAddress) {
+        navigate(
+          `/app/quan-ly-smart-contract?group=${response.created.groupKey}&election=${firstElectionAddress}`,
+        );
       }
     } catch (error) {
       setMessage(getErrorMessage(error));
@@ -292,251 +558,469 @@ export default function TaoCuocBauCuPage() {
   }
 
   return (
-    <div className="min-h-screen overflow-hidden bg-slate-950 text-slate-50">
-      <div className="pointer-events-none absolute inset-0">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,_rgba(249,115,22,0.18),_transparent_34%),radial-gradient(circle_at_top_right,_rgba(56,189,248,0.14),_transparent_30%),linear-gradient(180deg,_rgba(15,23,42,0.32),_rgba(2,6,23,0.96))]" />
-      </div>
-
-      <div className="relative mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
-        <div className="mb-6 grid gap-6 lg:grid-cols-[minmax(0,1.35fr)_340px]">
-          <div className={panelClasses()}>
-            <div className="inline-flex items-center gap-2 rounded-full border border-orange-400/25 bg-orange-500/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.28em] text-orange-100">
-              <Vote className="h-3.5 w-3.5" />
+    <div className="min-h-screen overflow-x-hidden text-[var(--clay-text)]">
+      <div className="mx-auto max-w-[1440px] px-0 py-2 sm:px-2 lg:px-4">
+        <div className="mb-6 grid gap-6 xl:grid-cols-[minmax(0,1fr)_360px]">
+          <section className={panelClasses()}>
+            <div className="clay-badge">
+              <Vote className="h-3.5 w-3.5" aria-hidden="true" />
               Group ballot create flow
             </div>
-            <h1 className="mt-4 text-3xl font-semibold text-white">Tao mot cuoc bau cu gom nhieu chuc vu</h1>
-            <p className="mt-3 max-w-3xl text-sm leading-7 text-slate-300">
-              Moi chuc vu se deploy thanh mot child election tren ElectionV1, nhung nguoi dung chi thay mot ballot
-              chung de bo phieu lan luot cho tung vi tri: lop truong, lop pho, bi thu, chi doan truong...
+            <h1 className="mt-4 max-w-4xl text-balance text-3xl font-semibold leading-[1.08] tracking-[-0.02em] text-black md:text-5xl">
+              Tạo một đợt bầu cử gồm nhiều chức vụ, nhiều lần bỏ phiếu
+            </h1>
+            <p className="mt-4 max-w-3xl text-[17px] leading-[1.47] text-[var(--clay-muted)]">
+              Mỗi chức vụ deploy thành một child election trên ElectionV1, nhưng cử tri chỉ thấy một
+              ballot chung để bỏ phiếu lần lượt cho từng vị trí.
             </p>
 
             <div className="mt-6 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-              <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
-                <p className="text-[11px] uppercase tracking-[0.24em] text-slate-400">Current user</p>
-                <p className="mt-2 truncate text-lg font-semibold text-white">
-                  {currentUser?.tenHienThi ?? currentUser?.tenDangNhap ?? 'n/a'}
-                </p>
-              </div>
-              <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
-                <p className="text-[11px] uppercase tracking-[0.24em] text-slate-400">JWT</p>
-                <p className="mt-2 text-lg font-semibold text-white">{accessToken ? 'ready' : 'missing'}</p>
-              </div>
-              <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
-                <p className="text-[11px] uppercase tracking-[0.24em] text-slate-400">Admin wallet</p>
-                <p className="mt-2 text-lg font-semibold text-white">{currentAccount ?? 'not connected'}</p>
-              </div>
-              <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
-                <p className="text-[11px] uppercase tracking-[0.24em] text-slate-400">Network</p>
-                <p className="mt-2 text-lg font-semibold text-white">{isNetworkConnected ? 'Sepolia' : 'Mismatch'}</p>
-              </div>
+              <MetricCard
+                label="Current user"
+                value={currentUser?.tenHienThi ?? currentUser?.tenDangNhap ?? 'n/a'}
+              />
+              <MetricCard label="JWT" value={accessToken ? 'Ready' : 'Missing'} />
+              <MetricCard
+                label="Admin wallet"
+                value={shortenAddress(currentAccount)}
+                title={currentAccount ?? 'not connected'}
+                mono
+              />
+              <MetricCard label="Network" value={isNetworkConnected ? 'Sepolia' : 'Mismatch'} />
             </div>
-          </div>
+          </section>
 
-          <div className={panelClasses()}>
+          <aside className={panelClasses()}>
             <div className="space-y-3">
-              <p className="text-sm font-semibold text-white">Quick actions</p>
-              <button type="button" onClick={() => void connectWallet()} className={actionButtonClasses('dark')}>
-                <Wallet className="h-4 w-4" />
-                {currentAccount ? 'Doi / ket noi lai MetaMask' : 'Ket noi MetaMask'}
+              <p className="text-sm font-semibold text-black">Quick actions</p>
+              <button
+                id="connect-wallet-button"
+                type="button"
+                onClick={() => void connectWallet()}
+                className={`${actionButtonClasses('outline')} w-full`}
+              >
+                <Wallet className="h-4 w-4" aria-hidden="true" />
+                {currentAccount ? 'Đổi / kết nối lại MetaMask' : 'Kết nối MetaMask'}
               </button>
 
-              <Link to="/app/quan-ly-smart-contract" className={actionButtonClasses('outline')}>
-                <ArrowRight className="h-4 w-4" />
-                Ve console ElectionV1
+              <Link
+                to="/app/quan-ly-smart-contract"
+                className={`${actionButtonClasses('outline')} w-full`}
+              >
+                <ArrowRight className="h-4 w-4" aria-hidden="true" />
+                Về console ElectionV1
               </Link>
             </div>
 
-            <div className={`mt-5 rounded-2xl border px-4 py-3 text-sm leading-6 ${messagePanelClasses(message)}`}>
-              <p className="font-semibold text-white/95">Live status</p>
+            <div
+              className={`mt-5 rounded-[18px] border px-4 py-3 text-sm leading-6 ${messagePanelClasses(message)}`}
+              aria-live="polite"
+            >
+              <p className="font-semibold text-black">Live status</p>
               <p className="mt-1">{message}</p>
             </div>
 
-            <div className="mt-5 rounded-2xl border border-white/10 bg-white/5 p-4 text-sm text-slate-300">
-              <p className="font-semibold text-white">Dieu kien submit</p>
-              <ul className="mt-3 space-y-2">
-                <li>- Dang nhap app bang JWT.</li>
-                <li>- MetaMask dang o Sepolia.</li>
-                <li>- It nhat 1 chuc vu, moi chuc vu it nhat 2 ung vien.</li>
-                <li>- Co it nhat 1 cu tri duoc whitelist.</li>
-                <li>- Lich hop le: commit start &lt; commit end &lt; reveal end.</li>
-              </ul>
+            <div className="mt-5 rounded-[18px] border border-[var(--clay-border)] bg-white p-4 text-sm">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <p className="font-semibold text-black">Điều kiện submit</p>
+                  <p className="mt-1 text-xs text-[var(--clay-muted)]">
+                    {isReadyToSubmit
+                      ? 'Sẵn sàng tạo ballot.'
+                      : `Cần xử lý: ${firstInvalidRequirement?.label}.`}
+                  </p>
+                </div>
+                <ClipboardList className="h-5 w-5 text-[var(--clay-primary)]" aria-hidden="true" />
+              </div>
+              <RequirementList requirements={requirements} />
             </div>
-          </div>
+          </aside>
         </div>
 
-        <form onSubmit={handleSubmit} className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_340px]">
+        <form onSubmit={handleSubmit} className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_360px]">
           <div className="space-y-6">
-            <div className={panelClasses()}>
+            <section className={panelClasses()}>
               <div className="mb-5 flex items-center gap-3">
-                <ShieldCheck className="h-5 w-5 text-orange-300" />
+                <ShieldCheck className="h-5 w-5 text-[var(--clay-primary)]" aria-hidden="true" />
                 <div>
-                  <p className="text-xs uppercase tracking-[0.28em] text-slate-500">Ballot</p>
-                  <h2 className="mt-2 text-xl font-semibold text-white">Thong tin cuoc bau cu</h2>
+                  <p className="clay-label">Ballot</p>
+                  <h2 className="mt-2 text-2xl font-semibold tracking-[-0.015em] text-black">
+                    Thông tin cuộc bầu cử
+                  </h2>
                 </div>
               </div>
 
               <div className="grid gap-4 md:grid-cols-2">
-                <label className="space-y-2 md:col-span-2">
-                  <span className="text-sm font-medium text-slate-200">Ten cuoc bau cu</span>
+                <div className="space-y-2 md:col-span-2">
+                  <label htmlFor="ballot-title" className="text-sm font-semibold text-black">
+                    Tên cuộc bầu cử
+                  </label>
                   <input
+                    id="ballot-title"
+                    name="ballot-title"
+                    autoComplete="off"
+                    spellCheck={false}
                     value={title}
                     onChange={(event) => setTitle(event.target.value)}
                     className={inputClasses()}
-                    placeholder="Bau cu can bo lop Hang Hai K66"
+                    placeholder="Ví dụ: Bầu cử cán bộ lớp Hàng Hải K66…"
                   />
-                </label>
+                  {showInlineErrors && title.trim().length === 0 && (
+                    <FieldError message="Nhập tên cuộc bầu cử để người dùng nhận diện ballot." />
+                  )}
+                </div>
 
-                <label className="space-y-2 md:col-span-2">
-                  <span className="text-sm font-medium text-slate-200">Mo ta</span>
+                <div className="space-y-2 md:col-span-2">
+                  <label htmlFor="ballot-description" className="text-sm font-semibold text-black">
+                    Mô tả
+                  </label>
                   <textarea
+                    id="ballot-description"
+                    name="ballot-description"
+                    autoComplete="off"
                     value={description}
                     onChange={(event) => setDescription(event.target.value)}
                     rows={4}
-                    className={inputClasses()}
-                    placeholder="Mo ta ngan ve pham vi va quy tac cua dot bau cu."
+                    className={inputClasses('rounded-[18px]')}
+                    placeholder="Mô tả ngắn về phạm vi và quy tắc của đợt bầu cử…"
                   />
-                </label>
+                </div>
 
-                <label className="space-y-2 md:col-span-2">
-                  <span className="text-sm font-medium text-slate-200">Group key (tuy chon)</span>
+                <div className="space-y-2 md:col-span-2">
+                  <label htmlFor="group-key" className="text-sm font-semibold text-black">
+                    Group key (tùy chọn)
+                  </label>
                   <input
+                    id="group-key"
+                    name="group-key"
+                    autoComplete="off"
+                    spellCheck={false}
                     value={groupKey}
                     onChange={(event) => setGroupKey(event.target.value)}
                     className={inputClasses()}
-                    placeholder="De trong de backend tu sinh."
+                    placeholder="Để trống để backend tự sinh…"
                   />
-                </label>
+                </div>
               </div>
-            </div>
+            </section>
 
-            <div className={panelClasses()}>
+            <section className={panelClasses()}>
               <div className="mb-5 flex items-center gap-3">
-                <Users className="h-5 w-5 text-sky-300" />
+                <Users className="h-5 w-5 text-[var(--clay-primary)]" aria-hidden="true" />
                 <div>
-                  <p className="text-xs uppercase tracking-[0.28em] text-slate-500">Timeline and voters</p>
-                  <h2 className="mt-2 text-xl font-semibold text-white">Lich va danh sach cu tri</h2>
+                  <p className="clay-label">Timeline & voters</p>
+                  <h2 className="mt-2 text-2xl font-semibold tracking-[-0.015em] text-black">
+                    Lịch và danh sách cử tri
+                  </h2>
                 </div>
               </div>
 
               <div className="grid gap-4 md:grid-cols-3">
-                <label className="space-y-2">
-                  <span className="text-sm font-medium text-slate-200">Commit start</span>
-                  <input type="datetime-local" value={commitStart} onChange={(event) => setCommitStart(event.target.value)} className={inputClasses()} />
-                </label>
-                <label className="space-y-2">
-                  <span className="text-sm font-medium text-slate-200">Commit end</span>
-                  <input type="datetime-local" value={commitEnd} onChange={(event) => setCommitEnd(event.target.value)} className={inputClasses()} />
-                </label>
-                <label className="space-y-2">
-                  <span className="text-sm font-medium text-slate-200">Reveal end</span>
-                  <input type="datetime-local" value={revealEnd} onChange={(event) => setRevealEnd(event.target.value)} className={inputClasses()} />
-                </label>
+                <div className="space-y-2">
+                  <label htmlFor="commit-start" className="text-sm font-semibold text-black">
+                    Commit start
+                  </label>
+                  <input
+                    id="commit-start"
+                    name="commit-start"
+                    type="datetime-local"
+                    autoComplete="off"
+                    value={commitStart}
+                    onChange={(event) => setCommitStart(event.target.value)}
+                    className={inputClasses()}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label htmlFor="commit-end" className="text-sm font-semibold text-black">
+                    Commit end
+                  </label>
+                  <input
+                    id="commit-end"
+                    name="commit-end"
+                    type="datetime-local"
+                    autoComplete="off"
+                    value={commitEnd}
+                    onChange={(event) => setCommitEnd(event.target.value)}
+                    className={inputClasses()}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label htmlFor="reveal-end" className="text-sm font-semibold text-black">
+                    Reveal end
+                  </label>
+                  <input
+                    id="reveal-end"
+                    name="reveal-end"
+                    type="datetime-local"
+                    autoComplete="off"
+                    value={revealEnd}
+                    onChange={(event) => setRevealEnd(event.target.value)}
+                    className={inputClasses()}
+                  />
+                </div>
               </div>
 
-              {!scheduleIsValid && (
-                <div className="mt-4 rounded-2xl border border-rose-400/30 bg-rose-500/10 px-4 py-3 text-sm text-rose-100">
-                  Lich phai thoa man CommitStart &lt; CommitEnd &lt; RevealEnd.
-                </div>
+              {showInlineErrors && !scheduleState.isValid && (
+                <FieldError message="Lịch phải thỏa mãn Commit start ở tương lai và Commit start < Commit end < Reveal end." />
               )}
 
-              <label className="mt-5 block space-y-2">
-                <span className="text-sm font-medium text-slate-200">Danh sach vi cu tri</span>
-                <textarea
-                  value={voterWalletsInput}
-                  onChange={(event) => setVoterWalletsInput(event.target.value)}
-                  rows={5}
-                  className={inputClasses()}
-                  placeholder="Moi dong mot dia chi vi hoac ngan cach bang dau phay."
-                />
-              </label>
-            </div>
+              <fieldset className="mt-5 space-y-2">
+                <legend className="text-sm font-semibold text-black">Chế độ cử tri</legend>
+                <div
+                  className="grid gap-3 md:grid-cols-2"
+                  role="group"
+                  aria-label="Chọn chế độ nhập cử tri"
+                >
+                  <button
+                    type="button"
+                    onClick={() => setVoterMode('wallets')}
+                    className={`${actionButtonClasses(voterMode === 'wallets' ? 'accent' : 'outline')} w-full`}
+                    aria-pressed={voterMode === 'wallets'}
+                    title="Nhập trực tiếp danh sách địa chỉ ví cử tri"
+                  >
+                    <Wallet className="h-4 w-4" aria-hidden="true" />
+                    Nhập ví trực tiếp
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setVoterMode('roster')}
+                    className={`${actionButtonClasses(voterMode === 'roster' ? 'accent' : 'outline')} w-full`}
+                    aria-pressed={voterMode === 'roster'}
+                    title="Tạo danh sách cử tri bằng link mời, QR và OTP"
+                  >
+                    <QrCode className="h-4 w-4" aria-hidden="true" />
+                    Roster QR / OTP
+                  </button>
+                </div>
+              </fieldset>
 
-            <div className={panelClasses()}>
+              {voterMode === 'wallets' ? (
+                <div className="mt-5 space-y-2">
+                  <label htmlFor="voter-wallets-input" className="text-sm font-semibold text-black">
+                    Danh sách ví cử tri
+                  </label>
+                  <textarea
+                    id="voter-wallets-input"
+                    name="voter-wallets-input"
+                    autoComplete="off"
+                    spellCheck={false}
+                    value={voterWalletsInput}
+                    onChange={(event) => setVoterWalletsInput(event.target.value)}
+                    rows={5}
+                    className={inputClasses('rounded-[18px] clay-mono')}
+                    placeholder="Mỗi dòng một địa chỉ ví, ví dụ: 0x1234…abcd"
+                  />
+                  {showInlineErrors && parsedVoterWallets.length === 0 && (
+                    <FieldError message="Thêm ít nhất 1 địa chỉ ví cử tri." />
+                  )}
+                  {showInlineErrors && invalidVoterWallets.length > 0 && (
+                    <FieldError
+                      message={`Có ${invalidVoterWallets.length} địa chỉ ví cử tri sai định dạng.`}
+                    />
+                  )}
+                  {showInlineErrors && duplicateVoterWallets.length > 0 && (
+                    <FieldError
+                      message={`Có ${duplicateVoterWallets.length} địa chỉ ví cử tri bị trùng.`}
+                    />
+                  )}
+                </div>
+              ) : (
+                <div className="mt-5 space-y-2">
+                  <label htmlFor="roster-input" className="text-sm font-semibold text-black">
+                    Danh sách cử tri
+                  </label>
+                  <textarea
+                    id="roster-input"
+                    name="roster-input"
+                    autoComplete="off"
+                    spellCheck={false}
+                    value={rosterInput}
+                    onChange={(event) => setRosterInput(event.target.value)}
+                    rows={7}
+                    className={inputClasses('rounded-[18px]')}
+                    placeholder="Mỗi dòng: Họ tên,email,mã sinh viên…"
+                  />
+                  <p className="text-sm leading-6 text-[var(--clay-muted)]">
+                    Hệ thống tạo bản nháp roster và một QR chung để cử tri tự xác thực email bằng
+                    OTP, sau đó bind MetaMask trước khi admin deploy ballot on-chain.
+                  </p>
+                  {showInlineErrors && parsedRosterVoters.length === 0 && (
+                    <FieldError message="Thêm ít nhất 1 dòng roster." />
+                  )}
+                  {showInlineErrors && invalidRosterRows.length > 0 && (
+                    <FieldError
+                      message={`Dòng roster cần có họ tên và email hợp lệ: ${invalidRosterRows
+                        .slice(0, 4)
+                        .map((row) => row.rowNumber)
+                        .join(', ')}${invalidRosterRows.length > 4 ? '…' : ''}.`}
+                    />
+                  )}
+                </div>
+              )}
+            </section>
+
+            <section id="positions-section" tabIndex={-1} className={panelClasses()}>
               <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <div className="flex items-center gap-3">
-                  <Vote className="h-5 w-5 text-violet-300" />
+                  <Vote className="h-5 w-5 text-[var(--clay-primary)]" aria-hidden="true" />
                   <div>
-                    <p className="text-xs uppercase tracking-[0.28em] text-slate-500">Positions</p>
-                    <h2 className="mt-2 text-xl font-semibold text-white">Chuc vu va ung vien</h2>
+                    <p className="clay-label">Positions</p>
+                    <h2 className="mt-2 text-2xl font-semibold tracking-[-0.015em] text-black">
+                      Chức vụ và ứng viên
+                    </h2>
                   </div>
                 </div>
 
-                <button type="button" onClick={addPosition} className={actionButtonClasses('outline')}>
-                  <Plus className="h-4 w-4" />
-                  Them chuc vu
+                <button
+                  type="button"
+                  onClick={addPosition}
+                  className={actionButtonClasses('outline')}
+                >
+                  <Plus className="h-4 w-4" aria-hidden="true" />
+                  Thêm chức vụ
                 </button>
               </div>
 
-              <div className="space-y-5">
+              {showInlineErrors && normalizedPositions.length === 0 && (
+                <FieldError message="Thêm ít nhất 1 chức vụ có tên và từ 2 ứng viên." />
+              )}
+              {showInlineErrors && invalidCandidateWallets.length > 0 && (
+                <FieldError
+                  message={`Có ${invalidCandidateWallets.length} ví ứng viên sai định dạng.`}
+                />
+              )}
+
+              <div className="mt-5 space-y-5">
                 {positions.map((position, positionIndex) => (
-                  <div key={position.id} className="rounded-3xl border border-white/10 bg-white/[0.03] p-4 md:p-5">
+                  <article
+                    key={position.id}
+                    className="rounded-[18px] border border-[var(--clay-border)] bg-white p-4 md:p-5"
+                  >
                     <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                      <div>
-                        <p className="text-xs uppercase tracking-[0.22em] text-slate-500">Chuc vu {positionIndex + 1}</p>
-                        <p className="mt-1 text-lg font-semibold text-white">{position.title || 'Chua dat ten chuc vu'}</p>
+                      <div className="min-w-0">
+                        <p className="clay-label">Chức vụ {positionIndex + 1}</p>
+                        <p className="mt-1 truncate text-lg font-semibold text-black">
+                          {position.title || 'Chưa đặt tên chức vụ'}
+                        </p>
                       </div>
-                      <button type="button" onClick={() => removePosition(position.id)} className={actionButtonClasses('outline')}>
-                        <Trash2 className="h-4 w-4" />
-                        Xoa chuc vu
+                      <button
+                        type="button"
+                        onClick={() => removePosition(position.id)}
+                        className={actionButtonClasses('outline')}
+                      >
+                        <Trash2 className="h-4 w-4" aria-hidden="true" />
+                        Xóa chức vụ
                       </button>
                     </div>
 
                     <div className="grid gap-4 md:grid-cols-2">
-                      <label className="space-y-2">
-                        <span className="text-sm font-medium text-slate-200">Ten chuc vu</span>
+                      <div className="space-y-2">
+                        <label
+                          htmlFor={`${position.id}-title`}
+                          className="text-sm font-semibold text-black"
+                        >
+                          Tên chức vụ
+                        </label>
                         <input
+                          id={`${position.id}-title`}
+                          name={`${position.id}-title`}
+                          autoComplete="off"
                           value={position.title}
-                          onChange={(event) => updatePosition(position.id, { title: event.target.value })}
+                          onChange={(event) =>
+                            updatePosition(position.id, { title: event.target.value })
+                          }
                           className={inputClasses()}
-                          placeholder="Lop truong"
+                          placeholder="Ví dụ: Lớp trưởng…"
                         />
-                      </label>
+                      </div>
 
-                      <label className="space-y-2">
-                        <span className="text-sm font-medium text-slate-200">Mo ta chuc vu</span>
+                      <div className="space-y-2">
+                        <label
+                          htmlFor={`${position.id}-description`}
+                          className="text-sm font-semibold text-black"
+                        >
+                          Mô tả chức vụ
+                        </label>
                         <input
+                          id={`${position.id}-description`}
+                          name={`${position.id}-description`}
+                          autoComplete="off"
                           value={position.description}
-                          onChange={(event) => updatePosition(position.id, { description: event.target.value })}
+                          onChange={(event) =>
+                            updatePosition(position.id, { description: event.target.value })
+                          }
                           className={inputClasses()}
-                          placeholder="Bau 1 nguoi cho vai tro nay"
+                          placeholder="Ví dụ: Bầu 1 người cho vai trò này…"
                         />
-                      </label>
+                      </div>
                     </div>
 
-                    <div className="mt-5 flex items-center justify-between">
-                      <p className="text-sm font-semibold text-white">Ung vien cho {position.title || `chuc vu ${positionIndex + 1}`}</p>
-                      <button type="button" onClick={() => addCandidate(position.id)} className={actionButtonClasses('outline')}>
-                        <Plus className="h-4 w-4" />
-                        Them ung vien
+                    <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                      <p className="text-sm font-semibold text-black">
+                        Ứng viên cho {position.title || `chức vụ ${positionIndex + 1}`}
+                      </p>
+                      <button
+                        type="button"
+                        onClick={() => addCandidate(position.id)}
+                        className={actionButtonClasses('outline')}
+                      >
+                        <Plus className="h-4 w-4" aria-hidden="true" />
+                        Thêm ứng viên
                       </button>
                     </div>
 
+                    {showInlineErrors &&
+                      position.title.trim().length > 0 &&
+                      position.candidates.filter(
+                        (candidate) => candidate.displayName.trim().length > 0,
+                      ).length < 2 && (
+                        <FieldError message="Mỗi chức vụ cần ít nhất 2 ứng viên có tên." />
+                      )}
+
                     <div className="mt-4 space-y-3">
                       {position.candidates.map((candidate, candidateIndex) => (
-                        <div key={candidate.id} className="grid gap-3 rounded-2xl border border-white/10 bg-slate-950/40 p-3 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto]">
-                          <label className="space-y-2">
-                            <span className="text-xs font-medium uppercase tracking-[0.18em] text-slate-500">Ten ung vien {candidateIndex + 1}</span>
+                        <div
+                          key={candidate.id}
+                          className="grid gap-3 rounded-[18px] border border-[var(--clay-border)] bg-[var(--clay-surface-soft)] p-3 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto]"
+                        >
+                          <div className="space-y-2">
+                            <label htmlFor={`${candidate.id}-name`} className="clay-label">
+                              Tên ứng viên {candidateIndex + 1}
+                            </label>
                             <input
+                              id={`${candidate.id}-name`}
+                              name={`${candidate.id}-name`}
+                              autoComplete="off"
                               value={candidate.displayName}
                               onChange={(event) =>
-                                updateCandidate(position.id, candidate.id, { displayName: event.target.value })
+                                updateCandidate(position.id, candidate.id, {
+                                  displayName: event.target.value,
+                                })
                               }
                               className={inputClasses()}
-                              placeholder="Nguyen Van A"
+                              placeholder="Ví dụ: Nguyễn Văn A…"
                             />
-                          </label>
+                          </div>
 
-                          <label className="space-y-2">
-                            <span className="text-xs font-medium uppercase tracking-[0.18em] text-slate-500">Vi ung vien (tuy chon)</span>
+                          <div className="space-y-2">
+                            <label htmlFor={`${candidate.id}-wallet`} className="clay-label">
+                              Ví ứng viên (tùy chọn)
+                            </label>
                             <input
+                              id={`${candidate.id}-wallet`}
+                              name={`${candidate.id}-wallet`}
+                              autoComplete="off"
+                              spellCheck={false}
                               value={candidate.walletAddress}
                               onChange={(event) =>
-                                updateCandidate(position.id, candidate.id, { walletAddress: event.target.value })
+                                updateCandidate(position.id, candidate.id, {
+                                  walletAddress: event.target.value,
+                                })
                               }
-                              className={inputClasses()}
-                              placeholder="0x..."
+                              className={inputClasses('clay-mono')}
+                              placeholder="0x1234…abcd"
                             />
-                          </label>
+                          </div>
 
                           <div className="flex items-end">
                             <button
@@ -544,57 +1028,230 @@ export default function TaoCuocBauCuPage() {
                               onClick={() => removeCandidate(position.id, candidate.id)}
                               className={actionButtonClasses('outline')}
                             >
-                              <Trash2 className="h-4 w-4" />
-                              Xoa
+                              <Trash2 className="h-4 w-4" aria-hidden="true" />
+                              Xóa
                             </button>
                           </div>
                         </div>
                       ))}
                     </div>
-                  </div>
+                  </article>
                 ))}
               </div>
-            </div>
+            </section>
           </div>
 
-          <div className="space-y-6">
-            <div className={panelClasses()}>
-              <p className="text-xs uppercase tracking-[0.28em] text-slate-500">Summary</p>
-              <h2 className="mt-2 text-xl font-semibold text-white">Tom tat payload</h2>
+          <aside className="space-y-6 xl:sticky xl:top-6 xl:self-start">
+            <section className={panelClasses()}>
+              <p className="clay-label">Summary</p>
+              <h2 className="mt-2 text-2xl font-semibold tracking-[-0.015em] text-black">
+                Tóm tắt payload
+              </h2>
 
-              <div className="mt-5 space-y-3 text-sm text-slate-300">
-                <div className="flex items-center justify-between gap-4">
-                  <span>Admin wallet</span>
-                  <span className="truncate text-right text-white">{currentAccount ?? 'n/a'}</span>
-                </div>
-                <div className="flex items-center justify-between gap-4">
-                  <span>So chuc vu</span>
-                  <span className="text-white">{normalizedPositions.length}</span>
-                </div>
-                <div className="flex items-center justify-between gap-4">
-                  <span>Cu tri hop le</span>
-                  <span className="text-white">{parsedVoterWallets.length}</span>
-                </div>
-                <div className="flex items-center justify-between gap-4">
-                  <span>Mang vi</span>
-                  <span className="text-white">{isNetworkConnected ? 'Sepolia' : 'Mismatch'}</span>
-                </div>
+              <div className="mt-5 space-y-3 text-sm">
+                <SummaryRow
+                  label="Admin wallet"
+                  value={shortenAddress(currentAccount)}
+                  fullValue={currentAccount}
+                />
+                <SummaryRow label="Số chức vụ" value={normalizedPositions.length} />
+                <SummaryRow
+                  label={voterMode === 'wallets' ? 'Cử tri hợp lệ' : 'Dòng roster'}
+                  value={
+                    voterMode === 'wallets' ? parsedVoterWallets.length : parsedRosterVoters.length
+                  }
+                />
+                <SummaryRow label="Mạng ví" value={isNetworkConnected ? 'Sepolia' : 'Mismatch'} />
               </div>
-            </div>
+            </section>
 
-            <div className={panelClasses()}>
-              <p className="text-xs uppercase tracking-[0.28em] text-slate-500">Submit</p>
-              <h2 className="mt-2 text-xl font-semibold text-white">Tao group ballot</h2>
-              <p className="mt-3 text-sm leading-6 text-slate-300">
-                Sau khi tao xong, he thong se chuyen sang command center va mo san child election dau tien trong ballot.
+            <section className={panelClasses()}>
+              <p className="clay-label">Submit</p>
+              <h2 className="mt-2 text-2xl font-semibold tracking-[-0.015em] text-black">
+                {voterMode === 'wallets' ? 'Tạo group ballot' : 'Tạo roster xác thực'}
+              </h2>
+              <p className="mt-3 text-sm leading-6 text-[var(--clay-muted)]">
+                {voterMode === 'wallets'
+                  ? 'Sau khi tạo xong, hệ thống chuyển sang command center và mở child election đầu tiên.'
+                  : 'Ở chế độ roster, hệ thống chỉ tạo bản nháp xác thực và QR mời cử tri. Ballot on-chain chỉ được deploy sau khi cử tri OTP và bind ví.'}
               </p>
 
-              <button type="submit" disabled={!canSubmit} className={`${actionButtonClasses('accent')} mt-5 w-full`}>
-                {submitting ? 'Dang deploy tren Sepolia...' : 'Tao election tren Sepolia'}
+              <button
+                type="submit"
+                disabled={submitting}
+                className={`${actionButtonClasses(isReadyToSubmit ? 'accent' : 'outline')} mt-5 w-full`}
+              >
+                {submitting
+                  ? voterMode === 'wallets'
+                    ? 'Đang deploy trên Sepolia…'
+                    : 'Đang tạo roster xác thực…'
+                  : !isReadyToSubmit
+                    ? 'Kiểm tra điều kiện submit'
+                    : voterMode === 'wallets'
+                      ? 'Tạo election trên Sepolia'
+                      : 'Tạo roster + QR xác thực'}
               </button>
-            </div>
-          </div>
+            </section>
+          </aside>
         </form>
+
+        {activeDraft && voterMode === 'roster' && (
+          <div className="mt-6 space-y-6">
+            <section className={panelClasses()}>
+              {activeDraft.status === 'deployed' ? (
+                <div className="rounded-[18px] border border-[rgba(132,231,165,0.28)] bg-[rgba(132,231,165,0.14)] p-5">
+                  <p className="clay-label">Hướng dẫn QR / OTP</p>
+                  <h2 className="mt-2 text-2xl font-semibold tracking-[-0.015em] text-black">
+                    Ballot đã deploy on-chain
+                  </h2>
+                  <p className="mt-3 max-w-3xl text-sm leading-6 text-[var(--clay-text)]">
+                    QR onboarding đã hoàn tất nhiệm vụ xác thực roster. Từ thời điểm này admin nên
+                    quản lý ballot ở command center và không phát tiếp QR xác thực trước deploy.
+                  </p>
+                </div>
+              ) : (
+                <div className="grid gap-6 xl:grid-cols-[minmax(0,360px)_minmax(0,1fr)]">
+                  <QRCodeGenerator
+                    inviteLink={buildSharedRosterInviteUrl(activeDraft)}
+                    title="QR mời xác thực cử tri"
+                    description="QR chỉ dùng cho bước xác thực roster trước deploy; chưa phải QR của ballot on-chain."
+                    downloadFileName={`${activeDraft.groupKey}-shared-qr`}
+                  />
+
+                  <div className="min-w-0">
+                    <p className="clay-label">Hướng dẫn QR / OTP</p>
+                    <h2 className="mt-2 text-2xl font-semibold tracking-[-0.015em] text-black">
+                      Bước 1/2: xác thực cử tri trước deploy
+                    </h2>
+                    <p className="mt-3 max-w-3xl text-sm leading-6 text-[var(--clay-muted)]">
+                      QR này được tạo sau khi admin bấm{' '}
+                      <span className="font-semibold text-black">Tạo roster + QR xác thực</span>. Nó
+                      chỉ mở luồng onboarding cho roster, giúp không phải phát từng mã cho từng cử
+                      tri. Token riêng vẫn được backend cấp sau bước nhập email để chống nhận nhầm
+                      định danh, chống bind ví thay người khác và giữ audit trail. Phiên bầu cử
+                      on-chain chỉ được tạo ở bước deploy bên dưới.
+                    </p>
+                    <ol className="mt-5 grid gap-3 text-sm text-[var(--clay-muted)] md:grid-cols-2">
+                      <li className="rounded-[16px] border border-[var(--clay-border)] bg-white p-4">
+                        <span className="font-semibold text-black">1. Tạo bản nháp roster</span>
+                        <p className="mt-1 leading-6">
+                          Admin nhập danh sách cử tri, lịch commit/reveal và các chức vụ.
+                        </p>
+                      </li>
+                      <li className="rounded-[16px] border border-[var(--clay-border)] bg-white p-4">
+                        <span className="font-semibold text-black">2. Công bố một QR chung</span>
+                        <p className="mt-1 leading-6">
+                          In hoặc gửi một QR theo roster này cho toàn bộ cử tri đủ điều kiện.
+                        </p>
+                      </li>
+                      <li className="rounded-[16px] border border-[var(--clay-border)] bg-white p-4">
+                        <span className="font-semibold text-black">3. Cử tri tự định danh</span>
+                        <p className="mt-1 leading-6">
+                          Cử tri nhập email trong roster; hệ thống chỉ gửi OTP về email đó.
+                        </p>
+                      </li>
+                      <li className="rounded-[16px] border border-[var(--clay-border)] bg-white p-4">
+                        <span className="font-semibold text-black">4. Bind ví rồi deploy</span>
+                        <p className="mt-1 leading-6">
+                          Chỉ ví đã bind sau OTP mới được đưa vào ballot khi admin deploy.
+                        </p>
+                      </li>
+                    </ol>
+                  </div>
+                </div>
+              )}
+            </section>
+
+            <section className={panelClasses()}>
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <div className="min-w-0">
+                  <p className="clay-label">Bản nháp danh sách cử tri</p>
+                  <h2 className="mt-2 truncate text-2xl font-semibold tracking-[-0.015em] text-black">
+                    {activeDraft.title}
+                  </h2>
+                  <p className="mt-2 break-all text-sm text-[var(--clay-muted)]">
+                    Group key: {activeDraft.groupKey}
+                  </p>
+                  {activeDraft.status === 'deployed' ? (
+                    <p className="mt-1 text-sm text-[var(--clay-muted)]">
+                      Onboarding đã chốt; không phát tiếp QR xác thực trước deploy.
+                    </p>
+                  ) : (
+                    <p className="mt-1 break-all text-sm text-[var(--clay-muted)]">
+                      QR xác thực trước deploy: {buildSharedRosterInviteUrl(activeDraft)}
+                    </p>
+                  )}
+                  <span className="mt-3 inline-flex rounded-full border border-[var(--clay-border)] bg-white px-3 py-1 text-xs font-semibold text-[var(--clay-muted)]">
+                    {activeDraft.status === 'deployed'
+                      ? 'Đã deploy ballot on-chain'
+                      : 'Chưa deploy ballot on-chain'}
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => void handleDeployVerifiedRoster()}
+                  disabled={
+                    submitting ||
+                    activeDraft.walletBoundCount === 0 ||
+                    activeDraft.status === 'deployed'
+                  }
+                  className={actionButtonClasses('accent')}
+                >
+                  {activeDraft.status === 'deployed'
+                    ? 'Đã deploy'
+                    : 'Deploy ballot từ cử tri đã xác thực'}
+                </button>
+              </div>
+
+              <div className="mt-5 grid gap-4 md:grid-cols-3">
+                <MetricCard label="Tổng invite" value={String(activeDraft.totalInviteCount)} />
+                <MetricCard label="OTP verified" value={String(activeDraft.otpVerifiedCount)} />
+                <MetricCard label="Wallet bound" value={String(activeDraft.walletBoundCount)} />
+              </div>
+
+              <div className="mt-5 space-y-4">
+                {activeDraft.invites.map((invite) => (
+                  <article
+                    key={invite.inviteId}
+                    className="rounded-[18px] border border-[var(--clay-border)] bg-white p-4"
+                  >
+                    <div className="grid gap-4 lg:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)_auto] lg:items-center">
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-lg font-semibold text-black">
+                          {invite.fullName}
+                        </p>
+                        <p className="mt-1 truncate text-sm text-[var(--clay-muted)]">
+                          {invite.email}
+                        </p>
+                        {invite.studentCode && (
+                          <p className="text-sm text-[var(--clay-muted)]">
+                            MSSV: {invite.studentCode}
+                          </p>
+                        )}
+                      </div>
+                      <div className="min-w-0">
+                        <p className="clay-label">Link riêng dự phòng</p>
+                        <p className="mt-2 break-all text-xs leading-5 text-[var(--clay-muted)]">
+                          {invite.inviteUrl}
+                        </p>
+                      </div>
+                      <div className="flex flex-wrap gap-2 text-xs lg:justify-end">
+                        <span className="clay-badge">
+                          OTP {invite.otpVerified ? 'verified' : 'pending'}
+                        </span>
+                        <span className="clay-badge" title={invite.walletAddress ?? undefined}>
+                          {invite.walletAddress
+                            ? shortenAddress(invite.walletAddress)
+                            : 'Chưa bind wallet'}
+                        </span>
+                      </div>
+                    </div>
+                  </article>
+                ))}
+              </div>
+            </section>
+          </div>
+        )}
       </div>
     </div>
   );

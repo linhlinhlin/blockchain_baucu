@@ -5,67 +5,7 @@ import { useSelector } from 'react-redux';
 import { listElectionV1Groups, type ElectionV1GroupListItem } from '../api/electionV1Api';
 import { useWeb3 } from '../context/Web3Context';
 import type { RootState } from '../store/store';
-
-function getErrorMessage(error: unknown) {
-  const maybeError = error as any;
-  if (maybeError?.response?.data?.Error) {
-    return maybeError.response.data.Error;
-  }
-  if (maybeError?.response?.data?.error) {
-    return maybeError.response.data.error;
-  }
-  if (maybeError instanceof Error) {
-    return maybeError.message;
-  }
-  return 'Khong the tai danh sach nhom bau cu.';
-}
-
-function normalizeAddress(value?: string | null) {
-  return value?.trim().toLowerCase() ?? '';
-}
-
-function shortenAddress(value?: string | null) {
-  if (!value) {
-    return 'n/a';
-  }
-
-  return `${value.slice(0, 6)}...${value.slice(-4)}`;
-}
-
-function formatUnix(timestamp?: number | null) {
-  if (!timestamp) {
-    return 'n/a';
-  }
-
-  return new Date(timestamp * 1000).toLocaleString('vi-VN');
-}
-
-function getPhaseLabel(item: ElectionV1GroupListItem) {
-  const now = Math.floor(Date.now() / 1000);
-  if (now < item.commitStart) {
-    return 'Pending';
-  }
-  if (now < item.commitEnd) {
-    return 'Commit';
-  }
-  if (now < item.revealEnd) {
-    return 'Reveal';
-  }
-  return 'Ended';
-}
-
-function phaseClasses(label: string) {
-  switch (label) {
-    case 'Commit':
-      return 'border-amber-400/30 bg-amber-500/10 text-amber-100';
-    case 'Reveal':
-      return 'border-sky-400/30 bg-sky-500/10 text-sky-100';
-    case 'Ended':
-      return 'border-slate-400/30 bg-slate-500/10 text-slate-100';
-    default:
-      return 'border-violet-400/30 bg-violet-500/10 text-violet-100';
-  }
-}
+import { getErrorMessage, shortenAddress, formatUnix, getPhaseLabel, phaseClasses, normalizeAddress } from '../utils/electionHelpers';
 
 export default function CuocBauCuCuaNguoiDungPage() {
   const navigate = useNavigate();
@@ -74,7 +14,7 @@ export default function CuocBauCuCuaNguoiDungPage() {
 
   const [items, setItems] = useState<ElectionV1GroupListItem[]>([]);
   const [loading, setLoading] = useState(true);
-  const [message, setMessage] = useState('Dang tai danh sach ballot...');
+  const [message, setMessage] = useState('Đang tải danh sách ballot…');
   const [searchTerm, setSearchTerm] = useState('');
   const [mineOnly, setMineOnly] = useState(false);
 
@@ -92,7 +32,7 @@ export default function CuocBauCuCuaNguoiDungPage() {
     try {
       const response = await listElectionV1Groups();
       setItems(response);
-      setMessage(`Da tai ${response.length} ballot group tu ElectionV1.`);
+      setMessage(`Đã tải ${response.length} nhóm ballot từ ElectionV1.`);
     } catch (error) {
       setMessage(getErrorMessage(error));
     } finally {
@@ -117,9 +57,9 @@ export default function CuocBauCuCuaNguoiDungPage() {
       (acc, item) => {
         const phase = getPhaseLabel(item);
         acc.total++;
-        if (phase === 'Pending') acc.pending++;
-        else if (phase === 'Commit') acc.commit++;
-        else if (phase === 'Reveal') acc.reveal++;
+        if (phase === 'Chờ bắt đầu') acc.pending++;
+        else if (phase === 'Đang bỏ phiếu') acc.commit++;
+        else if (phase === 'Kiểm phiếu') acc.reveal++;
         else acc.ended++;
         return acc;
       },
@@ -129,25 +69,28 @@ export default function CuocBauCuCuaNguoiDungPage() {
 
   return (
     <div className="space-y-6">
-      <div className="rounded-2xl border border-blue-900/30 bg-gradient-to-r from-gray-900 to-blue-950/40 p-6 shadow-lg">
+      <div className="clay-section p-6">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
           <div className="space-y-3">
-            <div className="inline-flex items-center gap-2 rounded-full border border-blue-400/20 bg-blue-500/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.28em] text-blue-100">
+            <div className="clay-badge bg-[rgba(59,211,253,0.26)]">
               <ShieldCheck className="h-3.5 w-3.5" />
-              Group ballots
+              Danh sách ballot
             </div>
             <div>
-              <h1 className="text-3xl font-semibold text-white">Quan ly cuoc bau cu</h1>
-              <p className="mt-2 max-w-3xl text-sm leading-6 text-blue-100/80">
-                Moi ballot group dai dien cho mot dot bau can bo. Moi chuc vu ben trong se duoc bo phieu tren mot child election rieng.
+              <h1 className="clay-display text-4xl font-bold leading-tight text-black md:text-6xl">
+                Quản lý ballot theo trạng thái thật.
+              </h1>
+              <p className="mt-2 max-w-3xl text-sm leading-6 text-[var(--clay-muted)]">
+                Mỗi ballot group đại diện cho một đợt bầu cử. Các chức vụ bên trong được tách
+                thành từng election để dễ kiểm chứng, dễ theo dõi và hạn chế thao tác nhầm.
               </p>
             </div>
-            <div className="flex flex-wrap gap-3 text-sm text-slate-300">
-              <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1">
-                User: {currentUser?.tenHienThi ?? currentUser?.tenDangNhap ?? 'n/a'}
+            <div className="flex flex-wrap gap-3 text-sm text-[var(--clay-muted)]">
+              <span className="clay-pill px-3 py-1">
+                Người dùng: {currentUser?.tenHienThi ?? currentUser?.tenDangNhap ?? 'n/a'}
               </span>
-              <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1">
-                Wallet: {shortenAddress(currentAccount ?? currentUser?.diaChiVi)}
+              <span className="clay-pill px-3 py-1">
+                Ví: {shortenAddress(currentAccount ?? currentUser?.diaChiVi)}
               </span>
             </div>
           </div>
@@ -156,81 +99,83 @@ export default function CuocBauCuCuaNguoiDungPage() {
             <button
               type="button"
               onClick={() => void connectWallet()}
-              className="inline-flex items-center justify-center gap-2 rounded-xl bg-slate-900 px-5 py-3 text-sm font-semibold text-white transition hover:bg-slate-800"
+              className="clay-button clay-button--matcha inline-flex items-center justify-center gap-2 px-5 py-3 text-sm font-semibold"
             >
               <Wallet className="h-4 w-4" />
-              {currentAccount ? 'Doi / ket noi lai MetaMask' : 'Ket noi MetaMask'}
+              {currentAccount ? 'Đổi / kết nối lại MetaMask' : 'Kết nối MetaMask'}
             </button>
             <Link
               to="/app/tao-phien-bau-cu"
-              className="inline-flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-blue-500"
+              className="clay-button clay-button--blueberry inline-flex items-center justify-center gap-2 px-5 py-3 text-sm font-semibold"
             >
               <Plus className="h-4 w-4" />
-              Tao ballot moi
+              Tạo ballot mới
             </Link>
           </div>
         </div>
       </div>
 
       <div className="grid gap-4 md:grid-cols-4">
-        <div className="rounded-xl border border-blue-900/20 bg-[#162033] p-5">
-          <p className="text-sm text-blue-300">Tong ballot</p>
-          <p className="mt-2 text-3xl font-semibold text-white">{stats.total}</p>
+        <div className="clay-panel bg-[rgba(248,204,101,0.24)] p-5">
+          <p className="text-sm text-[var(--clay-muted)]">Tổng ballot</p>
+          <p className="mt-2 text-3xl font-semibold text-black">{stats.total}</p>
         </div>
-        <div className="rounded-xl border border-blue-900/20 bg-[#162033] p-5">
-          <p className="text-sm text-blue-300">Sap dien ra</p>
-          <p className="mt-2 text-3xl font-semibold text-white">{stats.pending}</p>
+        <div className="clay-panel bg-[rgba(193,176,255,0.22)] p-5">
+          <p className="text-sm text-[var(--clay-muted)]">Sắp diễn ra</p>
+          <p className="mt-2 text-3xl font-semibold text-black">{stats.pending}</p>
         </div>
-        <div className="rounded-xl border border-blue-900/20 bg-[#162033] p-5">
-          <p className="text-sm text-blue-300">Dang bo phieu</p>
-          <p className="mt-2 text-3xl font-semibold text-white">{stats.commit + stats.reveal}</p>
+        <div className="clay-panel bg-[rgba(132,231,165,0.18)] p-5">
+          <p className="text-sm text-[var(--clay-muted)]">Đang bỏ phiếu</p>
+          <p className="mt-2 text-3xl font-semibold text-black">{stats.commit + stats.reveal}</p>
         </div>
-        <div className="rounded-xl border border-blue-900/20 bg-[#162033] p-5">
-          <p className="text-sm text-blue-300">Da ket thuc</p>
-          <p className="mt-2 text-3xl font-semibold text-white">{stats.ended}</p>
+        <div className="clay-panel bg-[rgba(252,121,129,0.16)] p-5">
+          <p className="text-sm text-[var(--clay-muted)]">Đã kết thúc</p>
+          <p className="mt-2 text-3xl font-semibold text-black">{stats.ended}</p>
         </div>
       </div>
 
-      <div className="rounded-xl border border-blue-900/20 bg-[#162033] p-5">
+      <div className="clay-panel clay-panel-dashed p-5">
         <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
           <div className="relative flex-1 max-w-xl">
-            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-blue-400" />
+            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--clay-muted)]" />
             <input
-              type="text"
+              type="search"
+              name="ballot-search"
+              autoComplete="off"
               value={searchTerm}
               onChange={(event) => setSearchTerm(event.target.value)}
-              placeholder="Tim theo ten ballot, mo ta hoac group key..."
-              className="w-full rounded-xl border border-gray-700 bg-gray-800 py-3 pl-10 pr-4 text-white outline-none transition focus:border-blue-500"
+              placeholder="Tìm theo tên ballot, mô tả hoặc group key…"
+              className="clay-input py-3 pl-10 pr-4"
             />
           </div>
 
-          <label className="inline-flex items-center gap-3 rounded-xl border border-gray-700 bg-gray-800 px-4 py-3 text-sm text-slate-200">
+          <label className="inline-flex items-center gap-3 rounded-[20px] border border-[var(--clay-border)] bg-white px-4 py-3 text-sm text-[var(--clay-text)] shadow-[var(--clay-shadow)]">
             <input
               type="checkbox"
               checked={mineOnly}
               onChange={(event) => setMineOnly(event.target.checked)}
-              className="h-4 w-4 rounded border-gray-600 bg-gray-900 text-blue-500"
+              className="h-4 w-4 rounded border-[var(--clay-border)] text-[var(--clay-blueberry)]"
             />
-            Chi hien ballot cua toi
+            Chỉ hiện ballot của tôi
           </label>
         </div>
 
-        <div className="mt-4 rounded-xl border border-white/10 bg-white/[0.03] px-4 py-3 text-sm text-slate-300">
+        <div aria-live="polite" className="mt-4 rounded-[20px] border border-[var(--clay-border)] bg-[rgba(255,255,255,0.76)] px-4 py-3 text-sm text-[var(--clay-muted)] shadow-[var(--clay-shadow)]">
           {message}
         </div>
       </div>
 
       {loading ? (
-        <div className="rounded-xl border border-blue-900/20 bg-[#162033] p-8 text-center text-slate-300">
-          Dang tai danh sach ballot...
+        <div role="status" className="clay-panel p-8 text-center text-[var(--clay-muted)]">
+          Đang tải danh sách ballot…
         </div>
       ) : filteredItems.length === 0 ? (
-        <div className="rounded-xl border border-blue-900/20 bg-[#162033] p-10 text-center">
-          <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-yellow-500/10">
-            <Vote className="h-7 w-7 text-yellow-400" />
+        <div className="clay-panel p-10 text-center">
+          <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-[rgba(248,204,101,0.3)]">
+            <Vote className="h-7 w-7 text-[var(--clay-lemon-deep)]" />
           </div>
-          <h3 className="text-xl font-semibold text-white">Khong tim thay ballot nao</h3>
-          <p className="mt-2 text-slate-300">Hay tao mot ballot moi hoac tat bo loc "chi cua toi".</p>
+          <h3 className="text-xl font-semibold text-black">Không tìm thấy ballot nào</h3>
+          <p className="mt-2 text-[var(--clay-muted)]">Hãy tạo một ballot mới hoặc tắt bộ lọc "chỉ của tôi".</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
@@ -238,33 +183,33 @@ export default function CuocBauCuCuaNguoiDungPage() {
             const phase = getPhaseLabel(item);
             const firstPosition = item.positions[0];
             return (
-              <div key={item.groupKey} className="rounded-2xl border border-blue-900/20 bg-[#162033] p-6 shadow-lg">
+              <div key={item.groupKey} className="clay-panel p-6">
                 <div className="flex flex-col gap-4">
                   <div className="flex flex-wrap items-center gap-3">
-                    <h3 className="text-xl font-semibold text-white">{item.title}</h3>
+                    <h3 className="text-xl font-semibold text-black">{item.title}</h3>
                     <span className={`rounded-full border px-3 py-1 text-xs font-semibold ${phaseClasses(phase)}`}>
                       {phase}
                     </span>
                   </div>
 
-                  <p className="text-sm leading-6 text-slate-300">{item.description || 'Khong co mo ta.'}</p>
+                  <p className="text-sm leading-6 text-[var(--clay-muted)]">{item.description || 'Không có mô tả.'}</p>
 
-                  <div className="grid gap-2 text-sm text-slate-300 sm:grid-cols-2">
+                  <div className="grid gap-2 text-sm text-[var(--clay-muted)] sm:grid-cols-2">
                     <p>Admin: {shortenAddress(item.admin)}</p>
                     <p>Group key: {item.groupKey}</p>
-                    <p>Commit end: {formatUnix(item.commitEnd)}</p>
-                    <p>Reveal end: {formatUnix(item.revealEnd)}</p>
-                    <p>So chuc vu: {item.positionCount}</p>
-                    <p>So cu tri: {item.voterCount}</p>
+                    <p>Kết thúc commit: {formatUnix(item.commitEnd)}</p>
+                    <p>Kết thúc reveal: {formatUnix(item.revealEnd)}</p>
+                    <p>Số chức vụ: {item.positionCount}</p>
+                    <p>Số cử tri: {item.voterCount}</p>
                   </div>
 
-                  <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
-                    <p className="mb-3 text-sm font-semibold text-white">Chuc vu trong ballot</p>
+                  <div className="rounded-[24px] border border-[var(--clay-border)] bg-[rgba(255,255,255,0.78)] p-4 shadow-[var(--clay-shadow)]">
+                    <p className="mb-3 text-sm font-semibold text-black">Chức vụ trong ballot</p>
                     <div className="space-y-2">
                       {item.positions.map((position) => (
-                        <div key={position.address} className="flex items-center justify-between gap-4 text-sm text-slate-300">
+                        <div key={position.address} className="flex items-center justify-between gap-4 text-sm text-[var(--clay-muted)]">
                           <span>{position.positionTitle || position.title}</span>
-                          <span>{position.candidates.length} ung vien</span>
+                          <span>{position.candidates.length} ứng viên</span>
                         </div>
                       ))}
                     </div>
@@ -276,9 +221,9 @@ export default function CuocBauCuCuaNguoiDungPage() {
                     onClick={() =>
                       navigate(`/app/quan-ly-smart-contract?group=${encodeURIComponent(item.groupKey)}&election=${firstPosition.address}`)
                     }
-                    className="inline-flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-blue-500 disabled:cursor-not-allowed disabled:opacity-50"
+                    className="clay-button clay-button--blueberry inline-flex items-center justify-center gap-2 px-4 py-3 text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-50"
                   >
-                    Mo ballot
+                    Xem ballot
                     <ArrowRight className="h-4 w-4" />
                   </button>
                 </div>

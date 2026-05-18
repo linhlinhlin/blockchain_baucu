@@ -34,15 +34,6 @@ export const dangNhapBangMetaMask = async (
 };
 
 export const refreshToken = async (): Promise<{ accessToken: string; user: TaiKhoan }> => {
-  try {
-    const response = await publicApiClient.post(`${API_URL}/refresh-token`);
-    return response.data;
-  } catch {
-    localStorage.removeItem('accessToken');
-    return new Promise<{ accessToken: string; user: TaiKhoan }>((resolve) => {
-      setTimeout(() => {
-        resolve({ accessToken: '', user: {} as TaiKhoan });
-      }, 5000);
-    });
-  }
+  const response = await publicApiClient.post(`${API_URL}/refresh-token`);
+  return response.data;
 };

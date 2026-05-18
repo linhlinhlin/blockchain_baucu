@@ -124,22 +124,7 @@ const DieuLePage: React.FC = () => {
     first: number | null;
     second: number | null;
   }>({ first: null, second: null });
-  const [isDarkMode, setIsDarkMode] = useState(false);
-
-  // Kiểm tra dark mode
-  useEffect(() => {
-    // Kiểm tra nếu người dùng đã chọn dark mode
-    const isDark =
-      localStorage.getItem('darkMode') === 'true' ||
-      window.matchMedia('(prefers-color-scheme: dark)').matches;
-    setIsDarkMode(isDark);
-
-    if (isDark) {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-    }
-  }, []);
+  const isDarkMode = false;
 
   // Fetch điều lệ khi component mount
   useEffect(() => {

@@ -32,23 +32,45 @@ namespace WebApplication3.Services
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _serviceProvider = serviceProvider ?? throw new ArgumentNullException(nameof(serviceProvider));
 
-            _rpcUrl = _configuration["BlockchainSettings:RpcUrl"];
+            _rpcUrl = _configuration["BlockchainSettings:RpcUrl"] ?? string.Empty;
             if (string.IsNullOrEmpty(_rpcUrl))
             {
-                _logger.LogError("RPC URL không được cấu hình trong appsettings.json.");
-                throw new ArgumentNullException(nameof(_rpcUrl));
+                _logger.LogWarning("BlockchainSettings:RpcUrl đang trống. Các flow blockchain legacy sẽ bị vô hiệu hóa.");
             }
 
-            _adminPrivateKey = _configuration["BlockchainSettings:AdminPrivateKey"];
-            _adminPrivateKey2 = _configuration["BlockchainSettings:AdminPrivateKey2"];
+            _adminPrivateKey = _configuration["BlockchainSettings:AdminPrivateKey"] ?? string.Empty;
+            _adminPrivateKey2 = _configuration["BlockchainSettings:AdminPrivateKey2"] ?? string.Empty;
 
             if (string.IsNullOrEmpty(_adminPrivateKey))
             {
-                _logger.LogError("Admin Private Key không được cấu hình trong appsettings.json.");
-                throw new ArgumentNullException(nameof(_adminPrivateKey));
+                _logger.LogWarning("BlockchainSettings:AdminPrivateKey đang trống. Các flow triển khai legacy sẽ bị vô hiệu hóa.");
             }
 
             _logger.LogInformation("BlockchainService khởi tạo thành công với RpcUrl: {RpcUrl}", _rpcUrl);
+        }
+
+        private void EnsureRpcConfigured()
+        {
+            if (string.IsNullOrWhiteSpace(_rpcUrl))
+            {
+                throw new InvalidOperationException("Legacy blockchain RPC chua duoc cau hinh.");
+            }
+        }
+
+        private void EnsureAdminPrivateKeyConfigured()
+        {
+            if (string.IsNullOrWhiteSpace(_adminPrivateKey))
+            {
+                throw new InvalidOperationException("Legacy blockchain admin private key chua duoc cau hinh.");
+            }
+        }
+
+        private void EnsureAdminPrivateKey2Configured()
+        {
+            if (string.IsNullOrWhiteSpace(_adminPrivateKey2))
+            {
+                throw new InvalidOperationException("Legacy blockchain admin private key 2 chua duoc cau hinh.");
+            }
         }
 
         private SessionService GetSessionService()
@@ -58,6 +80,7 @@ namespace WebApplication3.Services
 
         public async Task<bool> CheckSCWExists(string scwAddress)
         {
+            EnsureRpcConfigured();
             if (!AddressUtil.Current.IsValidEthereumAddressHexFormat(scwAddress))
             {
                 _logger.LogError("Địa chỉ SCW không hợp lệ: {ScwAddress}", scwAddress);
@@ -73,6 +96,7 @@ namespace WebApplication3.Services
 
         public async Task<decimal> GetTokenBalance(string scwAddress)
         {
+            EnsureRpcConfigured();
             if (!AddressUtil.Current.IsValidEthereumAddressHexFormat(scwAddress))
             {
                 _logger.LogError("Địa chỉ SCW không hợp lệ: {ScwAddress}", scwAddress);
@@ -97,6 +121,8 @@ namespace WebApplication3.Services
 
         public async Task<string> DeploySimpleAccount(string eoaAddress, string salt)
         {
+            EnsureRpcConfigured();
+            EnsureAdminPrivateKeyConfigured();
             if (!AddressUtil.Current.IsValidEthereumAddressHexFormat(eoaAddress))
             {
                 _logger.LogError("Địa chỉ EOA không hợp lệ: {EoaAddress}", eoaAddress);
@@ -181,6 +207,7 @@ namespace WebApplication3.Services
 
         public async Task MintInitialTokens(string scwAddress, string amount)
         {
+            EnsureRpcConfigured();
             if (!AddressUtil.Current.IsValidEthereumAddressHexFormat(scwAddress))
             {
                 _logger.LogError("Địa chỉ SCW không hợp lệ: {ScwAddress}", scwAddress);
@@ -194,6 +221,7 @@ namespace WebApplication3.Services
                 throw new ArgumentNullException(nameof(hluTokenAddress));
             }
 
+            EnsureAdminPrivateKey2Configured();
             var web3 = new Web3(new Nethereum.Web3.Accounts.Account(_adminPrivateKey2), _rpcUrl);
 
             // PHẦN 1: MINT HLU TOKEN
@@ -278,6 +306,7 @@ namespace WebApplication3.Services
 
         public async Task<string> PredictSCWAddress(string factoryAddress, string eoaAddress, string salt)
         {
+            EnsureRpcConfigured();
             if (!AddressUtil.Current.IsValidEthereumAddressHexFormat(factoryAddress) || !AddressUtil.Current.IsValidEthereumAddressHexFormat(eoaAddress))
             {
                 _logger.LogError("Địa chỉ Factory hoặc EOA không hợp lệ.");
@@ -301,6 +330,7 @@ namespace WebApplication3.Services
 
         public async Task<BigInteger> GetCurrentGasPrice()
         {
+            EnsureRpcConfigured();
             var web3 = new Web3(_rpcUrl);
             var gasPrice = await web3.Eth.GasPrice.SendRequestAsync();
             _logger.LogInformation("Giá gas hiện tại: {GasPrice} wei", gasPrice.Value);
@@ -309,6 +339,7 @@ namespace WebApplication3.Services
 
         public async Task<BigInteger> EstimateGasForBundledOps(string txData, string to)
         {
+            EnsureRpcConfigured();
             var web3 = new Web3(_rpcUrl);
             try
             {
@@ -329,6 +360,7 @@ namespace WebApplication3.Services
         {
             try
             {
+                EnsureRpcConfigured();
                 string factoryAddress = _configuration["BlockchainSettings:ContractAddresses:CuocBauCuFactory"];
                 if (string.IsNullOrEmpty(factoryAddress))
                 {

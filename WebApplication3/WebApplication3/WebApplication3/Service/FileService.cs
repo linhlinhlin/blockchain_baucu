@@ -1,4 +1,3 @@
-﻿using AutoMapper;
 using WebApplication3.Models;
 using WebApplication3.Repositories;
 
@@ -8,13 +7,10 @@ namespace WebApplication3.Services
     {
         private readonly IAzureBlobService _azureBlobService;
         private readonly IFileRepository _fileRepository;
-        private readonly IMapper _mapper;
-
-        public FileService(IAzureBlobService azureBlobService, IFileRepository fileRepository, IMapper mapper)
+        public FileService(IAzureBlobService azureBlobService, IFileRepository fileRepository)
         {
             _azureBlobService = azureBlobService;
             _fileRepository = fileRepository;
-            _mapper = mapper;
         }
 
         public async Task<UploadFileOutputDTO> UploadFileAsync(UploadFileInputDTO inputDto)
@@ -79,7 +75,17 @@ namespace WebApplication3.Services
         public async Task<IEnumerable<UploadFileOutputDTO>> GetAllFilesAsync()
         {
             var files = await _fileRepository.GetAllAsync();
-            return _mapper.Map<IEnumerable<UploadFileOutputDTO>>(files);
+            return files.Select(file => new UploadFileOutputDTO
+            {
+                TenFileDuocTao = file.TenFileDuocTao,
+                TenFileGoc = file.TenFileGoc,
+                FileUrl = file.FileURL,
+                NoiDungType = file.NoiDungType,
+                KichThuoc = file.KichThuoc,
+                NgayUpload = new DateTimeOffset(DateTime.SpecifyKind(file.NgayUpload, DateTimeKind.Utc)),
+                KichThuocHienThi = file.KichThuocHienThi,
+                NgayHienThi = file.NgayHienThi
+            }).ToList();
         }
 
         public async Task<IEnumerable<AzureBlobItemDTO>> GetAllAzureFilesAsync()

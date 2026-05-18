@@ -1,290 +1,154 @@
 'use client';
 
 import type React from 'react';
-
-import { useState, useEffect } from 'react';
-import { NavLink, Link, useSearchParams, useLocation } from 'react-router-dom';
-import { FaSignInAlt, FaList, FaHome, FaSearch, FaBars, FaTimes } from 'react-icons/fa';
-import { HiOutlineCube } from 'react-icons/hi';
+import { useState } from 'react';
+import { Link, NavLink, useLocation, useSearchParams } from 'react-router-dom';
+import { Home, ListChecks, LogIn, Menu, Search, ShieldCheck, X } from 'lucide-react';
 import { useSelector } from 'react-redux';
 import type { RootState } from '../store/store';
 import UserMenu from './UserMenu';
-import { Button } from '../components/ui/Button';
+import { Button } from './ui/Button';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from '../components/ui/Dropdown-Menu';
-import { Input } from '../components/ui/Input';
-import ThemeToggle from './ThemeToggle';
-import { useTheme } from '../context/ThemeContext';
+} from './ui/Dropdown-Menu';
+import { Input } from './ui/Input';
+
+const navItems = [
+  { to: '/', label: 'Trang chủ', icon: <Home className="h-4 w-4" /> },
+  { to: '/elections', label: 'Cuộc bầu cử', icon: <ListChecks className="h-4 w-4" /> },
+];
 
 export default function Header() {
   const [, setSearchParams] = useSearchParams();
   const [searchTerm, setSearchTerm] = useState('');
-  const [isScrolled, setIsScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const location = useLocation();
   const user = useSelector((state: RootState) => state.dangNhapTaiKhoan.taiKhoan);
-  const { theme } = useTheme();
-
-  useEffect(() => {
-    const handleScroll = () => {
-      setIsScrolled(window.scrollY > 10);
-    };
-
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
+  const showElectionSearch = location.pathname === '/elections';
 
   const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const value = event.target.value;
     setSearchTerm(value);
-    setSearchParams({ search: value });
+    setSearchParams(value.trim() ? { search: value.trim() } : {});
   };
 
-  const isCurrentPath = (path: string) => location.pathname === path;
-
-  const headerBg =
-    theme === 'dark'
-      ? isScrolled
-        ? 'bg-[#0A1416]/80 backdrop-blur-md shadow-[0_4px_30px_rgba(2,136,209,0.2)]'
-        : 'bg-transparent'
-      : isScrolled
-        ? 'bg-white/80 backdrop-blur-md shadow-[0_4px_30px_rgba(2,136,209,0.1)]'
-        : 'bg-transparent';
-
   return (
-    <header className={`sticky top-0 z-40 w-full transition-all duration-500 ${headerBg}`}>
-      <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-        {/* Logo and Brand */}
-        <Link to="/" className="flex items-center space-x-3 group">
-          <div className="relative">
-            <div className="absolute inset-0 bg-gradient-to-r from-[#0288D1] to-[#6A1B9A] rounded-full blur-md opacity-70 group-hover:opacity-100 transition-opacity duration-300"></div>
-            <div
-              className={`relative rounded-full p-2 border border-[#0288D1]/30 group-hover:border-[#0288D1] transition-colors duration-300 ${
-                theme === 'dark' ? 'bg-[#0A1416]' : 'bg-white'
-              }`}
-            >
-              <HiOutlineCube className="h-8 w-8 text-[#0288D1] group-hover:text-[#E1F5FE] transition-colors duration-300" />
-            </div>
-          </div>
-          <div className="flex flex-col">
-            <span
-              className={`font-bold text-xl tracking-wider ${
-                theme === 'dark' ? 'text-white' : 'text-[#0A1416]'
-              }`}
-            >
-              BLOCKCHAIN
-            </span>
-            <span className="text-xs text-[#B0BEC5] tracking-widest">BẦU CỬ MINH BẠCH</span>
-          </div>
+    <header className="sticky top-0 z-40 bg-black text-white">
+      <div className="mx-auto flex h-11 max-w-[1440px] items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
+        <Link to={user ? '/app' : '/'} className="flex min-w-0 items-center gap-2 text-white/90">
+          <ShieldCheck className="h-4 w-4 shrink-0" aria-hidden="true" />
+          <span className="truncate text-xs font-normal tracking-[-0.01em]">HoLiHu BlockVote</span>
         </Link>
 
-        {/* Desktop Navigation */}
-        <nav className="hidden md:flex items-center space-x-8">
-          <NavLink
-            to={user ? '/app' : '/'}
-            className={({ isActive }) =>
-              `text-base font-medium transition-all duration-300 relative group ${
-                isActive
-                  ? 'text-[#0288D1]'
-                  : theme === 'dark'
-                    ? 'text-white hover:text-[#0288D1]'
-                    : 'text-[#0A1416] hover:text-[#0288D1]'
-              } ${isCurrentPath(user ? '/app' : '/') ? 'pointer-events-none' : ''}`
-            }
-          >
-            <div className="flex items-center space-x-2">
-              <FaHome className="text-lg" />
-              <span>{user ? 'Trang Chủ Bầu Cử' : 'Trang Chủ'}</span>
-            </div>
-            <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-to-r from-[#0288D1] to-[#6A1B9A] group-hover:w-full transition-all duration-300"></span>
-          </NavLink>
-
-          <NavLink
-            to="/elections"
-            className={({ isActive }) =>
-              `text-base font-medium transition-all duration-300 relative group ${
-                isActive
-                  ? 'text-[#0288D1]'
-                  : theme === 'dark'
-                    ? 'text-white hover:text-[#0288D1]'
-                    : 'text-[#0A1416] hover:text-[#0288D1]'
-              } ${isCurrentPath('/elections') ? 'pointer-events-none' : ''}`
-            }
-          >
-            <div className="flex items-center space-x-2">
-              <FaList className="text-lg" />
-              <span>Xem Các Cuộc Bầu Cử</span>
-            </div>
-            <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-to-r from-[#0288D1] to-[#6A1B9A] group-hover:w-full transition-all duration-300"></span>
-          </NavLink>
-
-          {!user ? (
+        <nav className="hidden items-center gap-5 md:flex" aria-label="Điều hướng chính">
+          {navItems.map((item) => (
             <NavLink
-              to="/login"
-              className="px-6 py-2 bg-gradient-to-r from-[#0288D1] to-[#6A1B9A] rounded-full text-white font-medium text-base flex items-center gap-2 shadow-[0_0_15px_rgba(2,136,209,0.3)] hover:shadow-[0_0_25px_rgba(2,136,209,0.5)] transition-all duration-300 hover:scale-105 active:scale-95"
+              key={item.to}
+              to={item.to}
+              className={({ isActive }) =>
+                `inline-flex min-h-8 items-center gap-1.5 text-xs font-normal tracking-[-0.01em] transition-colors duration-150 ${
+                  isActive ? 'text-white' : 'text-white/70 hover:text-white'
+                }`
+              }
             >
-              <FaSignInAlt className="text-lg" />
-              <span>Đăng Nhập</span>
+              {item.icon}
+              {item.label}
             </NavLink>
-          ) : (
-            <UserMenu />
-          )}
-
-          {/* Theme Toggle */}
-          <ThemeToggle />
+          ))}
         </nav>
 
-        {/* Search and Mobile Menu */}
-        <div className="flex items-center space-x-6">
-          {location.pathname === '/elections' && (
-            <div className="relative hidden md:block">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <FaSearch className="text-[#0288D1] text-lg" />
-              </div>
+        <div className="hidden min-w-0 items-center justify-end gap-3 md:flex">
+          {showElectionSearch && (
+            <div className="relative w-60">
+              <Search className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-white/50" />
               <Input
-                type="text"
-                placeholder="Tìm kiếm cuộc bầu cử"
+                type="search"
+                name="election-search"
+                autoComplete="off"
+                placeholder="Tìm cuộc bầu cử..."
                 value={searchTerm}
                 onChange={handleSearchChange}
-                className={`w-72 pl-10 pr-4 py-2 border border-[#455A64] focus:border-[#0288D1] rounded-full placeholder-[#B0BEC5] focus:ring-[#0288D1]/30 focus:ring-2 outline-none transition-all duration-300 ${
-                  theme === 'dark' ? 'bg-[#263238]/80 text-white' : 'bg-white/90 text-[#0A1416]'
-                }`}
+                className="h-8 rounded-full border-white/10 bg-white/10 pl-9 text-xs text-white placeholder:text-white/45"
               />
             </div>
           )}
 
-          {/* Mobile Menu Button */}
-          <DropdownMenu open={menuOpen} onOpenChange={setMenuOpen}>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="md:hidden relative">
-                <div className="absolute inset-0 bg-[#0288D1]/10 rounded-full blur-md opacity-0 hover:opacity-70 transition-opacity duration-300"></div>
-                <div
-                  className={`relative rounded-full p-2 border border-[#455A64] hover:border-[#0288D1] transition-colors duration-300 ${
-                    theme === 'dark' ? 'bg-[#263238]/80' : 'bg-white/90'
-                  }`}
-                >
-                  {menuOpen ? (
-                    <FaTimes
-                      className={theme === 'dark' ? 'text-white h-5 w-5' : 'text-[#0A1416] h-5 w-5'}
-                    />
-                  ) : (
-                    <FaBars
-                      className={theme === 'dark' ? 'text-white h-5 w-5' : 'text-[#0A1416] h-5 w-5'}
-                    />
-                  )}
-                </div>
-                <span className="sr-only">Mở menu</span>
-              </Button>
-            </DropdownMenuTrigger>
-
-            {/* Mobile Menu Dropdown */}
-            <DropdownMenuContent
-              align="end"
-              className={`w-72 backdrop-blur-md border border-[#455A64] rounded-xl shadow-[0_10px_25px_rgba(0,0,0,0.5)] p-4 mt-2 z-50 ${
-                theme === 'dark' ? 'bg-[#263238]/95' : 'bg-white/95'
-              }`}
-              onClick={(e) => e.stopPropagation()}
+          {user ? (
+            <UserMenu />
+          ) : (
+            <NavLink
+              to="/login"
+              className="inline-flex min-h-8 items-center justify-center gap-1.5 rounded-full bg-[#1d1d1f] px-3 text-xs font-normal text-white transition-transform duration-150 hover:bg-[#2a2a2c] active:scale-95"
             >
-              <div className="space-y-4">
-                <DropdownMenuItem
-                  asChild
-                  className={`hover:bg-[#37474F] rounded-lg transition-colors duration-200 p-3 ${
-                    theme === 'dark' ? '' : 'hover:bg-[#E1F5FE]'
-                  }`}
-                  onClick={() => setMenuOpen(false)}
-                >
-                  <NavLink
-                    to={user ? '/app' : '/'}
-                    className={`flex items-center space-x-3 ${
-                      theme === 'dark'
-                        ? 'text-white hover:text-[#0288D1]'
-                        : 'text-[#0A1416] hover:text-[#0288D1]'
-                    }`}
-                  >
-                    <FaHome className="text-xl text-[#0288D1]" />
-                    <span>{user ? 'Trang Chủ Bầu Cử' : 'Trang Chủ'}</span>
-                  </NavLink>
-                </DropdownMenuItem>
+              <LogIn className="h-3.5 w-3.5" aria-hidden="true" />
+              Đăng nhập
+            </NavLink>
+          )}
+        </div>
 
-                <DropdownMenuItem
-                  asChild
-                  className={`hover:bg-[#37474F] rounded-lg transition-colors duration-200 p-3 ${
-                    theme === 'dark' ? '' : 'hover:bg-[#E1F5FE]'
-                  }`}
-                  onClick={() => setMenuOpen(false)}
-                >
-                  <NavLink
-                    to="/elections"
-                    className={`flex items-center space-x-3 ${
-                      theme === 'dark'
-                        ? 'text-white hover:text-[#0288D1]'
-                        : 'text-[#0A1416] hover:text-[#0288D1]'
-                    }`}
-                  >
-                    <FaList className="text-xl text-[#0288D1]" />
-                    <span>Xem Các Cuộc Bầu Cử</span>
-                  </NavLink>
-                </DropdownMenuItem>
+        <DropdownMenu open={menuOpen} onOpenChange={setMenuOpen}>
+          <DropdownMenuTrigger asChild>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8 text-white hover:bg-white/10 md:hidden"
+              aria-label={menuOpen ? 'Đóng menu' : 'Mở menu'}
+            >
+              {menuOpen ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent
+            align="end"
+            className="w-72 rounded-[18px] border-[var(--clay-border)] bg-white p-3 text-black"
+          >
+            {navItems.map((item) => (
+              <DropdownMenuItem key={item.to} asChild onClick={() => setMenuOpen(false)}>
+                <NavLink to={item.to} className="flex min-h-11 items-center gap-3 rounded-full px-3 py-3 text-sm font-normal">
+                  {item.icon}
+                  {item.label}
+                </NavLink>
+              </DropdownMenuItem>
+            ))}
 
-                {!user ? (
-                  <DropdownMenuItem
-                    asChild
-                    className={`hover:bg-[#37474F] rounded-lg transition-colors duration-200 p-3 ${
-                      theme === 'dark' ? '' : 'hover:bg-[#E1F5FE]'
-                    }`}
-                    onClick={() => setMenuOpen(false)}
-                  >
-                    <NavLink
-                      to="/login"
-                      className={`flex items-center space-x-3 ${
-                        theme === 'dark'
-                          ? 'text-white hover:text-[#0288D1]'
-                          : 'text-[#0A1416] hover:text-[#0288D1]'
-                      }`}
-                    >
-                      <FaSignInAlt className="text-xl text-[#0288D1]" />
-                      <span>Đăng Nhập</span>
-                    </NavLink>
-                  </DropdownMenuItem>
-                ) : (
-                  <div className="p-3">
-                    <UserMenu inMobileMenu={true} />
-                  </div>
-                )}
-
-                {location.pathname === '/elections' && (
-                  <div className="relative mt-4 p-3">
-                    <div className="absolute inset-y-0 left-3 pl-3 flex items-center pointer-events-none">
-                      <FaSearch className="text-[#0288D1] text-lg" />
-                    </div>
-                    <Input
-                      type="text"
-                      placeholder="Tìm kiếm cuộc bầu cử"
-                      value={searchTerm}
-                      onChange={handleSearchChange}
-                      className={`w-full pl-10 pr-4 py-2 border border-[#455A64] focus:border-[#0288D1] rounded-full placeholder-[#B0BEC5] focus:ring-[#0288D1]/30 focus:ring-2 outline-none transition-all duration-300 ${
-                        theme === 'dark' ? 'bg-[#37474F] text-white' : 'bg-white text-[#0A1416]'
-                      }`}
-                    />
-                  </div>
-                )}
-
-                {/* Theme Toggle in Mobile Menu */}
-                <div className="flex justify-center mt-4">
-                  <ThemeToggle />
+            {showElectionSearch && (
+              <div className="px-2 py-3">
+                <label htmlFor="mobile-election-search" className="mb-2 block text-xs font-semibold text-[var(--clay-muted)]">
+                  Tìm kiếm
+                </label>
+                <div className="relative">
+                  <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--clay-muted)]" />
+                  <Input
+                    id="mobile-election-search"
+                    type="search"
+                    name="mobile-election-search"
+                    autoComplete="off"
+                    placeholder="Tìm cuộc bầu cử..."
+                    value={searchTerm}
+                    onChange={handleSearchChange}
+                    className="h-11 rounded-full border-[var(--clay-border)] bg-white pl-10 text-sm"
+                  />
                 </div>
               </div>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
-      </div>
+            )}
 
-      {/* Animated Border Bottom */}
-      <div className="h-[1px] w-full bg-gradient-to-r from-transparent via-[#0288D1]/50 to-transparent"></div>
+            <div className="mt-2 border-t border-[var(--clay-border)] pt-3">
+              {user ? (
+                <UserMenu inMobileMenu />
+              ) : (
+                <DropdownMenuItem asChild onClick={() => setMenuOpen(false)}>
+                  <NavLink to="/login" className="flex min-h-11 items-center gap-3 rounded-full px-3 py-3 text-sm font-normal">
+                    <LogIn className="h-4 w-4" />
+                    Đăng nhập
+                  </NavLink>
+                </DropdownMenuItem>
+              )}
+            </div>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
     </header>
   );
 }

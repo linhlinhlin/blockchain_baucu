@@ -16,7 +16,7 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   // Lấy theme từ localStorage hoặc mặc định là 'dark'
   const [theme, setTheme] = useState<ThemeType>(() => {
     const savedTheme = localStorage.getItem('theme');
-    return (savedTheme as ThemeType) || 'dark';
+    return (savedTheme as ThemeType) || 'light';
   });
 
   // Cập nhật class trên document.documentElement khi theme thay đổi

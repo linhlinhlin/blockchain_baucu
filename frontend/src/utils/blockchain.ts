@@ -1,4 +1,5 @@
 import { ethers } from 'ethers';
+import { encodeUTF8Base64 } from './vietnamese-utf8-utils';
 
 // Địa chỉ và ABI của các smart contract
 export const QUAN_LY_PHIEU_BAU_ADDRESS = '0x9c244B5E1F168510B9b812573b1B667bd1E654c8';
@@ -250,7 +251,7 @@ export async function getMockBallotIPFSLinks(): Promise<
   { tokenId: number; tokenURI: string; processedURI: string }[]
 > {
   // Tạo một data URI mẫu với JSON tiếng Việt bị lỗi mã hóa
-  const sampleJsonBase64 = btoa(`{
+  const sampleJsonBase64 = encodeUTF8Base64(`{
     "name": "Phiếu bầu cử HoLiHu #123",
     "description": "Phiếu bầu cử chính thức cho cuộc bầu cử Ban chấp hành 2025",
     "image": "ipfs://QmaWEMdg5Y1Fin1h4JxuMLDDYLEkTSD4uAV5ErkWiGhHHg",

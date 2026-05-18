@@ -23,6 +23,7 @@ const Html5QrcodeWrapper: React.FC<Html5QrcodeWrapperProps> = ({
   onError,
 }) => {
   const scannerRef = useRef<Html5QrcodeScanner | null>(null);
+  const lastErrorRef = useRef<string | null>(null);
   const [isScanning, setIsScanning] = useState(false);
   const [isInitializing, setIsInitializing] = useState(true);
 
@@ -67,6 +68,7 @@ const Html5QrcodeWrapper: React.FC<Html5QrcodeWrapperProps> = ({
         height: 2px;
         background: #0ea5e9;
         animation: scan 2s linear infinite;
+        will-change: transform;
       }
       @keyframes scan {
         0% { transform: translateY(-100px); }
@@ -81,10 +83,12 @@ const Html5QrcodeWrapper: React.FC<Html5QrcodeWrapperProps> = ({
         cursor: pointer;
         font-size: 16px;
         margin: 16px 0;
-        transition: all 0.2s;
+        transition: background-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
       }
       #reader__camera_permission_button:hover {
         background: #0284c7;
+        box-shadow: 0 10px 30px rgba(14, 165, 233, 0.28);
+        transform: translateY(-1px);
       }
       #reader__dashboard {
         padding: 16px !important;
@@ -111,6 +115,17 @@ const Html5QrcodeWrapper: React.FC<Html5QrcodeWrapperProps> = ({
         width: 100%;
         margin-bottom: 16px;
       }
+      @media (prefers-reduced-motion: reduce) {
+        #reader__scan_region::after {
+          animation: none;
+        }
+        #reader__camera_permission_button {
+          transition: background-color 0.2s ease;
+        }
+        #reader__camera_permission_button:hover {
+          transform: none;
+        }
+      }
     `;
     document.head.appendChild(style);
 
@@ -128,9 +143,9 @@ const Html5QrcodeWrapper: React.FC<Html5QrcodeWrapperProps> = ({
       'reader',
       {
         fps,
-        qrbox: qrBoxFunction,
+        qrbox: qrbox ?? qrBoxFunction,
         aspectRatio: 1,
-        disableFlip: false,
+        disableFlip,
         showTorchButtonIfSupported: true,
         showZoomSliderIfSupported: true,
       },
@@ -142,7 +157,14 @@ const Html5QrcodeWrapper: React.FC<Html5QrcodeWrapperProps> = ({
       onScan(decodedText, decodedResult);
     };
 
-    const onScanError = (errorMessage: string, error: any) => {};
+    const onScanError = (errorMessage: string, error: any) => {
+      if (!errorMessage || lastErrorRef.current === errorMessage) {
+        return;
+      }
+
+      lastErrorRef.current = errorMessage;
+      onError(errorMessage, error);
+    };
 
     scannerRef.current.render(onScanSuccess, onScanError);
     setIsScanning(true);
@@ -157,7 +179,7 @@ const Html5QrcodeWrapper: React.FC<Html5QrcodeWrapperProps> = ({
       }
       document.head.removeChild(style);
     };
-  }, [fps, verbose, onScan, onError]); // Removed unnecessary dependencies: qrbox, disableFlip
+  }, [disableFlip, fps, onError, onScan, qrbox, verbose]);
 
   return (
     <div className="relative text-gray-300">

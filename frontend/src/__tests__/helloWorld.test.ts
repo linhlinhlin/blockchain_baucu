@@ -1,5 +1,5 @@
 import { helloWorld } from '../helloWorld';
 
-test('returns "Hello, World!"', () => {
-  expect(helloWorld()).toBe('Hello, World!');
+test('returns the greeting copy used by the app smoke test', () => {
+  expect(helloWorld()).toBe('Hello, world!');
 });

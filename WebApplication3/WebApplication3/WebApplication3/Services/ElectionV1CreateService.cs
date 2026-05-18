@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using System.Globalization;
 using System.Security.Claims;
+using System.Text;
 using System.Text.RegularExpressions;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
@@ -18,6 +19,7 @@ public sealed class ElectionV1CreateService
     private readonly string _nodeCommand;
     private readonly bool _developmentAuthEnabled;
     private readonly bool _isDevelopmentEnvironment;
+    private readonly string? _sepoliaRpcUrl;
 
     public ElectionV1CreateService(
         IConfiguration configuration,
@@ -42,6 +44,7 @@ public sealed class ElectionV1CreateService
             ?? (OperatingSystem.IsWindows() ? "node.exe" : "node");
         _developmentAuthEnabled = configuration.GetValue<bool>("DevelopmentAuthSettings:Enabled");
         _isDevelopmentEnvironment = environment.IsDevelopment();
+        _sepoliaRpcUrl = configuration["ElectionV1Settings:RpcUrl"];
     }
 
     public async Task<ElectionV1CreateResult> CreateElectionAsync(
@@ -153,6 +156,7 @@ public sealed class ElectionV1CreateService
         await File.WriteAllTextAsync(
             inputPath,
             JsonConvert.SerializeObject(inputPayload, Formatting.Indented),
+            new UTF8Encoding(false),
             cancellationToken);
 
         var process = new Process
@@ -209,6 +213,12 @@ public sealed class ElectionV1CreateService
         startInfo.ArgumentList.Add(workingDirectory);
         startInfo.Environment["ELECTION_REQUESTER_USER_ID"] = userId.ToString(CultureInfo.InvariantCulture);
         startInfo.Environment["ELECTION_REQUESTER_ADDRESS"] = adminWalletAddress;
+
+        // Forward RPC URL from configuration if not already in environment
+        if (!string.IsNullOrWhiteSpace(_sepoliaRpcUrl) && !startInfo.Environment.ContainsKey("SEPOLIA_RPC_URL"))
+        {
+            startInfo.Environment["SEPOLIA_RPC_URL"] = _sepoliaRpcUrl;
+        }
 
         return startInfo;
     }
@@ -384,17 +394,17 @@ public sealed class ElectionV1CreateService
 
     private static bool UserOwnsWallet(ClaimsPrincipal user, string walletAddress, bool allowDevelopmentBypass)
     {
+        if (allowDevelopmentBypass)
+        {
+            return true;
+        }
+
         var claimWallets = user
             .FindAll("DiaChiVi")
             .Select(claim => claim.Value)
             .Where(value => !string.IsNullOrWhiteSpace(value))
             .Select(NormalizeAddress)
             .ToList();
-
-        if (claimWallets.Count == 0 && allowDevelopmentBypass)
-        {
-            return true;
-        }
 
         return claimWallets.Any(value => string.Equals(value, walletAddress, StringComparison.OrdinalIgnoreCase));
     }

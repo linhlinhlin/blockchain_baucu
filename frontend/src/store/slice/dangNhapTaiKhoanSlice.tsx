@@ -32,6 +32,13 @@ const trangThaiBanDau: TrangThaiDangNhap = {
   loi: null,
 };
 
+const extractApiErrorMessage = (error: any, fallback: string) =>
+  error?.response?.data?.message ||
+  error?.response?.data?.Message ||
+  error?.response?.data?.error ||
+  error?.message ||
+  fallback;
+
 const taoPhienDangNhapTam = (user: TaiKhoan, accessToken: string): PhienDangNhap => ({
   id: `dev-session-${user.id}`,
   taiKhoanId: user.id,
@@ -63,7 +70,7 @@ export const login = createAsyncThunk(
       localStorage.setItem('isLoggedOut', 'false');
       return { ...response, phienDangNhap: latestSession };
     } catch (error: any) {
-      return rejectWithValue(error.response?.data?.message || 'Lỗi khi đăng nhập');
+      return rejectWithValue(extractApiErrorMessage(error, 'Lỗi khi đăng nhập'));
     }
   },
 );
@@ -88,7 +95,7 @@ export const loginWithMetaMask = createAsyncThunk(
 
       return { accessToken: data.accessToken, user: data.user, phienDangNhap: latestSession };
     } catch (error: any) {
-      return rejectWithValue(error.response?.data?.message || 'Lỗi khi đăng nhập với MetaMask');
+      return rejectWithValue(extractApiErrorMessage(error, 'Lỗi khi đăng nhập với MetaMask'));
     }
   },
 );
@@ -107,7 +114,7 @@ export const refreshJwtToken = createAsyncThunk(
       localStorage.setItem('isLoggedOut', 'false');
       return { ...response, phienDangNhap: latestSession };
     } catch (error: any) {
-      return rejectWithValue(error.response?.data?.message || 'Lỗi khi làm mới token');
+      return rejectWithValue(extractApiErrorMessage(error, 'Lỗi khi làm mới token'));
     }
   },
 );

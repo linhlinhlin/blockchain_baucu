@@ -86,46 +86,46 @@ type VotePackage = {
 };
 
 function panelClasses() {
-  return 'rounded-3xl border border-white/10 bg-slate-950/70 p-5 shadow-[0_24px_60px_rgba(2,6,23,0.35)] backdrop-blur-xl md:p-6';
+  return 'clay-panel p-5 md:p-6';
 }
 
 function commandButtonClasses(tone: 'dark' | 'accent' | 'outline') {
   const base =
-    'inline-flex items-center justify-center gap-2 rounded-2xl px-4 py-3 text-sm font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-300/80 disabled:cursor-not-allowed disabled:opacity-40';
+    'clay-button inline-flex items-center justify-center gap-2 px-4 py-3 text-sm font-semibold focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-40';
   if (tone === 'accent') {
-    return `${base} bg-orange-500 text-slate-950 hover:-translate-y-0.5 hover:bg-orange-400`;
+    return `${base} clay-button--blueberry`;
   }
   if (tone === 'outline') {
-    return `${base} border border-white/15 bg-white/5 text-slate-100 hover:-translate-y-0.5 hover:bg-white/10`;
+    return `${base} clay-button--ghost`;
   }
-  return `${base} bg-slate-900 text-white hover:-translate-y-0.5 hover:bg-slate-800`;
+  return `${base} clay-button--matcha`;
 }
 
 function messagePanelClasses(message: string) {
   const normalized = message.toLowerCase();
   if (normalized.includes('thanh cong') || normalized.includes('success')) {
-    return 'border-emerald-400/40 bg-emerald-500/10 text-emerald-50';
+    return 'border-[rgba(2,73,42,0.18)] bg-[rgba(132,231,165,0.24)] text-[var(--clay-matcha-dark)]';
   }
   if (normalized.includes('loi') || normalized.includes('error') || normalized.includes('fail') || normalized.includes('revert')) {
-    return 'border-rose-400/40 bg-rose-500/10 text-rose-50';
+    return 'border-[rgba(252,121,129,0.22)] bg-[rgba(252,121,129,0.18)] text-[var(--clay-text)]';
   }
-  return 'border-cyan-400/30 bg-cyan-500/10 text-cyan-50';
+  return 'border-[rgba(59,211,253,0.22)] bg-[rgba(59,211,253,0.18)] text-[var(--clay-text)]';
 }
 
 function phaseAccentClasses(phaseLabel?: string) {
   switch (phaseLabel) {
     case 'Commit':
-      return 'border-amber-400/40 bg-amber-400/10 text-amber-100';
+      return 'border-[rgba(208,138,17,0.22)] bg-[rgba(248,204,101,0.3)] text-[var(--clay-text)]';
     case 'Reveal':
-      return 'border-sky-400/40 bg-sky-400/10 text-sky-100';
+      return 'border-[rgba(1,65,141,0.2)] bg-[rgba(59,211,253,0.24)] text-[var(--clay-text)]';
     case 'Ended':
-      return 'border-slate-400/40 bg-slate-400/10 text-slate-100';
+      return 'border-[var(--clay-border)] bg-[rgba(255,255,255,0.78)] text-[var(--clay-text)]';
     case 'Finalized':
-      return 'border-emerald-400/40 bg-emerald-400/10 text-emerald-100';
+      return 'border-[rgba(2,73,42,0.18)] bg-[rgba(132,231,165,0.24)] text-[var(--clay-text)]';
     case 'Canceled':
-      return 'border-rose-400/40 bg-rose-400/10 text-rose-100';
+      return 'border-[rgba(252,121,129,0.22)] bg-[rgba(252,121,129,0.18)] text-[var(--clay-text)]';
     default:
-      return 'border-violet-400/40 bg-violet-400/10 text-violet-100';
+      return 'border-[rgba(67,8,159,0.2)] bg-[rgba(193,176,255,0.24)] text-[var(--clay-text)]';
   }
 }
 
@@ -199,13 +199,13 @@ function getErrorMessage(error: unknown) {
   if (maybeError instanceof Error) {
     return maybeError.message;
   }
-  return 'Co loi khong xac dinh.';
+  return 'Có lỗi không xác định.';
 }
 
 async function switchToSepolia(rpcUrl: string) {
   const ethereum = getEthereum();
   if (!ethereum) {
-    throw new Error('MetaMask chua duoc cai dat.');
+    throw new Error('MetaMask chưa được cài đặt.');
   }
 
   try {
@@ -295,31 +295,31 @@ async function loadOnChainStateDirectly(detail: ElectionV1Detail, viewerAddress:
 }
 
 function getCommitReason(detail: ElectionV1Detail | null, walletAddress: string | null, busy: boolean) {
-  if (busy) return 'Dang xu ly giao dich hoac tai du lieu.';
-  if (!walletAddress) return 'Hay ket noi MetaMask truoc.';
-  if (!detail?.onChain?.viewer?.eligible) return 'Vi hien tai khong nam trong danh sach cu tri cua chuc vu nay.';
-  if (detail.onChain.viewer.hasCommitted) return 'Vi nay da commit cho chuc vu nay.';
-  if (detail.onChain.phaseLabel !== 'Commit') return `Phase hien tai la ${detail.onChain.phaseLabel}, chua the commit.`;
+  if (busy) return 'Đang xử lý giao dịch hoặc tải dữ liệu.';
+  if (!walletAddress) return 'Hãy kết nối MetaMask trước.';
+  if (!detail?.onChain?.viewer?.eligible) return 'Ví hiện tại không nằm trong danh sách cử tri của chức vụ này.';
+  if (detail.onChain.viewer.hasCommitted) return 'Ví này đã commit cho chức vụ này.';
+  if (detail.onChain.phaseLabel !== 'Commit') return `Giai đoạn hiện tại là ${detail.onChain.phaseLabel}, chưa thể commit.`;
   return null;
 }
 
 function getRevealReason(detail: ElectionV1Detail | null, walletAddress: string | null, votePackage: VotePackage | null, busy: boolean) {
-  if (busy) return 'Dang xu ly giao dich hoac tai du lieu.';
-  if (!walletAddress) return 'Hay ket noi MetaMask truoc.';
-  if (!votePackage) return 'Khong tim thay vote package cuc bo cho vi nay.';
-  if (!detail?.onChain?.viewer?.hasCommitted) return 'Vi nay chua commit.';
-  if (detail.onChain.viewer.hasRevealed) return 'Vi nay da reveal roi.';
-  if (detail.onChain.phaseLabel !== 'Reveal') return `Phase hien tai la ${detail.onChain.phaseLabel}, chua the reveal.`;
+  if (busy) return 'Đang xử lý giao dịch hoặc tải dữ liệu.';
+  if (!walletAddress) return 'Hãy kết nối MetaMask trước.';
+  if (!votePackage) return 'Không tìm thấy vote package cục bộ cho ví này.';
+  if (!detail?.onChain?.viewer?.hasCommitted) return 'Ví này chưa commit.';
+  if (detail.onChain.viewer.hasRevealed) return 'Ví này đã reveal rồi.';
+  if (detail.onChain.phaseLabel !== 'Reveal') return `Giai đoạn hiện tại là ${detail.onChain.phaseLabel}, chưa thể reveal.`;
   return null;
 }
 
 function getFinalizeReason(detail: ElectionV1Detail | null, walletAddress: string | null, busy: boolean) {
-  if (busy) return 'Dang xu ly giao dich hoac tai du lieu.';
-  if (!walletAddress) return 'Hay ket noi MetaMask truoc.';
-  if (!detail?.onChain) return 'Chua tai duoc trang thai election.';
-  if (detail.onChain.finalized) return 'Election da finalized.';
-  if (detail.onChain.canceled) return 'Election da bi huy.';
-  if (detail.onChain.phaseLabel !== 'Ended') return `Phase hien tai la ${detail.onChain.phaseLabel}, chua the finalize.`;
+  if (busy) return 'Đang xử lý giao dịch hoặc tải dữ liệu.';
+  if (!walletAddress) return 'Hãy kết nối MetaMask trước.';
+  if (!detail?.onChain) return 'Chưa tải được trạng thái election.';
+  if (detail.onChain.finalized) return 'Election đã finalized.';
+  if (detail.onChain.canceled) return 'Election đã bị hủy.';
+  if (detail.onChain.phaseLabel !== 'Ended') return `Giai đoạn hiện tại là ${detail.onChain.phaseLabel}, chưa thể finalize.`;
   return null;
 }
 
@@ -335,7 +335,7 @@ export default function QuanLySmartContractPage() {
   const [connectedAccount, setConnectedAccount] = useState<string | null>(null);
   const [walletBalance, setWalletBalance] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
-  const [message, setMessage] = useState('San sang.');
+  const [message, setMessage] = useState('Sẵn sàng.');
   const [votePackageRevision, setVotePackageRevision] = useState(0);
 
   const storedVotePackage = useMemo(() => {
@@ -401,11 +401,11 @@ export default function QuanLySmartContractPage() {
       const nextAccount = accounts[0] ?? null;
       setConnectedAccount(nextAccount);
       setVotePackageRevision((current) => current + 1);
-      setMessage(nextAccount ? `Da chuyen vi sang ${nextAccount}` : 'MetaMask da ngat ket noi.');
+      setMessage(nextAccount ? `Đã chuyển ví sang ${nextAccount}` : 'MetaMask đã ngắt kết nối.');
     };
 
     const handleChainChanged = () => {
-      setMessage('Mang blockchain da thay doi. Dang tai lai du lieu ballot.');
+      setMessage('Mạng blockchain đã thay đổi. Đang tải lại dữ liệu ballot.');
       if (selectedElectionAddress) {
         void refreshElection(selectedElectionAddress, getEthereum()?.selectedAddress ?? connectedAccount);
       }
@@ -462,7 +462,7 @@ export default function QuanLySmartContractPage() {
         payload = { ...payload, onChain: directOnChain };
       } catch (error) {
         if (!payload.onChain) {
-          setMessage(`Khong dong bo duoc on-chain state tu frontend: ${getErrorMessage(error)}`);
+          setMessage(`Không đồng bộ được on-chain state từ frontend: ${getErrorMessage(error)}`);
         }
       }
       setDetail(payload);
@@ -505,7 +505,7 @@ export default function QuanLySmartContractPage() {
       await switchToSepolia(rpcUrl);
       const ethereum = getEthereum();
       if (!ethereum) {
-        throw new Error('MetaMask chua duoc cai dat.');
+        throw new Error('MetaMask chưa được cài đặt.');
       }
       const accounts = (await ethereum.request({ method: 'eth_requestAccounts' })) as string[];
       const nextAccount = accounts[0] ?? null;
@@ -513,7 +513,7 @@ export default function QuanLySmartContractPage() {
       if (nextAccount) {
         await loadWalletBalance(nextAccount, rpcUrl);
       }
-      setMessage(nextAccount ? `Da ket noi vi ${nextAccount}` : 'Khong tim thay tai khoan MetaMask.');
+      setMessage(nextAccount ? `Đã kết nối ví ${nextAccount}` : 'Không tìm thấy tài khoản MetaMask.');
     } catch (error) {
       setMessage(getErrorMessage(error));
     }
@@ -522,7 +522,7 @@ export default function QuanLySmartContractPage() {
   async function getSignerContext() {
     const ethereum = getEthereum();
     if (!ethereum) {
-      throw new Error('MetaMask chua duoc cai dat.');
+      throw new Error('MetaMask chưa được cài đặt.');
     }
 
     await switchToSepolia(publicConfig?.rpcUrl ?? DEFAULT_RPC_URL);
@@ -530,7 +530,7 @@ export default function QuanLySmartContractPage() {
     await provider.send('eth_requestAccounts', []);
     const network = await provider.getNetwork();
     if (Number(network.chainId) !== TARGET_CHAIN_ID) {
-      throw new Error('MetaMask chua o dung mang Sepolia.');
+      throw new Error('MetaMask chưa ở đúng mạng Sepolia.');
     }
     const signer = await provider.getSigner();
     const address = await signer.getAddress();
@@ -547,7 +547,7 @@ export default function QuanLySmartContractPage() {
       const { signer, address } = await getSignerContext();
       const proofPayload = await getElectionV1Proof(detail.address, address);
       if (!proofPayload.eligible || proofPayload.proof.length === 0) {
-        throw new Error('Vi hien tai khong nam trong Merkle whitelist cua election nay.');
+        throw new Error('Ví hiện tại không nằm trong Merkle whitelist của election này.');
       }
       const contract = new ethers.Contract(detail.address, electionV1Abi, signer);
       const salt = createRandomBytes32();
@@ -568,7 +568,7 @@ export default function QuanLySmartContractPage() {
       setVotePackageRevision((current) => current + 1);
       await refreshElection(detail.address, address);
       await loadWalletBalance(address, publicConfig?.rpcUrl ?? DEFAULT_RPC_URL);
-      setMessage(`Commit thanh cong: ${tx.hash}`);
+      setMessage(`Commit thành công: ${tx.hash}`);
     } catch (error) {
       setMessage(getErrorMessage(error));
     } finally {
@@ -596,7 +596,7 @@ export default function QuanLySmartContractPage() {
       setVotePackageRevision((current) => current + 1);
       await refreshElection(detail.address, address);
       await loadWalletBalance(address, publicConfig?.rpcUrl ?? DEFAULT_RPC_URL);
-      setMessage(`Reveal thanh cong: ${tx.hash}`);
+      setMessage(`Reveal thành công: ${tx.hash}`);
     } catch (error) {
       setMessage(getErrorMessage(error));
     } finally {
@@ -616,7 +616,7 @@ export default function QuanLySmartContractPage() {
       await tx.wait();
       await refreshElection(detail.address, address);
       await loadWalletBalance(address, publicConfig?.rpcUrl ?? DEFAULT_RPC_URL);
-      setMessage(`Finalize thanh cong: ${tx.hash}`);
+      setMessage(`Finalize thành công: ${tx.hash}`);
     } catch (error) {
       setMessage(getErrorMessage(error));
     } finally {
@@ -645,39 +645,39 @@ export default function QuanLySmartContractPage() {
   const currentPositionTitle = detail?.positionTitle || detail?.manifest?.positionTitle || detail?.title;
 
   return (
-    <div className="min-h-screen overflow-hidden bg-slate-950 text-slate-50">
+    <div className="min-h-screen overflow-hidden text-[var(--clay-text)]">
       <div className="pointer-events-none absolute inset-0">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,_rgba(249,115,22,0.18),_transparent_34%),radial-gradient(circle_at_top_right,_rgba(56,189,248,0.14),_transparent_30%),linear-gradient(180deg,_rgba(15,23,42,0.32),_rgba(2,6,23,0.96))]" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,_rgba(248,204,101,0.3),_transparent_28%),radial-gradient(circle_at_top_right,_rgba(59,211,253,0.18),_transparent_24%),radial-gradient(circle_at_bottom_left,_rgba(193,176,255,0.15),_transparent_22%)]" />
       </div>
 
       <div className="relative mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
         <div className="mb-6 grid gap-6 lg:grid-cols-[minmax(0,1.25fr)_340px]">
           <div className={panelClasses()}>
-            <div className="inline-flex items-center gap-2 rounded-full border border-orange-400/25 bg-orange-500/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.28em] text-orange-100">
+            <div className="clay-badge bg-[rgba(193,176,255,0.42)]">
               <Vote className="h-3.5 w-3.5" />
               Group ballot console
             </div>
-            <h1 className="mt-4 text-3xl font-semibold text-white">Quan ly bieu bau cu nhieu chuc vu</h1>
-            <p className="mt-3 max-w-3xl text-sm leading-7 text-slate-300">
-              Chon mot ballot group, sau do chon tung chuc vu de commit, reveal va finalize. Moi chuc vu la mot child election rieng tren ElectionV1.
+            <h1 className="mt-4 max-w-4xl text-3xl font-extrabold tracking-[-0.05em] text-black md:text-5xl">Quản lý biểu bầu cử nhiều chức vụ</h1>
+            <p className="mt-3 max-w-3xl text-sm leading-7 text-[var(--clay-muted)]">
+              Chọn một ballot group, sau đó chọn từng chức vụ để commit, reveal và finalize. Mỗi chức vụ là một child election riêng trên ElectionV1.
             </p>
 
             <div className="mt-6 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-              <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
-                <p className="text-[11px] uppercase tracking-[0.24em] text-slate-400">Chain</p>
-                <p className="mt-2 text-lg font-semibold text-white">{publicConfig?.chainId ?? TARGET_CHAIN_ID}</p>
+              <div className="rounded-[24px] border border-[var(--clay-border)] bg-[rgba(248,204,101,0.24)] p-4 shadow-[var(--clay-shadow)]">
+                <p className="clay-label">Chain</p>
+                <p className="mt-2 text-lg font-semibold text-black">{publicConfig?.chainId ?? TARGET_CHAIN_ID}</p>
               </div>
-              <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
-                <p className="text-[11px] uppercase tracking-[0.24em] text-slate-400">Factory</p>
-                <p className="mt-2 text-lg font-semibold text-white">{shortenAddress(publicConfig?.factoryAddress)}</p>
+              <div className="rounded-[24px] border border-[var(--clay-border)] bg-[rgba(59,211,253,0.16)] p-4 shadow-[var(--clay-shadow)]">
+                <p className="clay-label">Factory</p>
+                <p className="mt-2 text-lg font-semibold text-black">{shortenAddress(publicConfig?.factoryAddress)}</p>
               </div>
-              <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
-                <p className="text-[11px] uppercase tracking-[0.24em] text-slate-400">Wallet</p>
-                <p className="mt-2 text-lg font-semibold text-white">{shortenAddress(connectedAccount)}</p>
+              <div className="rounded-[24px] border border-[var(--clay-border)] bg-[rgba(132,231,165,0.18)] p-4 shadow-[var(--clay-shadow)]">
+                <p className="clay-label">Wallet</p>
+                <p className="mt-2 text-lg font-semibold text-black">{shortenAddress(connectedAccount)}</p>
               </div>
-              <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
-                <p className="text-[11px] uppercase tracking-[0.24em] text-slate-400">Balance</p>
-                <p className="mt-2 text-lg font-semibold text-white">{walletBalance ? `${walletBalance} SEP` : 'n/a'}</p>
+              <div className="rounded-[24px] border border-[var(--clay-border)] bg-[rgba(252,121,129,0.16)] p-4 shadow-[var(--clay-shadow)]">
+                <p className="clay-label">Balance</p>
+                <p className="mt-2 text-lg font-semibold text-black">{walletBalance ? `${walletBalance} SEP` : 'n/a'}</p>
               </div>
             </div>
           </div>
@@ -686,22 +686,22 @@ export default function QuanLySmartContractPage() {
             <div className="space-y-3">
               <button type="button" onClick={() => void connectWallet()} className={`${commandButtonClasses('dark')} w-full`}>
                 <Wallet className="h-4 w-4" />
-                {connectedAccount ? 'Doi / ket noi lai MetaMask' : 'Ket noi MetaMask'}
+                {connectedAccount ? 'Đổi / kết nối lại MetaMask' : 'Kết nối MetaMask'}
               </button>
 
               <button type="button" onClick={() => void refreshAll()} className={`${commandButtonClasses('outline')} w-full`}>
                 <RefreshCw className="h-4 w-4" />
-                Tai lai ballot
+                Tải lại ballot
               </button>
 
               <Link to="/app/tao-phien-bau-cu" className={`${commandButtonClasses('accent')} w-full`}>
                 <ArrowRight className="h-4 w-4" />
-                Tao ballot moi
+                Tạo ballot mới
               </Link>
             </div>
 
             <div className={`mt-5 rounded-2xl border px-4 py-3 text-sm leading-6 ${messagePanelClasses(message)}`}>
-              <p className="font-semibold text-white/95">Live status</p>
+              <p className="font-semibold text-black">Live status</p>
               <p className="mt-1">{message}</p>
             </div>
           </div>
@@ -709,7 +709,7 @@ export default function QuanLySmartContractPage() {
 
         <div className="grid gap-6 lg:grid-cols-[280px_minmax(0,240px)_minmax(0,1fr)]">
           <div className={panelClasses()}>
-            <p className="text-sm font-semibold text-white">Danh sach ballot</p>
+            <p className="text-sm font-semibold text-black">Danh sách ballot</p>
             <div className="mt-4 space-y-3">
               {groupItems.map((group) => {
                 const active = selectedGroupKey === group.groupKey;
@@ -718,14 +718,18 @@ export default function QuanLySmartContractPage() {
                     key={group.groupKey}
                     type="button"
                     onClick={() => openGroup(group.groupKey)}
-                    className={`w-full rounded-2xl border p-4 text-left transition ${active ? 'border-orange-400/40 bg-orange-500/10' : 'border-white/10 bg-white/[0.03] hover:border-white/20 hover:bg-white/[0.05]'}`}
+                    className={`w-full rounded-[24px] border p-4 text-left shadow-[var(--clay-shadow)] transition ${
+                      active
+                        ? 'border-[rgba(208,138,17,0.25)] bg-[rgba(248,204,101,0.34)]'
+                        : 'border-[var(--clay-border)] bg-[rgba(255,255,255,0.88)] hover:bg-[rgba(132,231,165,0.16)]'
+                    }`}
                   >
                     <div className="flex items-start justify-between gap-3">
                       <div>
-                        <p className="text-sm font-semibold text-white">{group.title}</p>
-                        <p className="mt-1 text-xs text-slate-400">{group.positionCount} chuc vu</p>
+                        <p className="text-sm font-semibold text-black">{group.title}</p>
+                        <p className="mt-1 text-xs text-[var(--clay-muted)]">{group.positionCount} chức vụ</p>
                       </div>
-                      <span className="rounded-full border border-white/10 bg-white/5 px-2 py-1 text-[11px] text-slate-200">
+                      <span className="rounded-full border border-[var(--clay-border)] bg-white px-2 py-1 text-[11px] text-[var(--clay-muted)]">
                         {group.groupKey}
                       </span>
                     </div>
@@ -736,7 +740,7 @@ export default function QuanLySmartContractPage() {
           </div>
 
           <div className={panelClasses()}>
-            <p className="text-sm font-semibold text-white">Chuc vu trong ballot</p>
+            <p className="text-sm font-semibold text-black">Chức vụ trong ballot</p>
             {groupDetail ? (
               <div className="mt-4 space-y-3">
                 {groupDetail.positions.map((position) => {
@@ -746,17 +750,21 @@ export default function QuanLySmartContractPage() {
                       key={position.address}
                       type="button"
                       onClick={() => openGroup(groupDetail.groupKey, position.address)}
-                      className={`w-full rounded-2xl border p-4 text-left transition ${active ? 'border-sky-400/40 bg-sky-500/10' : 'border-white/10 bg-white/[0.03] hover:border-white/20 hover:bg-white/[0.05]'}`}
+                      className={`w-full rounded-[24px] border p-4 text-left shadow-[var(--clay-shadow)] transition ${
+                        active
+                          ? 'border-[rgba(1,65,141,0.22)] bg-[rgba(59,211,253,0.24)]'
+                          : 'border-[var(--clay-border)] bg-[rgba(255,255,255,0.88)] hover:bg-[rgba(193,176,255,0.18)]'
+                      }`}
                     >
-                      <p className="text-sm font-semibold text-white">{position.positionTitle || position.title}</p>
-                      <p className="mt-1 text-xs text-slate-400">{position.candidates.length} ung vien</p>
-                      <p className="mt-2 text-xs text-slate-500">{shortenAddress(position.address)}</p>
+                      <p className="text-sm font-semibold text-black">{position.positionTitle || position.title}</p>
+                      <p className="mt-1 text-xs text-[var(--clay-muted)]">{position.candidates.length} ứng viên</p>
+                      <p className="mt-2 text-xs text-[var(--clay-muted-soft)]">{shortenAddress(position.address)}</p>
                     </button>
                   );
                 })}
               </div>
             ) : (
-              <p className="mt-4 text-sm text-slate-400">Chon mot ballot de xem cac chuc vu.</p>
+              <p className="mt-4 text-sm text-[var(--clay-muted)]">Chọn một ballot để xem các chức vụ.</p>
             )}
           </div>
 
@@ -766,9 +774,9 @@ export default function QuanLySmartContractPage() {
                 <div className="space-y-5">
                   <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                     <div>
-                      <p className="text-xs uppercase tracking-[0.26em] text-slate-500">{groupDetail?.title ?? detail.groupTitle ?? 'Ballot group'}</p>
-                      <h2 className="mt-2 text-2xl font-semibold text-white">{currentPositionTitle}</h2>
-                      <p className="mt-2 text-sm leading-6 text-slate-300">{detail.description || 'Khong co mo ta.'}</p>
+                      <p className="clay-label">{groupDetail?.title ?? detail.groupTitle ?? 'Ballot group'}</p>
+                      <h2 className="mt-2 text-2xl font-bold tracking-[-0.03em] text-black">{currentPositionTitle}</h2>
+                      <p className="mt-2 text-sm leading-6 text-[var(--clay-muted)]">{detail.description || 'Không có mô tả.'}</p>
                     </div>
                     <span className={`inline-flex rounded-full border px-3 py-1 text-xs font-semibold ${phaseAccentClasses(phaseLabel)}`}>
                       {phaseLabel}
@@ -776,39 +784,39 @@ export default function QuanLySmartContractPage() {
                   </div>
 
                   <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-                    <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
-                      <p className="text-xs uppercase tracking-[0.2em] text-slate-500">Commit end</p>
-                      <p className="mt-2 text-sm font-semibold text-white">{formatUnix(detail.commitEnd)}</p>
+                    <div className="rounded-[24px] border border-[var(--clay-border)] bg-[rgba(255,255,255,0.88)] p-4 shadow-[var(--clay-shadow)]">
+                      <p className="clay-label">Commit end</p>
+                      <p className="mt-2 text-sm font-semibold text-black">{formatUnix(detail.commitEnd)}</p>
                     </div>
-                    <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
-                      <p className="text-xs uppercase tracking-[0.2em] text-slate-500">Reveal end</p>
-                      <p className="mt-2 text-sm font-semibold text-white">{formatUnix(detail.revealEnd)}</p>
+                    <div className="rounded-[24px] border border-[var(--clay-border)] bg-[rgba(255,255,255,0.88)] p-4 shadow-[var(--clay-shadow)]">
+                      <p className="clay-label">Reveal end</p>
+                      <p className="mt-2 text-sm font-semibold text-black">{formatUnix(detail.revealEnd)}</p>
                     </div>
-                    <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
-                      <p className="text-xs uppercase tracking-[0.2em] text-slate-500">Commits</p>
-                      <p className="mt-2 text-sm font-semibold text-white">{detail.onChain?.totalCommits ?? '0'}</p>
+                    <div className="rounded-[24px] border border-[var(--clay-border)] bg-[rgba(255,255,255,0.88)] p-4 shadow-[var(--clay-shadow)]">
+                      <p className="clay-label">Commits</p>
+                      <p className="mt-2 text-sm font-semibold text-black">{detail.onChain?.totalCommits ?? '0'}</p>
                     </div>
-                    <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
-                      <p className="text-xs uppercase tracking-[0.2em] text-slate-500">Reveals</p>
-                      <p className="mt-2 text-sm font-semibold text-white">{detail.onChain?.totalReveals ?? '0'}</p>
+                    <div className="rounded-[24px] border border-[var(--clay-border)] bg-[rgba(255,255,255,0.88)] p-4 shadow-[var(--clay-shadow)]">
+                      <p className="clay-label">Reveals</p>
+                      <p className="mt-2 text-sm font-semibold text-black">{detail.onChain?.totalReveals ?? '0'}</p>
                     </div>
                   </div>
 
                   <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_320px]">
                     <div className="space-y-3">
-                      <p className="text-sm font-semibold text-white">Ung vien va ket qua da reveal</p>
+                      <p className="text-sm font-semibold text-black">Ứng viên và kết quả đã reveal</p>
                       {(detail.onChain?.results ?? []).map((candidate) => (
-                        <div key={candidate.candidateId} className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
+                        <div key={candidate.candidateId} className="rounded-[24px] border border-[var(--clay-border)] bg-[rgba(255,255,255,0.88)] p-4 shadow-[var(--clay-shadow)]">
                           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                             <div>
-                              <p className="text-base font-semibold text-white">{candidate.candidateName}</p>
-                              <p className="mt-1 text-xs text-slate-400">{candidate.candidateWalletAddress || candidate.candidateId}</p>
+                              <p className="text-base font-semibold text-black">{candidate.candidateName}</p>
+                              <p className="mt-1 text-xs text-[var(--clay-muted)]">{candidate.candidateWalletAddress || candidate.candidateId}</p>
                             </div>
                             <div className="flex items-center gap-3">
-                              <div className="h-2 w-24 overflow-hidden rounded-full bg-slate-800">
-                                <div className="h-full rounded-full bg-orange-400" style={{ width: `${(candidate.count / maxResultCount) * 100}%` }} />
+                              <div className="h-2 w-24 overflow-hidden rounded-full bg-[rgba(1,65,141,0.12)]">
+                                <div className="h-full rounded-full bg-[var(--clay-blueberry)]" style={{ width: `${(candidate.count / maxResultCount) * 100}%` }} />
                               </div>
-                              <span className="min-w-10 text-right text-lg font-semibold text-white">{candidate.count}</span>
+                              <span className="min-w-10 text-right text-lg font-semibold text-black">{candidate.count}</span>
                             </div>
                           </div>
 
@@ -818,7 +826,7 @@ export default function QuanLySmartContractPage() {
                             disabled={commitReason !== null}
                             className={`${commandButtonClasses('accent')} mt-4 w-full`}
                           >
-                            Commit cho ung vien nay
+                            Commit cho ứng viên này
                           </button>
                         </div>
                       ))}
@@ -826,52 +834,52 @@ export default function QuanLySmartContractPage() {
 
                     <div className="space-y-4">
                       <div className={panelClasses()}>
-                        <p className="text-sm font-semibold text-white">Viewer state</p>
-                        <div className="mt-4 space-y-3 text-sm text-slate-300">
+                        <p className="text-sm font-semibold text-black">Viewer state</p>
+                        <div className="mt-4 space-y-3 text-sm text-[var(--clay-muted)]">
                           <div className="flex items-center justify-between gap-4">
                             <span>Wallet</span>
-                            <span className="text-right text-white">{shortenAddress(connectedAccount)}</span>
+                            <span className="text-right text-black">{shortenAddress(connectedAccount)}</span>
                           </div>
                           <div className="flex items-center justify-between gap-4">
                             <span>Eligible</span>
-                            <span className="text-right text-white">{detail.onChain?.viewer?.eligible ? 'Yes' : 'No'}</span>
+                            <span className="text-right text-black">{detail.onChain?.viewer?.eligible ? 'Yes' : 'No'}</span>
                           </div>
                           <div className="flex items-center justify-between gap-4">
                             <span>Has committed</span>
-                            <span className="text-right text-white">{detail.onChain?.viewer?.hasCommitted ? 'Yes' : 'No'}</span>
+                            <span className="text-right text-black">{detail.onChain?.viewer?.hasCommitted ? 'Yes' : 'No'}</span>
                           </div>
                           <div className="flex items-center justify-between gap-4">
                             <span>Has revealed</span>
-                            <span className="text-right text-white">{detail.onChain?.viewer?.hasRevealed ? 'Yes' : 'No'}</span>
+                            <span className="text-right text-black">{detail.onChain?.viewer?.hasRevealed ? 'Yes' : 'No'}</span>
                           </div>
                         </div>
                       </div>
 
                       <div className={panelClasses()}>
-                        <p className="text-sm font-semibold text-white">Action rail</p>
+                        <p className="text-sm font-semibold text-black">Action rail</p>
                         <div className="mt-4 space-y-3">
                           <button type="button" onClick={() => void handleRevealVote()} disabled={revealReason !== null} className={`${commandButtonClasses('outline')} w-full`}>
                             Reveal vote
                           </button>
-                          <p className="text-xs text-slate-400">{revealReason ?? 'San sang reveal cho chuc vu nay.'}</p>
+                          <p className="text-xs text-[var(--clay-muted)]">{revealReason ?? 'Sẵn sàng reveal cho chức vụ này.'}</p>
 
                           <button type="button" onClick={() => void handleFinalizeElection()} disabled={finalizeReason !== null} className={`${commandButtonClasses('dark')} w-full`}>
                             Finalize election
                           </button>
-                          <p className="text-xs text-slate-400">{finalizeReason ?? 'San sang finalize.'}</p>
+                          <p className="text-xs text-[var(--clay-muted)]">{finalizeReason ?? 'Sẵn sàng finalize.'}</p>
                         </div>
                       </div>
 
                       <div className={panelClasses()}>
-                        <p className="text-sm font-semibold text-white">Explorer</p>
+                        <p className="text-sm font-semibold text-black">Explorer</p>
                         <div className="mt-4 space-y-3">
                           <a href={detail.links?.contract ?? '#'} target="_blank" rel="noreferrer" className={`${commandButtonClasses('outline')} w-full ${!detail.links?.contract ? 'pointer-events-none opacity-50' : ''}`}>
                             <ExternalLink className="h-4 w-4" />
-                            Mo contract tren explorer
+                            Mở contract trên explorer
                           </a>
                           <a href={detail.links?.transaction ?? '#'} target="_blank" rel="noreferrer" className={`${commandButtonClasses('outline')} w-full ${!detail.links?.transaction ? 'pointer-events-none opacity-50' : ''}`}>
                             <ExternalLink className="h-4 w-4" />
-                            Mo giao dich tao election
+                            Mở giao dịch tạo election
                           </a>
                         </div>
                       </div>
@@ -879,7 +887,7 @@ export default function QuanLySmartContractPage() {
                   </div>
                 </div>
               ) : (
-                <p className="text-sm text-slate-400">Chon mot ballot va mot chuc vu de bat dau bo phieu.</p>
+                <p className="text-sm text-[var(--clay-muted)]">Chọn một ballot và một chức vụ để bắt đầu bỏ phiếu.</p>
               )}
             </div>
           </div>

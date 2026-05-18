@@ -1,7 +1,7 @@
 'use client';
 
 import type React from 'react';
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import type { RootState } from '../store/store';
@@ -28,6 +28,17 @@ interface UserMenuProps {
   inMobileMenu?: boolean;
 }
 
+type MenuPosition = {
+  top: number;
+  left: number;
+  maxHeight: number;
+  side: 'above' | 'below' | 'right' | 'left';
+};
+
+const VIEWPORT_MARGIN = 16;
+const MENU_GUTTER = 8;
+const MENU_WIDTH = 288;
+
 function shortenAddress(value?: string | null) {
   if (!value) {
     return 'n/a';
@@ -46,9 +57,67 @@ const UserMenu: React.FC<UserMenuProps> = ({ isCollapsed = false, inMobileMenu =
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
-  const [menuPosition, setMenuPosition] = useState({ top: 0, left: 0 });
+  const [menuPosition, setMenuPosition] = useState<MenuPosition>({
+    top: 0,
+    left: 0,
+    maxHeight: 520,
+    side: 'below',
+  });
   const menuRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
+  const floatingMenuRef = useRef<HTMLDivElement>(null);
+
+  const updateMenuPosition = useCallback(() => {
+    if (!isAccountMenuOpen || !buttonRef.current || isMobile) {
+      return;
+    }
+
+    const buttonRect = buttonRef.current.getBoundingClientRect();
+    const menuHeight = floatingMenuRef.current?.getBoundingClientRect().height ?? 420;
+    const availableHeight = Math.max(240, window.innerHeight - VIEWPORT_MARGIN * 2);
+    const maxHeight = Math.min(availableHeight, 520);
+    const measuredHeight = Math.min(menuHeight, maxHeight);
+
+    if (isCollapsed) {
+      const preferredRight = buttonRect.right + MENU_GUTTER;
+      const canOpenRight = preferredRight + MENU_WIDTH <= window.innerWidth - VIEWPORT_MARGIN;
+      const left = canOpenRight
+        ? preferredRight
+        : Math.max(VIEWPORT_MARGIN, buttonRect.left - MENU_WIDTH - MENU_GUTTER);
+      const top = Math.min(
+        Math.max(VIEWPORT_MARGIN, buttonRect.top),
+        Math.max(VIEWPORT_MARGIN, window.innerHeight - measuredHeight - VIEWPORT_MARGIN),
+      );
+
+      setMenuPosition({
+        top,
+        left,
+        maxHeight,
+        side: canOpenRight ? 'right' : 'left',
+      });
+      return;
+    }
+
+    const spaceBelow = window.innerHeight - buttonRect.bottom - VIEWPORT_MARGIN;
+    const shouldOpenBelow = spaceBelow >= measuredHeight + MENU_GUTTER || buttonRect.top < measuredHeight;
+    const top = shouldOpenBelow
+      ? Math.min(
+          buttonRect.bottom + MENU_GUTTER,
+          Math.max(VIEWPORT_MARGIN, window.innerHeight - measuredHeight - VIEWPORT_MARGIN),
+        )
+      : Math.max(VIEWPORT_MARGIN, buttonRect.top - measuredHeight - MENU_GUTTER);
+    const left = Math.min(
+      Math.max(VIEWPORT_MARGIN, buttonRect.left),
+      Math.max(VIEWPORT_MARGIN, window.innerWidth - MENU_WIDTH - VIEWPORT_MARGIN),
+    );
+
+    setMenuPosition({
+      top,
+      left,
+      maxHeight,
+      side: shouldOpenBelow ? 'below' : 'above',
+    });
+  }, [isAccountMenuOpen, isCollapsed, isMobile]);
 
   useEffect(() => {
     const checkMobile = () => {
@@ -63,24 +132,23 @@ const UserMenu: React.FC<UserMenuProps> = ({ isCollapsed = false, inMobileMenu =
     };
   }, []);
 
+  useLayoutEffect(() => {
+    updateMenuPosition();
+  }, [updateMenuPosition]);
+
   useEffect(() => {
-    if (isAccountMenuOpen && buttonRef.current && !isMobile) {
-      const rect = buttonRef.current.getBoundingClientRect();
-
-      if (isCollapsed) {
-        setMenuPosition({
-          top: rect.top,
-          left: rect.right + 8,
-        });
-        return;
-      }
-
-      setMenuPosition({
-        top: rect.bottom + 8,
-        left: rect.left,
-      });
+    if (!isAccountMenuOpen || isMobile) {
+      return;
     }
-  }, [isAccountMenuOpen, isCollapsed, isMobile]);
+
+    window.addEventListener('resize', updateMenuPosition);
+    window.addEventListener('scroll', updateMenuPosition, true);
+
+    return () => {
+      window.removeEventListener('resize', updateMenuPosition);
+      window.removeEventListener('scroll', updateMenuPosition, true);
+    };
+  }, [isAccountMenuOpen, isMobile, updateMenuPosition]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -174,12 +242,12 @@ const UserMenu: React.FC<UserMenuProps> = ({ isCollapsed = false, inMobileMenu =
           aria-expanded={isAccountMenuOpen}
           aria-haspopup="true"
         >
-          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500 to-orange-500">
+          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-black">
             {user?.anhDaiDien ? (
               <img
                 src={user.anhDaiDien || '/placeholder.svg?height=48&width=48'}
                 alt={displayName}
-                className="h-full w-full rounded-xl object-cover"
+                className="h-full w-full rounded-full object-cover"
               />
             ) : (
               <User className="h-5 w-5 text-white" />
@@ -190,27 +258,27 @@ const UserMenu: React.FC<UserMenuProps> = ({ isCollapsed = false, inMobileMenu =
         <button
           ref={buttonRef}
           onClick={toggleAccountMenu}
-          className={`flex w-full items-center space-x-2 rounded-lg border border-[#334155]/50 bg-[#1E293B]/50 px-4 py-2 backdrop-blur-sm transition hover:bg-[#1E293B]/80 ${mobileMenuClasses}`}
+          className={`flex min-h-11 w-full items-center space-x-2 rounded-full border border-[var(--clay-border)] bg-white px-3 py-2 transition-colors hover:bg-[var(--clay-surface-soft)] ${mobileMenuClasses}`}
           aria-expanded={isAccountMenuOpen}
           aria-haspopup="true"
         >
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500 to-orange-500">
+          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-black">
             {user?.anhDaiDien ? (
               <img
                 src={user.anhDaiDien || '/placeholder.svg?height=40&width=40'}
                 alt={displayName}
-                className="h-full w-full rounded-xl object-cover"
+                className="h-full w-full rounded-full object-cover"
               />
             ) : (
               <User className="h-5 w-5 text-white" />
             )}
           </div>
           <div className="min-w-0 flex-1 text-left">
-            <p className="truncate text-sm font-medium text-white">{formatName(displayName)}</p>
-            <p className="truncate text-xs text-blue-300">{userRole}</p>
+            <p className="truncate text-sm font-semibold text-black">{formatName(displayName)}</p>
+            <p className="truncate text-xs text-[var(--clay-muted)]">{userRole}</p>
           </div>
           <ChevronDown
-            className={`h-4 w-4 flex-shrink-0 text-blue-300 transition-transform duration-200 ${
+            className={`h-4 w-4 flex-shrink-0 text-[var(--clay-muted)] transition-transform duration-200 ${
               isAccountMenuOpen ? 'rotate-180' : ''
             }`}
           />
@@ -220,38 +288,57 @@ const UserMenu: React.FC<UserMenuProps> = ({ isCollapsed = false, inMobileMenu =
       <AnimatePresence>
         {isAccountMenuOpen && (
           <motion.div
-            initial={{ opacity: 0, y: 10, scale: 0.95 }}
+            ref={floatingMenuRef}
+            initial={{
+              opacity: 0,
+              y: menuPosition.side === 'above' ? -8 : 8,
+              scale: 0.98,
+            }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: 10, scale: 0.95 }}
-            transition={{ duration: 0.2 }}
-            className={`${inMobileMenu ? 'w-full' : isMobile ? 'absolute right-0 z-[100]' : 'fixed z-[100] w-72'}`}
+            exit={{
+              opacity: 0,
+              y: menuPosition.side === 'above' ? -8 : 8,
+              scale: 0.98,
+            }}
+            transition={{ duration: 0.18 }}
+            className={`${inMobileMenu ? 'w-full' : isMobile ? 'absolute right-0 z-[1000]' : 'fixed z-[1000] w-72'}`}
             style={{
-              transformOrigin: isMobile ? 'top right' : isCollapsed ? 'left center' : 'top left',
+              transformOrigin: isMobile
+                ? 'top right'
+                : menuPosition.side === 'above'
+                  ? 'bottom left'
+                  : menuPosition.side === 'left'
+                    ? 'right center'
+                    : 'top left',
               ...(isMobile
                 ? { top: '100%', right: '0', marginTop: '0.5rem' }
-                : { top: `${menuPosition.top}px`, left: `${menuPosition.left}px` }),
+                : {
+                    top: `${menuPosition.top}px`,
+                    left: `${menuPosition.left}px`,
+                    maxHeight: `${menuPosition.maxHeight}px`,
+                  }),
             }}
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="overflow-hidden rounded-xl border border-[#334155]/70 bg-[#1E293B]/90 shadow-lg backdrop-blur-md">
-              <div className="border-b border-[#334155]/70 p-4">
+            <div className="max-h-[inherit] overflow-y-auto overscroll-contain rounded-[18px] border border-[var(--clay-border)] bg-white">
+              <div className="border-b border-[var(--clay-border)] p-4">
                 <div className="flex items-center space-x-3">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500 to-orange-500">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-black">
                     {user?.anhDaiDien ? (
                       <img
                         src={user.anhDaiDien || '/placeholder.svg?height=40&width=40'}
                         alt={displayName}
-                        className="h-full w-full rounded-xl object-cover"
+                        className="h-full w-full rounded-full object-cover"
                       />
                     ) : (
-                      <span className="text-lg font-bold text-white">
+                      <span className="text-lg font-semibold text-white">
                         {displayName.charAt(0).toUpperCase()}
                       </span>
                     )}
                   </div>
                   <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-medium text-white">{formatName(displayName)}</p>
-                    <p className="truncate text-xs text-blue-300">{userRole}</p>
+                    <p className="truncate text-sm font-semibold text-black">{formatName(displayName)}</p>
+                    <p className="truncate text-xs text-[var(--clay-muted)]">{userRole}</p>
                   </div>
                 </div>
 
@@ -262,32 +349,32 @@ const UserMenu: React.FC<UserMenuProps> = ({ isCollapsed = false, inMobileMenu =
                         e.stopPropagation();
                         void copyToClipboard(user.diaChiVi!);
                       }}
-                      className="group flex items-center rounded-full border border-[#334155]/50 bg-[#0D1321]/50 px-2 py-1 transition hover:border-blue-500/50 hover:bg-[#0D1321]/70"
+                      className="group flex min-h-8 items-center rounded-full border border-[var(--clay-border)] bg-[var(--clay-surface-soft)] px-2 py-1 transition-colors hover:border-[var(--clay-primary)]"
                       title="Nhấn để sao chép địa chỉ ví"
                     >
-                      <FaEthereum className="mr-1 h-3 w-3 text-orange-400" />
-                      <span className="text-xs text-blue-200 group-hover:text-blue-300">
+                      <FaEthereum className="mr-1 h-3 w-3 text-[var(--clay-primary)]" />
+                      <span className="text-xs text-[var(--clay-muted)] group-hover:text-[var(--clay-primary)]">
                         {shortenAddress(user.diaChiVi)}
                       </span>
                     </button>
                   )}
 
-                  <div className="flex items-center rounded-full border border-[#334155]/50 bg-[#0D1321]/50 px-2 py-1">
-                    <Shield className="mr-1 h-3 w-3 text-green-400" />
-                    <span className="text-xs text-blue-200">Sepolia active</span>
+                  <div className="flex min-h-8 items-center rounded-full border border-[var(--clay-border)] bg-[var(--clay-surface-soft)] px-2 py-1">
+                    <Shield className="mr-1 h-3 w-3 text-[var(--clay-primary)]" />
+                    <span className="text-xs text-[var(--clay-muted)]">Sepolia active</span>
                   </div>
                 </div>
 
                 {user?.diaChiVi && (
-                  <div className="mt-3 rounded-lg border border-[#334155]/70 bg-[#0D1321]/70 p-3">
+                  <div className="mt-3 rounded-[18px] border border-[var(--clay-border)] bg-[var(--clay-surface-soft)] p-3">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center">
-                        <Wallet className="mr-2 h-4 w-4 text-blue-400" />
+                        <Wallet className="mr-2 h-4 w-4 text-[var(--clay-primary)]" />
                         <div>
-                          <span className="text-xs text-blue-300">Số dư Sepolia ETH</span>
-                          <p className="text-sm font-medium text-white">
+                          <span className="text-xs text-[var(--clay-muted)]">Số dư Sepolia ETH</span>
+                          <p className="text-sm font-semibold text-black">
                             {isLoading ? (
-                              <span className="inline-block h-4 w-12 animate-pulse rounded bg-[#334155]/50" />
+                              <span className="inline-block h-4 w-12 animate-pulse rounded bg-[var(--clay-border)]" />
                             ) : (
                               `${balance ?? '0.00'} ETH`
                             )}
@@ -297,10 +384,10 @@ const UserMenu: React.FC<UserMenuProps> = ({ isCollapsed = false, inMobileMenu =
                       <button
                         onClick={refreshBalance}
                         disabled={isRefreshing || isLoading}
-                        className="rounded-md bg-[#334155]/50 p-1.5 transition hover:bg-[#334155] disabled:opacity-50"
+                        className="rounded-full border border-[var(--clay-border)] bg-white p-1.5 transition-colors hover:border-[var(--clay-primary)] disabled:opacity-50"
                       >
                         <RefreshCw
-                          className={`h-3.5 w-3.5 text-blue-300 ${isRefreshing || isLoading ? 'animate-spin' : ''}`}
+                          className={`h-3.5 w-3.5 text-[var(--clay-primary)] ${isRefreshing || isLoading ? 'animate-spin' : ''}`}
                         />
                       </button>
                     </div>
@@ -310,14 +397,14 @@ const UserMenu: React.FC<UserMenuProps> = ({ isCollapsed = false, inMobileMenu =
                         href={explorerUrl}
                         target="_blank"
                         rel="noreferrer"
-                        className="mt-2 inline-flex items-center gap-2 text-xs text-blue-300 hover:text-blue-200"
+                        className="mt-2 inline-flex items-center gap-2 text-xs text-[var(--clay-primary)] hover:underline"
                       >
                         Explorer
                         <ExternalLink className="h-3.5 w-3.5" />
                       </a>
                     )}
 
-                    {error && <p className="mt-2 text-xs text-red-300">{error}</p>}
+                    {error && <p className="mt-2 text-xs text-[var(--clay-pomegranate)]">{error}</p>}
                   </div>
                 )}
               </div>
@@ -325,47 +412,47 @@ const UserMenu: React.FC<UserMenuProps> = ({ isCollapsed = false, inMobileMenu =
               <div className="py-1">
                 <NavLink
                   to="/app/account-info"
-                  className="flex items-center px-4 py-2.5 text-sm text-blue-100 transition hover:bg-blue-600/20"
+                  className="flex min-h-11 items-center px-4 py-2.5 text-sm text-[var(--clay-text)] transition-colors hover:bg-[var(--clay-surface-soft)]"
                   onClick={() => setIsAccountMenuOpen(false)}
                 >
-                  <User className="mr-3 h-4 w-4 text-blue-400" />
+                  <User className="mr-3 h-4 w-4 text-[var(--clay-primary)]" />
                   Thông tin tài khoản
                 </NavLink>
 
                 <NavLink
                   to="/app/quan-ly-smart-contract"
-                  className="flex items-center px-4 py-2.5 text-sm text-blue-100 transition hover:bg-blue-600/20"
+                  className="flex min-h-11 items-center px-4 py-2.5 text-sm text-[var(--clay-text)] transition-colors hover:bg-[var(--clay-surface-soft)]"
                   onClick={() => setIsAccountMenuOpen(false)}
                 >
-                  <Wallet className="mr-3 h-4 w-4 text-blue-400" />
+                  <Wallet className="mr-3 h-4 w-4 text-[var(--clay-primary)]" />
                   Console Sepolia
                 </NavLink>
 
                 <NavLink
                   to="/app/upcoming-elections"
-                  className="flex items-center px-4 py-2.5 text-sm text-blue-100 transition hover:bg-blue-600/20"
+                  className="flex min-h-11 items-center px-4 py-2.5 text-sm text-[var(--clay-text)] transition-colors hover:bg-[var(--clay-surface-soft)]"
                   onClick={() => setIsAccountMenuOpen(false)}
                 >
-                  <History className="mr-3 h-4 w-4 text-blue-400" />
+                  <History className="mr-3 h-4 w-4 text-[var(--clay-primary)]" />
                   Lịch sử hoạt động
                 </NavLink>
 
                 <NavLink
                   to="/app/settings"
-                  className="flex items-center px-4 py-2.5 text-sm text-blue-100 transition hover:bg-blue-600/20"
+                  className="flex min-h-11 items-center px-4 py-2.5 text-sm text-[var(--clay-text)] transition-colors hover:bg-[var(--clay-surface-soft)]"
                   onClick={() => setIsAccountMenuOpen(false)}
                 >
-                  <Settings className="mr-3 h-4 w-4 text-blue-400" />
+                  <Settings className="mr-3 h-4 w-4 text-[var(--clay-primary)]" />
                   Cài đặt
                 </NavLink>
 
-                <div className="my-1 border-t border-[#334155]/70" />
+                <div className="my-1 border-t border-[var(--clay-border)]" />
 
                 <button
                   onClick={() => setShowLogoutConfirm(true)}
-                  className="flex w-full items-center px-4 py-2.5 text-sm text-red-300 transition hover:bg-red-600/20"
+                  className="flex min-h-11 w-full items-center px-4 py-2.5 text-sm text-[var(--clay-pomegranate)] transition-colors hover:bg-[var(--clay-surface-soft)]"
                 >
-                  <LogOut className="mr-3 h-4 w-4 text-red-400" />
+                  <LogOut className="mr-3 h-4 w-4 text-[var(--clay-pomegranate)]" />
                   Đăng xuất
                 </button>
               </div>
@@ -387,22 +474,22 @@ const UserMenu: React.FC<UserMenuProps> = ({ isCollapsed = false, inMobileMenu =
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.9, opacity: 0 }}
-              className="w-full max-w-md rounded-xl border border-[#334155] bg-[#1E293B] p-6"
+              className="w-full max-w-md rounded-[18px] border border-[var(--clay-border)] bg-white p-6"
               onClick={(e) => e.stopPropagation()}
             >
-              <h3 className="mb-2 text-xl font-semibold text-white">Xác nhận đăng xuất</h3>
-              <p className="mb-6 text-blue-200/80">Bạn có chắc chắn muốn đăng xuất khỏi hệ thống?</p>
+              <h3 className="mb-2 text-xl font-semibold text-black">Xác nhận đăng xuất</h3>
+              <p className="mb-6 text-[var(--clay-muted)]">Bạn có chắc chắn muốn đăng xuất khỏi hệ thống?</p>
 
               <div className="flex space-x-3">
                 <button
                   onClick={() => setShowLogoutConfirm(false)}
-                  className="flex-1 rounded-lg bg-[#334155] px-4 py-2 text-white transition hover:bg-[#475569]"
+                  className="flex-1 rounded-full border border-[var(--clay-border)] bg-white px-4 py-2 text-[var(--clay-primary)] transition-colors hover:bg-[var(--clay-surface-soft)]"
                 >
                   Hủy
                 </button>
                 <button
                   onClick={confirmLogout}
-                  className="flex-1 rounded-lg bg-red-500 px-4 py-2 text-white transition hover:bg-red-600"
+                  className="flex-1 rounded-full bg-[var(--clay-pomegranate)] px-4 py-2 text-white transition-transform active:scale-95"
                 >
                   Đăng xuất
                 </button>

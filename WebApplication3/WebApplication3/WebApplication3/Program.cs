@@ -18,7 +18,57 @@ using WebApplication3.Services;
 
 // Other using statements...
 
+static bool LooksLikePostgresConnectionString(string? connectionString)
+{
+    if (string.IsNullOrWhiteSpace(connectionString))
+    {
+        return false;
+    }
+
+    return connectionString.Contains("Host=", StringComparison.OrdinalIgnoreCase)
+        || connectionString.Contains("Username=", StringComparison.OrdinalIgnoreCase)
+        || connectionString.Contains("SSL Mode=", StringComparison.OrdinalIgnoreCase);
+}
+
 var builder = WebApplication.CreateBuilder(args);
+Console.OutputEncoding = Encoding.UTF8;
+Console.InputEncoding = Encoding.UTF8;
+
+var defaultConnection = builder.Configuration.GetConnectionString("DefaultConnection");
+var electionV1StoreConnection = builder.Configuration.GetConnectionString("ElectionV1StoreConnection");
+var electionV1StoreProvider = builder.Configuration["ElectionV1StoreSettings:Provider"]?.Trim();
+var developmentAuthEnabled = builder.Configuration.GetValue<bool>("DevelopmentAuthSettings:Enabled");
+var useDevelopmentInMemoryDatabase = string.IsNullOrWhiteSpace(defaultConnection)
+    || (builder.Environment.IsDevelopment() && developmentAuthEnabled);
+
+var configuredJwtSecret = builder.Configuration["JwtSettings:Secret"];
+if (string.IsNullOrWhiteSpace(configuredJwtSecret) && useDevelopmentInMemoryDatabase)
+{
+    builder.Configuration["JwtSettings:Secret"] = "holihu-local-dev-jwt-secret-2026-change-me";
+}
+
+if (useDevelopmentInMemoryDatabase)
+{
+    if (string.IsNullOrWhiteSpace(builder.Configuration["JwtSettings:Issuer"]))
+    {
+        builder.Configuration["JwtSettings:Issuer"] = "HoLiHu.Local";
+    }
+
+    if (string.IsNullOrWhiteSpace(builder.Configuration["JwtSettings:Audience"]))
+    {
+        builder.Configuration["JwtSettings:Audience"] = "HoLiHu.Local.Client";
+    }
+
+    if (!int.TryParse(builder.Configuration["JwtSettings:AccessTokenExpirationMinutes"], out var accessMinutes) || accessMinutes <= 0)
+    {
+        builder.Configuration["JwtSettings:AccessTokenExpirationMinutes"] = "120";
+    }
+
+    if (!int.TryParse(builder.Configuration["JwtSettings:RefreshTokenExpirationDays"], out var refreshDays) || refreshDays <= 0)
+    {
+        builder.Configuration["JwtSettings:RefreshTokenExpirationDays"] = "7";
+    }
+}
 
 // Đăng ký các dịch vụ cho ứng dụng
 builder.Services.AddControllersWithViews();
@@ -57,6 +107,8 @@ builder.Services.AddScoped<CryptoService>();
 builder.Services.AddScoped<OtpController>();
 builder.Services.AddSingleton<ElectionV1ReadService>();
 builder.Services.AddScoped<ElectionV1CreateService>();
+builder.Services.AddScoped<ElectionV1RosterService>();
+builder.Services.AddScoped<DevelopmentAuthStore>();
 builder.Services.Configure<LegacyBlockchainSettings>(
     builder.Configuration.GetSection("LegacyBlockchainSettings"));
 builder.Services.AddLegacyBlockchainStack(builder.Configuration);
@@ -96,18 +148,12 @@ builder.Services.AddAuthentication(options =>
         ValidateIssuerSigningKey = true,
         ValidIssuer = builder.Configuration["JwtSettings:Issuer"],
         ValidAudience = builder.Configuration["JwtSettings:Audience"],
-        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["JwtSettings:Secret"])),
+        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["JwtSettings:Secret"]!)),
         ClockSkew = TimeSpan.Zero // Giảm thời gian lệch giữa máy chủ và token
     };
 #pragma warning restore CS8604 // Possible null reference argument.
 });
 
-
-// Cấu hình DbContext
-var defaultConnection = builder.Configuration.GetConnectionString("DefaultConnection");
-var developmentAuthEnabled = builder.Configuration.GetValue<bool>("DevelopmentAuthSettings:Enabled");
-var useDevelopmentInMemoryDatabase = string.IsNullOrWhiteSpace(defaultConnection)
-    || (builder.Environment.IsDevelopment() && developmentAuthEnabled);
 
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
 {
@@ -122,6 +168,45 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
         sqlOptions => sqlOptions.EnableRetryOnFailure());
 });
 
+builder.Services.AddDbContext<ElectionV1StoreDbContext>(options =>
+{
+    if (string.Equals(electionV1StoreProvider, "postgres", StringComparison.OrdinalIgnoreCase)
+        || LooksLikePostgresConnectionString(electionV1StoreConnection))
+    {
+        if (string.IsNullOrWhiteSpace(electionV1StoreConnection))
+        {
+            throw new InvalidOperationException("ElectionV1StoreConnection chua duoc cau hinh cho PostgreSQL.");
+        }
+
+        options.UseNpgsql(electionV1StoreConnection);
+        return;
+    }
+
+    if (string.Equals(electionV1StoreProvider, "sqlserver", StringComparison.OrdinalIgnoreCase))
+    {
+        if (string.IsNullOrWhiteSpace(electionV1StoreConnection))
+        {
+            throw new InvalidOperationException("ElectionV1StoreConnection chua duoc cau hinh cho SQL Server.");
+        }
+
+        options.UseSqlServer(
+            electionV1StoreConnection,
+            sqlOptions => sqlOptions.EnableRetryOnFailure());
+        return;
+    }
+
+    if (string.Equals(electionV1StoreProvider, "inmemory", StringComparison.OrdinalIgnoreCase)
+        || string.IsNullOrWhiteSpace(electionV1StoreConnection))
+    {
+        options.UseInMemoryDatabase("ElectionV1RosterDev");
+        return;
+    }
+
+    options.UseSqlServer(
+        electionV1StoreConnection,
+        sqlOptions => sqlOptions.EnableRetryOnFailure());
+});
+
 
 // cau hinh pinata
 builder.Services.AddHttpClient("Pinata", client =>
@@ -130,9 +215,6 @@ builder.Services.AddHttpClient("Pinata", client =>
     client.DefaultRequestHeaders.Add("pinata_api_key", builder.Configuration["Pinata:ApiKey"]);
     client.DefaultRequestHeaders.Add("pinata_secret_api_key", builder.Configuration["Pinata:ApiSecret"]);
 });
-
-// Đăng ký AutoMapper
-builder.Services.AddAutoMapper(typeof(MappingProfile));
 
 // Đăng ký CORS cho phép kết nối với React App
 builder.Services.AddCors(options =>
@@ -203,6 +285,19 @@ using (var scope = app.Services.CreateScope())
             logger.LogInformation("SQL Server connection opened successfully.");
             dbContext.Database.CloseConnection();
         }
+
+        var electionV1StoreContext = scope.ServiceProvider.GetRequiredService<ElectionV1StoreDbContext>();
+        await electionV1StoreContext.Database.EnsureCreatedAsync();
+        logger.LogInformation(
+            "ElectionV1 store is ready with provider {Provider}.",
+            electionV1StoreContext.Database.ProviderName);
+
+        if (developmentAuthEnabled)
+        {
+            var developmentAuthStore = scope.ServiceProvider.GetRequiredService<DevelopmentAuthStore>();
+            await developmentAuthStore.EnsureSeedAsync();
+            logger.LogInformation("Development auth store seeded.");
+        }
     }
     catch (Exception ex)
     {
@@ -231,8 +326,10 @@ else
 }
 
 
-
-app.UseHttpsRedirection();
+if (!builder.Configuration.GetValue<bool>("AppSettings:DisableHttpsRedirection"))
+{
+    app.UseHttpsRedirection();
+}
 app.UseStaticFiles(); // Phục vụ file tĩnh
 app.UseRouting();
 app.UseCors("AllowReactApp"); // Đặt sau UseRouting() và trước Authentication

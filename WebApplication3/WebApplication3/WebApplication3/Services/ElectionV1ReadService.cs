@@ -389,7 +389,7 @@ public sealed class ElectionV1ReadService
         for (var index = 0; index < record.Candidates.Count; index++)
         {
             var candidate = record.Candidates[index];
-            var count = await voteCountsFunction.CallAsync<BigInteger>(candidate.CandidateId);
+            var count = await voteCountsFunction.CallAsync<BigInteger>(candidate.CandidateId.HexToByteArray());
             resultItems.Add(new ElectionV1ResultDto
             {
                 CandidateIndex = index,

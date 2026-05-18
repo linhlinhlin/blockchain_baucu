@@ -1,0 +1,69 @@
+services:
+  postgres:
+    image: postgres:17-alpine
+    container_name: holihu-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: holihu_electionv1
+      POSTGRES_USER: holihu
+      POSTGRES_PASSWORD: holihu
+    ports:
+      - "5432:5432"
+    volumes:
+      - holihu_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U holihu -d holihu_electionv1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  backend:
+    build:
+      context: .
+      dockerfile: docker/backend.Dockerfile
+    container_name: holihu-backend
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    env_file:
+      - path: ./blockchain_sm/.env
+        required: false
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_URLS: http://0.0.0.0:5293
+      AppUrl: http://localhost:3000
+      AppSettings__DisableHttpsRedirection: "true"
+      ConnectionStrings__DefaultConnection: ""
+      ConnectionStrings__ElectionV1StoreConnection: Host=postgres;Port=5432;Database=holihu_electionv1;Username=holihu;Password=holihu
+      ElectionV1StoreSettings__Provider: postgres
+      ElectionV1Settings__ContractsRootPath: /workspace/blockchain_sm
+      ElectionV1Settings__RpcUrl: "https://ethereum-sepolia-rpc.publicnode.com"
+      DevelopmentAuthSettings__Enabled: "true"
+      LegacyBlockchainSettings__Enabled: "false"
+      RecaptchaSettings__Enabled: "false"
+      JwtSettings__Secret: holihu-local-dev-jwt-secret-2026-change-me
+      JwtSettings__Issuer: HoLiHu.Local
+      JwtSettings__Audience: HoLiHu.Local.Client
+      JwtSettings__AccessTokenExpirationMinutes: "120"
+      JwtSettings__RefreshTokenExpirationDays: "7"
+    ports:
+      - "5293:5293"
+
+  frontend:
+    build:
+      context: .
+      dockerfile: docker/frontend.Dockerfile
+    container_name: holihu-frontend
+    restart: unless-stopped
+    depends_on:
+      - backend
+    environment:
+      VITE_API_BASE_URL: http://localhost:5293
+      VITE_RECAPTCHA_ENABLED: "false"
+      VITE_RPC_URL: https://ethereum-sepolia-rpc.publicnode.com
+    ports:
+      - "3000:3000"
+
+volumes:
+  holihu_postgres_data:

@@ -46,12 +46,15 @@ export default defineConfig({
       },
     },
   },
-  // Đảm bảo mã hóa URL đúng
   server: {
-    https: {
-      key: fs.readFileSync(path.resolve(__dirname, 'localhost-key.pem')),
-      cert: fs.readFileSync(path.resolve(__dirname, 'localhost.pem')),
-    },
+    https: (() => {
+      const keyPath = path.resolve(__dirname, 'localhost-key.pem');
+      const certPath = path.resolve(__dirname, 'localhost.pem');
+      if (fs.existsSync(keyPath) && fs.existsSync(certPath)) {
+        return { key: fs.readFileSync(keyPath), cert: fs.readFileSync(certPath) };
+      }
+      return false;
+    })(),
     port: 3000,
     fs: {
       strict: true,
@@ -59,10 +62,14 @@ export default defineConfig({
     },
   },
   preview: {
-    https: {
-      key: fs.readFileSync(path.resolve(__dirname, 'localhost-key.pem')),
-      cert: fs.readFileSync(path.resolve(__dirname, 'localhost.pem')),
-    },
+    https: (() => {
+      const keyPath = path.resolve(__dirname, 'localhost-key.pem');
+      const certPath = path.resolve(__dirname, 'localhost.pem');
+      if (fs.existsSync(keyPath) && fs.existsSync(certPath)) {
+        return { key: fs.readFileSync(keyPath), cert: fs.readFileSync(certPath) };
+      }
+      return false;
+    })(),
     port: 5000,
   },
 });

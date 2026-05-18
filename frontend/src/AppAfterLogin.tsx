@@ -3,21 +3,19 @@
 import type React from 'react';
 import { useEffect, useState } from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
+import { useSelector } from 'react-redux';
 import Sidebar from './components/Sidebar';
 import { useSidebar } from './utils/useSidebar';
-import { useSelector } from 'react-redux';
 import type { RootState } from './store/store';
 import { ThemeProvider } from './context/ThemeContext';
 import { Toaster } from 'react-hot-toast';
 
 const AppAfterLogin: React.FC = () => {
   const { isSidebarOpen, toggleSidebar } = useSidebar();
-  const [isMobile, setIsMobile] = useState<boolean>(false);
+  const [isMobile, setIsMobile] = useState(false);
   const location = useLocation();
-
   const accessToken = useSelector((state: RootState) => state.dangNhapTaiKhoan.accessToken);
 
-  // Kiểm tra kích thước màn hình
   useEffect(() => {
     const checkMobile = () => {
       setIsMobile(window.innerWidth < 768);
@@ -25,13 +23,9 @@ const AppAfterLogin: React.FC = () => {
 
     checkMobile();
     window.addEventListener('resize', checkMobile);
-
-    return () => {
-      window.removeEventListener('resize', checkMobile);
-    };
+    return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
-  // Lưu đường dẫn trước khi F5
   useEffect(() => {
     if (accessToken) {
       localStorage.setItem('lastPath', location.pathname);
@@ -41,15 +35,21 @@ const AppAfterLogin: React.FC = () => {
   return (
     <ThemeProvider>
       <Toaster position="top-right" />
-      <div className="flex min-h-screen bg-gray-50 dark:bg-gradient-to-br dark:from-[#0A0F18] dark:via-[#121A29] dark:to-[#0D1321] text-gray-900 dark:text-white transition-colors duration-300">
+      <div className="apple-page flex min-h-screen text-black">
+        <a href="#main-content" className="skip-link">
+          Bỏ qua điều hướng
+        </a>
         <Sidebar isSidebarOpen={isSidebarOpen} toggleSidebar={toggleSidebar} />
 
         <main
-          className={`flex-1 transition-all duration-300 ease-in-out ${
-            isMobile ? 'mt-16 px-4 py-6' : isSidebarOpen ? 'ml-[280px] p-6' : 'ml-[80px] p-6'
+          id="main-content"
+          className={`flex-1 transition-[margin] duration-300 ease-in-out ${
+            isMobile ? 'mt-[60px] px-4 py-5' : isSidebarOpen ? 'ml-[296px]' : 'ml-[104px]'
           }`}
         >
-          <Outlet />
+          <div className="min-h-screen bg-[var(--clay-bg)] p-4 sm:p-6 lg:p-8">
+            <Outlet />
+          </div>
         </main>
       </div>
     </ThemeProvider>

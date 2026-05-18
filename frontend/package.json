@@ -80,6 +80,7 @@
     "preview": "vite preview",
     "build": "vite build",
     "start": "vite",
+    "test": "jest --runInBand",
     "typecheck": "tsc --noEmit"
   },
   "browserslist": {

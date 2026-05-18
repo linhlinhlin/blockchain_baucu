@@ -48,7 +48,7 @@ const TaoPhienBauCuPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-blue-400 dark:bg-gray-900 p-6 flex flex-col items-center justify-center rounded-lg">
+    <div className="min-h-screen bg-gray-50 p-6 flex flex-col items-center justify-center rounded-lg">
       <Helmet>
         <title>Tạo Cuộc Bầu Cử Mới | Nền Tảng Bầu Cử Blockchain</title>
         <meta
@@ -59,8 +59,8 @@ const TaoPhienBauCuPage: React.FC = () => {
         <meta name="author" content="Nền Tảng Bầu Cử Blockchain" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
       </Helmet>
-      <div className="max-w-7xl w-full p-6 bg-white dark:bg-gray-800 rounded-lg shadow-md">
-        <h1 className="text-3xl font-bold text-center mb-6 bg-gradient-to-r from-gray-800 to-blue-700 dark:from-green-300 dark:to-blue-400 text-transparent bg-clip-text">
+      <div className="max-w-7xl w-full p-6 bg-white rounded-lg shadow-md">
+        <h1 className="text-3xl font-bold text-center mb-6 bg-gradient-to-r from-gray-800 to-blue-700 text-transparent bg-clip-text">
           Tạo Cuộc Bầu Cử Mới
         </h1>
         {showAlert && (
