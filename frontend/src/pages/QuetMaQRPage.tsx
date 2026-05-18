@@ -34,6 +34,25 @@ interface QRData {
   content: string;
 }
 
+// UX (spec 006/M1,M4): lấy message backend (gồm lockout OTP "Còn N lần thử"
+// từ S2) thay vì nuốt lỗi / nối raw err.message.
+function readableError(error: unknown, fallback: string): string {
+  if (typeof error === 'string' && error.trim()) return error;
+  const e = error as {
+    response?: { data?: { Error?: string; message?: string } };
+    payload?: { Error?: string; message?: string };
+    message?: string;
+  };
+  return (
+    e?.response?.data?.Error ||
+    e?.response?.data?.message ||
+    e?.payload?.Error ||
+    e?.payload?.message ||
+    (typeof e?.message === 'string' && e.message ? e.message : '') ||
+    fallback
+  );
+}
+
 const QuetMaQRPage: React.FC = () => {
   const [scanning, setScanning] = useState(false);
   const [scannedData, setScannedData] = useState<QRData | null>(null);
@@ -283,7 +302,7 @@ const QuetMaQRPage: React.FC = () => {
                 setError(null);
               })
               .catch((err) => {
-                handleError('Lỗi xác thực mã mời: ' + (err.message || 'Không xác định'), err);
+                handleError(readableError(err, 'Lỗi xác thực mã mời. Vui lòng thử lại.'), err);
               });
           } else {
             // Thử phương pháp thay thế để tìm token
@@ -382,10 +401,10 @@ const QuetMaQRPage: React.FC = () => {
         if (response.success) {
           await handleThamGiaPhienBauCu();
         } else {
-          setOtpError('Mã OTP không hợp lệ. Vui lòng thử lại.');
+          setOtpError(readableError(response, 'Mã OTP không hợp lệ. Vui lòng thử lại.'));
         }
       } catch (error) {
-        setOtpError('Mã OTP không hợp lệ. Vui lòng thử lại.');
+        setOtpError(readableError(error, 'Mã OTP không hợp lệ. Vui lòng thử lại.'));
       }
     }
   };

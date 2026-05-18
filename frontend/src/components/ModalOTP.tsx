@@ -114,11 +114,26 @@ const ModalOTP: React.FC<ModalProps> = ({
     }
   }, [devOtpCode]);
 
+  // UX (spec 006/M2): Escape để đóng modal (a11y bàn phím).
+  useEffect(() => {
+    if (!isOpen) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [isOpen, onClose]);
+
   if (!isOpen) return null;
 
   return createPortal(
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 px-4 backdrop-blur-sm">
-      <div className="relative w-full max-w-md rounded-2xl bg-white p-8 shadow-2xl dark:bg-gray-800">
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="modal-otp-title"
+        className="relative w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl dark:bg-gray-800 sm:p-8"
+      >
         <button
           type="button"
           onClick={onClose}
@@ -136,7 +151,7 @@ const ModalOTP: React.FC<ModalProps> = ({
               <Mail size={32} className="text-blue-600 dark:text-blue-400" />
             )}
           </div>
-          <h3 className="mb-2 text-2xl font-bold text-gray-950 dark:text-white">
+          <h3 id="modal-otp-title" className="mb-2 text-2xl font-bold text-gray-950 dark:text-white">
             {isDevelopmentPreview ? 'OTP dev preview' : 'Xác thực OTP'}
           </h3>
           {isDevelopmentPreview ? (

@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { ethers } from 'ethers';
-import { ArrowRight, ExternalLink, RefreshCw, Vote, Wallet } from 'lucide-react';
+import { ArrowRight, CheckCircle2, ExternalLink, Loader2, RefreshCw, Vote, Wallet, XCircle } from 'lucide-react';
+import toast from 'react-hot-toast';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import {
   getElectionV1Detail,
@@ -142,9 +143,23 @@ function shortenAddress(value?: string | null) {
 
 function formatUnix(timestamp?: number | null) {
   if (!timestamp) {
-    return 'n/a';
+    return 'Chưa thiết lập';
   }
   return new Date(timestamp * 1000).toLocaleString('vi-VN');
+}
+
+// UX (spec 006/M6): trạng thái không chỉ bằng màu — kèm icon + nhãn + aria.
+function YesNoBadge({ value }: { value?: boolean }) {
+  return (
+    <span className="inline-flex items-center gap-1 text-right" aria-label={value ? 'Có' : 'Không'}>
+      {value ? (
+        <CheckCircle2 className="h-4 w-4 text-emerald-600" aria-hidden />
+      ) : (
+        <XCircle className="h-4 w-4 text-[var(--clay-muted)]" aria-hidden />
+      )}
+      <span className="text-black">{value ? 'Có' : 'Không'}</span>
+    </span>
+  );
 }
 
 function normalizeAddress(value?: string | null) {
@@ -389,6 +404,8 @@ export default function QuanLySmartContractPage() {
   const [connectedAccount, setConnectedAccount] = useState<string | null>(null);
   const [walletBalance, setWalletBalance] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  // UX (spec 006/H1): theo dõi ứng viên đang commit để hiện spinner đúng nút.
+  const [committingCandidateId, setCommittingCandidateId] = useState<string | null>(null);
   const [message, setMessage] = useState('Sẵn sàng.');
   const [votePackageRevision, setVotePackageRevision] = useState(0);
 
@@ -597,6 +614,7 @@ export default function QuanLySmartContractPage() {
       return;
     }
     setBusy(true);
+    setCommittingCandidateId(candidate.candidateId);
     try {
       const { signer, address } = await getSignerContext();
       const proofPayload = await getElectionV1Proof(detail.address, address);
@@ -629,10 +647,14 @@ export default function QuanLySmartContractPage() {
       await refreshElection(detail.address, address);
       await loadWalletBalance(address, publicConfig?.rpcUrl ?? DEFAULT_RPC_URL);
       setMessage(`Commit thành công: ${tx.hash}`);
+      toast.success('Commit phiếu thành công.');
     } catch (error) {
-      setMessage(getErrorMessage(error));
+      const msg = getErrorMessage(error);
+      setMessage(msg);
+      toast.error(msg);
     } finally {
       setBusy(false);
+      setCommittingCandidateId(null);
     }
   }
 
@@ -668,8 +690,11 @@ export default function QuanLySmartContractPage() {
       await refreshElection(detail.address, address);
       await loadWalletBalance(address, publicConfig?.rpcUrl ?? DEFAULT_RPC_URL);
       setMessage(`Reveal thành công: ${tx.hash}`);
+      toast.success('Reveal phiếu thành công.');
     } catch (error) {
-      setMessage(getErrorMessage(error));
+      const msg = getErrorMessage(error);
+      setMessage(msg);
+      toast.error(msg);
     } finally {
       setBusy(false);
     }
@@ -688,8 +713,11 @@ export default function QuanLySmartContractPage() {
       await refreshElection(detail.address, address);
       await loadWalletBalance(address, publicConfig?.rpcUrl ?? DEFAULT_RPC_URL);
       setMessage(`Finalize thành công: ${tx.hash}`);
+      toast.success('Finalize election thành công.');
     } catch (error) {
-      setMessage(getErrorMessage(error));
+      const msg = getErrorMessage(error);
+      setMessage(msg);
+      toast.error(msg);
     } finally {
       setBusy(false);
     }
@@ -894,10 +922,17 @@ export default function QuanLySmartContractPage() {
                           <button
                             type="button"
                             onClick={() => void handleCommitVote(candidate)}
-                            disabled={commitReason !== null}
+                            disabled={commitReason !== null || busy}
+                            aria-busy={committingCandidateId === candidate.candidateId}
                             className={`${commandButtonClasses('accent')} mt-4 w-full`}
                           >
-                            Commit cho ứng viên này
+                            {committingCandidateId === candidate.candidateId ? (
+                              <span className="inline-flex items-center justify-center gap-2">
+                                <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> Đang commit…
+                              </span>
+                            ) : (
+                              'Commit cho ứng viên này'
+                            )}
                           </button>
                         </div>
                       ))}
@@ -912,16 +947,16 @@ export default function QuanLySmartContractPage() {
                             <span className="text-right text-black">{shortenAddress(connectedAccount)}</span>
                           </div>
                           <div className="flex items-center justify-between gap-4">
-                            <span>Eligible</span>
-                            <span className="text-right text-black">{detail.onChain?.viewer?.eligible ? 'Yes' : 'No'}</span>
+                            <span>Đủ điều kiện</span>
+                            <YesNoBadge value={detail.onChain?.viewer?.eligible} />
                           </div>
                           <div className="flex items-center justify-between gap-4">
-                            <span>Has committed</span>
-                            <span className="text-right text-black">{detail.onChain?.viewer?.hasCommitted ? 'Yes' : 'No'}</span>
+                            <span>Đã commit</span>
+                            <YesNoBadge value={detail.onChain?.viewer?.hasCommitted} />
                           </div>
                           <div className="flex items-center justify-between gap-4">
-                            <span>Has revealed</span>
-                            <span className="text-right text-black">{detail.onChain?.viewer?.hasRevealed ? 'Yes' : 'No'}</span>
+                            <span>Đã reveal</span>
+                            <YesNoBadge value={detail.onChain?.viewer?.hasRevealed} />
                           </div>
                         </div>
                       </div>
@@ -929,16 +964,24 @@ export default function QuanLySmartContractPage() {
                       <div className={panelClasses()}>
                         <p className="text-sm font-semibold text-black">Action rail</p>
                         <div className="mt-4 space-y-3">
-                          <button type="button" onClick={() => void handleRevealVote()} disabled={revealReason !== null} className={`${commandButtonClasses('outline')} w-full`}>
-                            Reveal vote
+                          <button type="button" onClick={() => void handleRevealVote()} disabled={revealReason !== null} aria-busy={busy} className={`${commandButtonClasses('outline')} w-full`}>
+                            {busy ? (
+                              <span className="inline-flex items-center justify-center gap-2"><Loader2 className="h-4 w-4 animate-spin" aria-hidden /> Đang xử lý giao dịch…</span>
+                            ) : (
+                              'Reveal vote'
+                            )}
                           </button>
                           <p className="text-xs text-[var(--clay-muted)]">{revealReason ?? 'Sẵn sàng reveal cho chức vụ này.'}</p>
                           <p className="text-[11px] text-amber-600">
                             ⚠️ Bí mật phiếu được mã hoá cục bộ bằng chữ ký ví. Reveal phải dùng <strong>đúng ví và đúng trình duyệt/thiết bị</strong> đã commit; xoá dữ liệu trình duyệt sẽ mất khả năng reveal.
                           </p>
 
-                          <button type="button" onClick={() => void handleFinalizeElection()} disabled={finalizeReason !== null} className={`${commandButtonClasses('dark')} w-full`}>
-                            Finalize election
+                          <button type="button" onClick={() => void handleFinalizeElection()} disabled={finalizeReason !== null} aria-busy={busy} className={`${commandButtonClasses('dark')} w-full`}>
+                            {busy ? (
+                              <span className="inline-flex items-center justify-center gap-2"><Loader2 className="h-4 w-4 animate-spin" aria-hidden /> Đang xử lý giao dịch…</span>
+                            ) : (
+                              'Finalize election'
+                            )}
                           </button>
                           <p className="text-xs text-[var(--clay-muted)]">{finalizeReason ?? 'Sẵn sàng finalize.'}</p>
                         </div>
