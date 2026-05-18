@@ -67,11 +67,9 @@ public partial class ApplicationDbContext : DbContext
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
-        if (!optionsBuilder.IsConfigured)
-        {
-            var builder = WebApplication.CreateBuilder();
-            optionsBuilder.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"));
-        }
+        // S12 (spec 005): KHONG hardcode UseSqlServer (chan migration Postgres).
+        // Provider do DI (Program.cs) cau hinh; EF tooling dung host cua app.
+        // Khong tu dung WebApplication.CreateBuilder() nang & ghim SQL Server nua.
     }
 
 

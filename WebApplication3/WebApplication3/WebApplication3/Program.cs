@@ -170,6 +170,14 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
         return;
     }
 
+    // S12 (spec 005): provider-aware (mở đường SQL Server -> PostgreSQL).
+    // Default vẫn SQL Server (tương thích ngược); Postgres khi connection string là Postgres.
+    if (LooksLikePostgresConnectionString(defaultConnection))
+    {
+        options.UseNpgsql(defaultConnection);
+        return;
+    }
+
     options.UseSqlServer(
         defaultConnection,
         sqlOptions => sqlOptions.EnableRetryOnFailure());
