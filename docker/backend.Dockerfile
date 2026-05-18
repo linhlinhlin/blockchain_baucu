@@ -22,6 +22,12 @@ WORKDIR /app
 COPY --from=build /app/publish/ ./
 COPY --from=contracts /workspace/blockchain_sm /workspace/blockchain_sm
 
+# S16 (spec 004): chay non-root. User `app` (uid 1654) co san trong image aspnet .NET 9.
+# S15: dam bao thu muc deployments ton tai & thuoc `app` de named volume khoi tao dung quyen.
+RUN mkdir -p /workspace/blockchain_sm/deployments \
+    && chown -R app:app /app /workspace/blockchain_sm
+USER app
+
 ENV ASPNETCORE_URLS=http://0.0.0.0:5293
 EXPOSE 5293
 

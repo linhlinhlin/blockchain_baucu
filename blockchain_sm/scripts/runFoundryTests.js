@@ -43,12 +43,23 @@ if (commandExists("docker", ["info"])) {
 } else if (commandExists("forge")) {
   console.warn("[runFoundryTests] Docker khong san sang, chuyen sang forge native.");
   result = runNativeForge();
-} else {
+} else if (process.env.SKIP_FOUNDRY === "1") {
+  // S17 (spec 004): chi bo qua khi opt-out TUONG MINH, in canh bao to.
   console.warn(
-    "[runFoundryTests] Bo qua Foundry tests vi Docker daemon va forge deu khong san sang tren may nay."
+    "\n[runFoundryTests] !!! BO QUA Foundry tests (SKIP_FOUNDRY=1). " +
+      "Khong co phan tich Foundry nao chay. !!!\n"
   );
   process.exitCode = 0;
   process.exit();
+} else {
+  // S17: KHONG silent-pass. Thieu tool => FAIL (non-zero) de `validate`/CI bat duoc.
+  console.error(
+    "\n[runFoundryTests] LOI: Docker daemon va forge deu khong san sang. " +
+      "Foundry tests KHONG chay. Cai Foundry (foundryup) hoac Docker, " +
+      "hoac dat SKIP_FOUNDRY=1 de bo qua co chu y.\n"
+  );
+  process.exitCode = 1;
+  process.exit(1);
 }
 
 process.exitCode = result.status ?? 1;

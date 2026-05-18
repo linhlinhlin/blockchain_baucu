@@ -55,12 +55,23 @@ if (commandExists("docker", ["info"])) {
 } else if (commandExists("slither")) {
   console.warn("[runSlitherAnalysis] Docker khong san sang, chuyen sang slither native.");
   result = runNativeSlither();
-} else {
+} else if (process.env.SKIP_SLITHER === "1") {
+  // S17 (spec 004): chi bo qua khi opt-out TUONG MINH, in canh bao to.
   console.warn(
-    "[runSlitherAnalysis] Bo qua Slither analysis vi Docker daemon va slither deu khong san sang tren may nay."
+    "\n[runSlitherAnalysis] !!! BO QUA Slither (SKIP_SLITHER=1). " +
+      "Khong co phan tich tinh nao chay. !!!\n"
   );
   process.exitCode = 0;
   process.exit();
+} else {
+  // S17: KHONG silent-pass. Thieu tool => FAIL (non-zero).
+  console.error(
+    "\n[runSlitherAnalysis] LOI: Docker daemon va slither deu khong san sang. " +
+      "Slither KHONG chay. Cai Slither hoac Docker, " +
+      "hoac dat SKIP_SLITHER=1 de bo qua co chu y.\n"
+  );
+  process.exitCode = 1;
+  process.exit(1);
 }
 
 process.exitCode = result.status ?? 1;
