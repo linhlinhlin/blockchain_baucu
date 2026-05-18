@@ -31,9 +31,13 @@ public sealed class ElectionV1RosterInviteRecord
     public string QrPayload { get; set; } = string.Empty;
     public DateTimeOffset CreatedAt { get; set; }
     public DateTimeOffset? LastOtpSentAt { get; set; }
+    // S2 (spec 001): chua HASH cua OTP (BCrypt), KHONG phai OTP plaintext.
     public string? LastOtpCode { get; set; }
     public DateTimeOffset? OtpExpiresAt { get; set; }
     public DateTimeOffset? OtpVerifiedAt { get; set; }
+    // S2: rate-limit / lockout chong brute-force OTP.
+    public int OtpAttemptCount { get; set; }
+    public DateTimeOffset? OtpLockedUntil { get; set; }
     public int? ClaimedByUserId { get; set; }
     public string? WalletAddress { get; set; }
     public DateTimeOffset? WalletBoundAt { get; set; }
