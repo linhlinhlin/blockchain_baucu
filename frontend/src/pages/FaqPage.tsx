@@ -1,9 +1,9 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { ChevronDown, ChevronUp, ArrowLeft, Github, Twitter, Linkedin } from 'lucide-react';
+import { ArrowLeft, Github, Twitter, Linkedin } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import SEO from '../components/SEO';
+import { Accordion, Panel } from '../components/ui/clay';
 
 // Định nghĩa kiểu dữ liệu cho FAQ
 type FAQItem = {
@@ -12,10 +12,6 @@ type FAQItem = {
 };
 
 export default function FAQ() {
-  // State để theo dõi accordion đang mở
-  const [openIndex, setOpenIndex] = useState<number | null>(null);
-  const [isLoaded, setIsLoaded] = useState(false);
-
   // Thêm SEO component
   const seoData = {
     title: 'Câu Hỏi Thường Gặp | Blockchain Election Hub',
@@ -83,148 +79,48 @@ export default function FAQ() {
     },
   ];
 
-  // Hiệu ứng khi component được mount
-  useEffect(() => {
-    setIsLoaded(true);
-  }, []);
-
-  // Xử lý khi click vào câu hỏi
-  const toggleAccordion = (index: number) => {
-    setOpenIndex(openIndex === index ? null : index);
-  };
-
   return (
-    <div className="relative min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-[var(--clay-bg)] text-[var(--clay-text)]">
       <SEO {...seoData} />
 
-      {/* Header */}
-      <header className="sticky top-0 z-10 bg-white shadow-md px-6 md:px-10 py-5 flex justify-between items-center border-b border-gray-200">
-        <div className="flex items-center space-x-3">
-          <div className="w-8 h-8 rounded-full bg-[#0288D1] flex items-center justify-center">
-            <svg
-              width="16"
-              height="16"
-              viewBox="0 0 24 24"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <path
-                d="M12 2L2 7L12 12L22 7L12 2Z"
-                stroke="white"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-              <path
-                d="M2 17L12 22L22 17"
-                stroke="white"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-              <path
-                d="M2 12L12 17L22 12"
-                stroke="white"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
-          </div>
-          <h1 className="text-gray-900 font-bold text-xl md:text-2xl tracking-tight">
-            Câu Hỏi Thường Gặp
+      <div className="mx-auto max-w-3xl px-4 py-12">
+        <div className="mb-8 flex items-center justify-between gap-4">
+          <h1 className="text-[1.75rem] font-semibold tracking-[-0.015em] text-[var(--clay-text)] md:text-[2rem]">
+            Câu hỏi thường gặp
           </h1>
-        </div>
-        <Link
-          to="/"
-          className="flex items-center px-4 py-2 bg-[#0288D1] hover:bg-[#01579B] text-white rounded-lg transition-all duration-300 transform hover:scale-105 shadow-lg"
-        >
-          <ArrowLeft className="w-4 h-4 mr-2" />
-          <span className="font-medium text-sm">Về Trang Chủ</span>
-        </Link>
-      </header>
-
-      {/* Main Content */}
-      <main className="max-w-3xl mx-auto px-4 py-16 relative z-0">
-        {/* Title */}
-        <div
-          className={`text-center mb-12 transition-all duration-1000 ${
-            isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-10'
-          }`}
-        >
-          <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-gray-900 relative inline-block">
-            Câu Hỏi Thường Gặp
-          </h2>
+          <Link
+            to="/"
+            className="inline-flex min-h-[44px] items-center gap-2 rounded-[12px] border border-[var(--clay-primary)] px-4 text-sm text-[var(--clay-primary)] hover:bg-[var(--clay-primary-light)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[var(--clay-primary-focus)]"
+          >
+            <ArrowLeft className="h-4 w-4" aria-hidden="true" />
+            Về trang chủ
+          </Link>
         </div>
 
-        {/* FAQ Accordion */}
-        <div className="space-y-4">
-          {faqItems.map((item, index) => (
-            <div
-              key={index}
-              className={`transition-all duration-500 ${
-                isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'
-              }`}
-              style={{ transitionDelay: `${index * 100}ms` }}
-            >
-              <div
-                className={`rounded-xl transition-all duration-300 ${
-                  openIndex === index
-                    ? 'bg-white shadow-lg border border-[#0288D1]'
-                    : 'bg-white border border-gray-200 hover:border-[#0288D1]/50 hover:scale-[1.01]'
-                }`}
-              >
-                <button
-                  onClick={() => toggleAccordion(index)}
-                  className="w-full text-left px-6 py-5 flex justify-between items-center"
-                >
-                  <span className="text-gray-900 font-medium text-lg md:text-xl">{item.question}</span>
-                  {openIndex === index ? (
-                    <ChevronUp className="w-5 h-5 text-gray-600" />
-                  ) : (
-                    <ChevronDown className="w-5 h-5 text-gray-600" />
-                  )}
-                </button>
-                <div
-                  className={`overflow-hidden transition-all duration-300 ease-in-out ${
-                    openIndex === index ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'
-                  }`}
-                >
-                  <div className="px-6 pb-6 text-gray-600 leading-relaxed">{item.answer}</div>
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-      </main>
+        <Accordion
+          items={faqItems.map((item, index) => ({
+            key: `q${index}`,
+            trigger: <span className="pr-2">{item.question}</span>,
+            content: item.answer,
+          }))}
+        />
 
-      {/* Footer */}
-      <footer className="bg-white border-t border-gray-200 py-10 text-center">
-        <div className="max-w-3xl mx-auto px-4">
-          <h3 className="text-gray-900 font-bold text-lg mb-4">Blockchain Holihu</h3>
-          <div className="flex justify-center space-x-6 mb-6">
-            <a
-              href="#"
-              className="text-[#0288D1] hover:text-[#6A1B9A] transition-all duration-300 transform hover:scale-125"
-            >
-              <Twitter className="w-6 h-6" />
+        <Panel className="mt-12 text-center">
+          <h2 className="font-semibold text-[var(--clay-text)]">Blockchain HoLiHu</h2>
+          <div className="mt-4 flex justify-center gap-6">
+            <a href="#" aria-label="Twitter" className="text-[var(--clay-primary)] hover:opacity-80">
+              <Twitter className="h-6 w-6" />
             </a>
-            <a
-              href="#"
-              className="text-[#0288D1] hover:text-[#6A1B9A] transition-all duration-300 transform hover:scale-125"
-            >
-              <Github className="w-6 h-6" />
+            <a href="#" aria-label="GitHub" className="text-[var(--clay-primary)] hover:opacity-80">
+              <Github className="h-6 w-6" />
             </a>
-            <a
-              href="#"
-              className="text-[#0288D1] hover:text-[#6A1B9A] transition-all duration-300 transform hover:scale-125"
-            >
-              <Linkedin className="w-6 h-6" />
+            <a href="#" aria-label="LinkedIn" className="text-[var(--clay-primary)] hover:opacity-80">
+              <Linkedin className="h-6 w-6" />
             </a>
           </div>
-          <p className="text-gray-600 text-sm">Powered by Web3 Technology</p>
-        </div>
-      </footer>
+          <p className="mt-4 text-sm text-[var(--clay-muted)]">Powered by Web3 Technology</p>
+        </Panel>
+      </div>
     </div>
   );
 }

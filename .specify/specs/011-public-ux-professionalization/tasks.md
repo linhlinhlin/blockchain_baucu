@@ -61,11 +61,11 @@ description: "Task list — Đợt 11 Public UX Professionalization"
 
 ## Phase 5: User Story 3 — Marketing/nội dung (P2)
 
-- [ ] T016 [P] [US3] `frontend/src/pages/CacCuocBauCuPage.tsx`: clay Panel/EmptyState/Loader cho lưới + trạng thái rỗng/tải; GIỮ Redux fetch. **Verify**: `typecheck:active` sạch; §B6.
-- [ ] T017 [P] [US3] `frontend/src/pages/FaqPage.tsx`: dùng clay `Accordion`; GIỮ data. **Verify**: bàn phím accordion; `typecheck:active` sạch.
-- [ ] T018 [P] [US3] `frontend/src/pages/LienHe.tsx`: clay Field/Button/StatusBadge; GIỮ react-hook-form + `lienHeSlice` dispatch. **Verify**: `git diff` không đụng submit logic; §B5; `typecheck:active` sạch.
-- [ ] T019 [P] [US3] `frontend/src/pages/CamOnPage.tsx`: clay Panel/Button. **Verify**: `typecheck:active` sạch.
-- [ ] T020 [US3] Checkpoint US3: quickstart §A + §B5/§B6 + SC-001/002 grep. **Verify**: đạt; commit lát US3.
+- [X] T016 [P] [US3] `frontend/src/pages/CacCuocBauCuPage.tsx`: clay Panel/EmptyState/Loader cho lưới + trạng thái rỗng/tải; GIỮ Redux fetch. **Verify**: `typecheck:active` sạch; §B6.
+- [X] T017 [P] [US3] `frontend/src/pages/FaqPage.tsx`: dùng clay `Accordion`; GIỮ data. **Verify**: bàn phím accordion; `typecheck:active` sạch.
+- [X] T018 [P] [US3] `frontend/src/pages/LienHe.tsx`: clay Field/Button/StatusBadge; GIỮ react-hook-form + `lienHeSlice` dispatch. **Verify**: `git diff` không đụng submit logic; §B5; `typecheck:active` sạch.
+- [X] T019 [P] [US3] `frontend/src/pages/CamOnPage.tsx`: clay Panel/Button. **Verify**: `typecheck:active` sạch.
+- [X] T020 [US3] Checkpoint US3: quickstart §A + §B5/§B6 + SC-001/002 grep. **Verify**: đạt; commit lát US3.
 
 ---
 
