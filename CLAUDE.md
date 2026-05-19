@@ -28,6 +28,10 @@ Hệ thống bầu cử sinh viên on-chain. Monorepo 4 module.
 - Pipeline: `/speckit-specify` → `/speckit-plan` → `/speckit-tasks` → `/speckit-implement`. Mỗi spec atomic, tham chiếu mã issue `S#` từ audit.
 - Thay đổi tối thiểu, đúng scope spec; không mở rộng bề mặt legacy; không commit secret.
 
+<!-- SPECKIT START -->
+- **Active feature**: `010-ux-professionalization` — kế hoạch: `.specify/specs/010-ux-professionalization/plan.md` (Đợt 10: chuyên nghiệp hoá UX/UI 5 trang app + shell, frontend-only, bảo toàn S4/S5).
+<!-- SPECKIT END -->
+
 ## Cảnh báo bảo mật đang mở (xem audit §2)
 
 5 Critical (S1–S5): private key commit trong `frontend/src/test/**`; OTP plaintext/echo; JWT secret hardcode; vote-secret plaintext localStorage. **Chưa vá** — đang chờ team duyệt scope Đợt 1.
