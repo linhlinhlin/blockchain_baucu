@@ -49,3 +49,7 @@ export type { LoaderProps } from './Loader';
 
 export { Skeleton } from './Skeleton';
 export type { SkeletonProps } from './Skeleton';
+
+// Đợt 11
+export { Accordion } from './Accordion';
+export type { AccordionProps, AccordionItem } from './Accordion';

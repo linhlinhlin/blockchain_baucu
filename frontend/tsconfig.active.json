@@ -15,6 +15,21 @@
     "src/pages/CuocBauCuCuaNguoiDungPage.tsx",
     "src/pages/QuanLySmartContractPage.tsx",
     "src/pages/VoterVerificationPage.tsx",
-    "src/pages/QuetMaQRPage.tsx"
+    "src/pages/QuetMaQRPage.tsx",
+    "src/AppBeforeLogin.tsx",
+    "src/components/Header.tsx",
+    "src/components/Footer.tsx",
+    "src/pages/ChaoMungPage.tsx",
+    "src/pages/LoginPage.tsx",
+    "src/pages/DangKyTaiKhoanPage.tsx",
+    "src/pages/CacCuocBauCuPage.tsx",
+    "src/pages/FaqPage.tsx",
+    "src/pages/LienHe.tsx",
+    "src/pages/CamOnPage.tsx",
+    "src/pages/ChinhSachBaoMatPage.tsx",
+    "src/pages/DieuKhoanSuDungPage.tsx",
+    "src/pages/TimTaiKhoanPage.tsx",
+    "src/pages/GuiOTPPage.tsx",
+    "src/pages/DatLaiMatKhauPage.tsx"
   ]
 }

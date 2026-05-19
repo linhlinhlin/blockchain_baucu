@@ -8,7 +8,7 @@ import { ThemeProvider } from './context/ThemeContext';
 const AppBeforeLogin: React.FC = () => {
   return (
     <ThemeProvider>
-      <div className="flex min-h-screen flex-col">
+      <div className="flex min-h-screen flex-col bg-[var(--clay-bg)] text-[var(--clay-text)]">
         <a href="#main-content" className="skip-link">
           Bỏ qua điều hướng
         </a>

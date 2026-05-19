@@ -36,7 +36,7 @@ export default function Header() {
   };
 
   return (
-    <header className="sticky top-0 z-40 bg-black text-white">
+    <header className="sticky top-0 z-40 bg-[var(--surface-black)] text-white">
       <div className="mx-auto flex h-11 max-w-[1440px] items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
         <Link to={user ? '/app' : '/'} className="flex min-w-0 items-center gap-2 text-white/90">
           <ShieldCheck className="h-4 w-4 shrink-0" aria-hidden="true" />
@@ -81,7 +81,7 @@ export default function Header() {
           ) : (
             <NavLink
               to="/login"
-              className="inline-flex min-h-8 items-center justify-center gap-1.5 rounded-full bg-[#1d1d1f] px-3 text-xs font-normal text-white transition-transform duration-150 hover:bg-[#2a2a2c] active:scale-95"
+              className="inline-flex min-h-8 items-center justify-center gap-1.5 rounded-full bg-[var(--clay-text)] px-3 text-xs font-normal text-white transition-transform duration-150 hover:bg-[var(--surface-tile-2)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--clay-primary-focus)] active:scale-95"
             >
               <LogIn className="h-3.5 w-3.5" aria-hidden="true" />
               Đăng nhập
@@ -94,7 +94,7 @@ export default function Header() {
             <Button
               variant="ghost"
               size="icon"
-              className="h-8 w-8 text-white hover:bg-white/10 md:hidden"
+              className="h-11 w-11 text-white hover:bg-white/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-[var(--clay-primary-focus)] md:hidden"
               aria-label={menuOpen ? 'Đóng menu' : 'Mở menu'}
             >
               {menuOpen ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}

@@ -158,7 +158,7 @@ export function Footer() {
           )}
 
           {(error || emailError) && (
-            <div className="mt-4 flex items-center gap-2 rounded-[18px] border border-[rgba(191,72,0,0.24)] bg-[#fff4ed] px-3 py-2 text-sm text-[var(--clay-pomegranate)]">
+            <div className="mt-4 flex items-center gap-2 rounded-[14px] border border-[var(--state-danger)] bg-[var(--state-danger-soft)] px-3 py-2 text-sm text-[var(--state-danger)]">
               <AlertCircle className="h-4 w-4" />
               <span>{error || emailError}</span>
             </div>

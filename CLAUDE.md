@@ -29,7 +29,7 @@ Hệ thống bầu cử sinh viên on-chain. Monorepo 4 module.
 - Thay đổi tối thiểu, đúng scope spec; không mở rộng bề mặt legacy; không commit secret.
 
 <!-- SPECKIT START -->
-- **Active feature**: `010-ux-professionalization` — kế hoạch: `.specify/specs/010-ux-professionalization/plan.md` (Đợt 10: chuyên nghiệp hoá UX/UI 5 trang app + shell, frontend-only, bảo toàn S4/S5).
+- **Active feature**: `011-public-ux-professionalization` — `.specify/specs/011-public-ux-professionalization/plan.md` (Đợt 11: chuyên nghiệp hoá UX/UI trang công khai, tái dùng clay, bảo toàn verbatim auth/recaptcha/OTP). Tiền nhiệm: Đợt 10 (`010-ux-professionalization`) + 10.1 type-baseline — DONE.
 <!-- SPECKIT END -->
 
 ## Cảnh báo bảo mật đang mở (xem audit §2)
