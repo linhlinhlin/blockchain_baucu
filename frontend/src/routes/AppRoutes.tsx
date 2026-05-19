@@ -3,65 +3,91 @@ import { createBrowserRouter, Navigate, RouterProvider } from 'react-router-dom'
 import { lazy, Suspense } from 'react';
 import { GoogleReCaptchaProvider } from 'react-google-recaptcha-v3';
 
+// Đợt 13 (hiệu năng): route-level code-splitting. Shell/ErrorPage/HOC/provider
+// giữ static (cần ngay/độ tin cậy); mọi trang ../pages/* → lazy() ⇒ tách chunk
+// theo route, giảm mạnh bundle index ban đầu. Routing/guard/redirect KHÔNG đổi.
 import AppBeforeLogin from '../AppBeforeLogin';
 import AppAfterLogin from '../AppAfterLogin';
-import CacPhienBauCuPage from '../pages/CacCuocBauCuPage';
-import XemChiTietCuocBauCuPage from '../pages/XemChiTietCuocBauCuPage';
 import ErrorPage from '../pages/ErrorPage';
-import HomePage from '../pages/HomePage';
-import LoginPage from '../pages/LoginPage';
-import RoleManagementPage from '../pages/QuanLyVaiTroAdminPage';
-import RoleAssignmentPage from '../pages/PhanQuyenAdminPage';
-import AccountInfoPage from '../pages/ThongTinTaiKhoanPage';
-import WelcomePage from '../pages/ChaoMungPage';
-import ThankYouPage from '../pages/CamOnPage';
-import FindAccountPage from '../pages/TimTaiKhoanPage';
-import AccountOptionsPage from '../pages/TuyChonTaiKhoanPage';
-import RegisterPage from '../pages/DangKyTaiKhoanPage';
-import SettingsPage from '../pages/CaiDatPage';
-import UserElectionsPage from '../pages/CuocBauCuCuaNguoiDungPage';
-import TaoPhienBauCuPage from '../pages/TaoCuocBauCuPage';
-import UpcomingElectionsPage from '../pages/ThongBaoCuocBauCuPage';
 import withElectionId from '../components/withElectionId';
-import ElectionTienHanh from '../pages/ThongTinChiTietCuocBauCu';
-// import TienHanhBauCu from '../pages/TienHanhPhienBauCuPage';
 import ThongBaoKhongCoPhien from '../components/ThongBaoKhongCoCuocBauCu';
-import ChinhSachBaoMat from '../pages/ChinhSachBaoMatPage';
-import DieuKhoanSuDung from '../pages/DieuKhoanSuDungPage';
-import LienHePage from '../pages/LienHe';
-import UnauthorizedPage from '../pages/UnauthoriedPage';
 import ProtectedRoute from '../routes/ProtectedRoute';
-import GuiOTPPage from '../pages/GuiOTPPage';
-import DatLaiMatKhauPage from '../pages/DatLaiMatKhauPage';
 import withPhienBauCuId from '../components/withPhienBauCuId';
-import QuanLyFilePage from '../pages/QuanLyFilePage'; // Import QuanLyFilePage
-import QuetMaQRPage from '../pages/QuetMaQRPage';
-import QuanLySmartContractPage from '../pages/QuanLySmartContractPage'; // Import QuanLySmartContractPage
-//import ThongTinBlockchainRealTimePage from '../pages/ThongTinBlockchainRealTimePage'; // Import ThongTinBlockchainRealTimePage
-import FAQ from '../pages/FaqPage';
-import BlockchainSetupPage from '../pages/BlockchainSetupPage';
-import DieuLePage from '../pages/DieuLePage';
-//import PhienBauCuBlockchainPage from '../pages/PhienBauCuBlockchainPage';
-
-// Import component VuaChua với tên mới
-import PhienBauCuBlockchainDeploymentPage from '../pages/PhienBauCuBlockchainDeploymentPage'; // Đổi tên từ VuaChua.tsx
-import ChinhSuaPhienBauCuPage from '../pages/ChinhSuaPhienBauCuPage';
-
-// Thêm import cho trang xác thực cử tri
-import VoterVerificationPage from '../pages/VoterVerificationPage';
-
-// Thêm import cho trang ElectionSessionManagerPage
-import ElectionSessionManagerPage from '../pages/ElectionSessionManagerPage';
-import XemChiTietPhienBauCuPage from '../pages/XemChiTietPhienBauCuPage';
-
-// Thêm withPhienBauCuId cho ChinhSuaPhienBauCuPage
 import { Web3Provider } from '../context/Web3Context';
 import { ThemeProvider } from '../context/ThemeContext';
 import { ToastProvider } from '../components/ui/Use-toast';
 import { ReCaptchaProvider } from '../components/ui/Use-recaptcha';
 import { isRecaptchaEnabled } from '../config/runtimeFlags';
 
+const CacPhienBauCuPage = lazy(() => import('../pages/CacCuocBauCuPage'));
+const XemChiTietCuocBauCuPage = lazy(() => import('../pages/XemChiTietCuocBauCuPage'));
+const HomePage = lazy(() => import('../pages/HomePage'));
+const LoginPage = lazy(() => import('../pages/LoginPage'));
+const RoleManagementPage = lazy(() => import('../pages/QuanLyVaiTroAdminPage'));
+const RoleAssignmentPage = lazy(() => import('../pages/PhanQuyenAdminPage'));
+const AccountInfoPage = lazy(() => import('../pages/ThongTinTaiKhoanPage'));
+const WelcomePage = lazy(() => import('../pages/ChaoMungPage'));
+const ThankYouPage = lazy(() => import('../pages/CamOnPage'));
+const FindAccountPage = lazy(() => import('../pages/TimTaiKhoanPage'));
+const AccountOptionsPage = lazy(() => import('../pages/TuyChonTaiKhoanPage'));
+const RegisterPage = lazy(() => import('../pages/DangKyTaiKhoanPage'));
+const SettingsPage = lazy(() => import('../pages/CaiDatPage'));
+const UserElectionsPage = lazy(() => import('../pages/CuocBauCuCuaNguoiDungPage'));
+const TaoPhienBauCuPage = lazy(() => import('../pages/TaoCuocBauCuPage'));
+const UpcomingElectionsPage = lazy(() => import('../pages/ThongBaoCuocBauCuPage'));
+const ElectionTienHanh = lazy(() => import('../pages/ThongTinChiTietCuocBauCu'));
+const ChinhSachBaoMat = lazy(() => import('../pages/ChinhSachBaoMatPage'));
+const DieuKhoanSuDung = lazy(() => import('../pages/DieuKhoanSuDungPage'));
+const LienHePage = lazy(() => import('../pages/LienHe'));
+const UnauthorizedPage = lazy(() => import('../pages/UnauthoriedPage'));
+const GuiOTPPage = lazy(() => import('../pages/GuiOTPPage'));
+const DatLaiMatKhauPage = lazy(() => import('../pages/DatLaiMatKhauPage'));
+const QuanLyFilePage = lazy(() => import('../pages/QuanLyFilePage'));
+const QuetMaQRPage = lazy(() => import('../pages/QuetMaQRPage'));
+const QuanLySmartContractPage = lazy(() => import('../pages/QuanLySmartContractPage'));
+const FAQ = lazy(() => import('../pages/FaqPage'));
+const BlockchainSetupPage = lazy(() => import('../pages/BlockchainSetupPage'));
+const DieuLePage = lazy(() => import('../pages/DieuLePage'));
+const PhienBauCuBlockchainDeploymentPage = lazy(
+  () => import('../pages/PhienBauCuBlockchainDeploymentPage'),
+);
+const ChinhSuaPhienBauCuPage = lazy(() => import('../pages/ChinhSuaPhienBauCuPage'));
+const VoterVerificationPage = lazy(() => import('../pages/VoterVerificationPage'));
+const ElectionSessionManagerPage = lazy(() => import('../pages/ElectionSessionManagerPage'));
+const XemChiTietPhienBauCuPage = lazy(() => import('../pages/XemChiTietPhienBauCuPage'));
+
 const AdminPage = lazy(() => import('../pages/AdminPage'));
+
+function RouteFallback() {
+  return (
+    <div
+      style={{
+        minHeight: '60vh',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        color: 'var(--clay-muted)',
+        fontSize: 14,
+      }}
+      role="status"
+      aria-live="polite"
+    >
+      <span
+        style={{
+          width: 22,
+          height: 22,
+          border: '3px solid currentColor',
+          borderRightColor: 'transparent',
+          borderRadius: '50%',
+          display: 'inline-block',
+          animation: 'spin 0.7s linear infinite',
+        }}
+        aria-hidden="true"
+      />
+      <span style={{ marginLeft: 10 }}>Đang tải…</span>
+    </div>
+  );
+}
 
 const XemChiTietCuocBauCuPageWithId = withElectionId(XemChiTietCuocBauCuPage);
 // Using type assertion to resolve the type incompatibility
@@ -95,7 +121,9 @@ const AppWithProviders = ({
           }}
         >
           <ReCaptchaProvider>
-            <Web3Provider>{children}</Web3Provider>
+            <Web3Provider>
+              <Suspense fallback={<RouteFallback />}>{children}</Suspense>
+            </Web3Provider>
           </ReCaptchaProvider>
         </GoogleReCaptchaProvider>
       ) : (

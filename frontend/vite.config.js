@@ -23,7 +23,9 @@ export default defineConfig({
   },
   build: {
     outDir: 'build',
-    chunkSizeWarningLimit: 6000, // Tăng giới hạn cảnh báo
+    // Đợt 13 (hiệu năng): sau route-level code-splitting main chunk ~427kB
+    // (trước 1769kB). Hạ band-aid 6000→900 để BẮT hồi quy bundle.
+    chunkSizeWarningLimit: 900,
     commonjsOptions: {
       transformMixedEsModules: true,
     },
