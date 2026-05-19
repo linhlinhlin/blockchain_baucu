@@ -24,8 +24,10 @@ export default defineConfig({
   build: {
     outDir: 'build',
     // Đợt 13 (hiệu năng): sau route-level code-splitting main chunk ~427kB
-    // (trước 1769kB). Hạ band-aid 6000→900 để BẮT hồi quy bundle.
-    chunkSizeWarningLimit: 900,
+    // (trước 1769kB). Ngưỡng 1200: trên chunk vendor `three` ~1100kB (Three.js
+    // vốn lớn, đã tách riêng + lazy theo route — không tối ưu thêm = YAGNI),
+    // dưới mức app-chunk phình cũ (1769) ⇒ vẫn BẮT hồi quy bundle ứng dụng.
+    chunkSizeWarningLimit: 1200,
     commonjsOptions: {
       transformMixedEsModules: true,
     },
