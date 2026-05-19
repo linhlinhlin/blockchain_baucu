@@ -661,21 +661,54 @@ export default function TaoCuocBauCuPage() {
           </aside>
         </div>
 
+        <nav
+          aria-label="Các bước tạo bầu cử"
+          className={`${panelClasses()} mb-6 flex flex-wrap items-center gap-2 px-3 py-3`}
+        >
+          {[
+            { n: 1, label: 'Thông tin', href: '#sec-thongtin' },
+            { n: 2, label: 'Lựa chọn', href: '#positions-section' },
+            { n: 3, label: 'Cử tri', href: '#sec-cutri' },
+            { n: 4, label: 'Xác nhận', href: '#sec-xacnhan' },
+          ].map((s, i) => (
+            <a
+              key={s.n}
+              href={s.href}
+              className={`flex items-center gap-2 rounded-[10px] px-3 py-1.5 text-sm transition-colors ${
+                i === 0
+                  ? 'bg-[var(--clay-primary-light)] font-semibold text-[var(--clay-primary)]'
+                  : 'text-[var(--clay-muted)] hover:bg-[var(--clay-surface-soft)] hover:text-[var(--clay-text)]'
+              }`}
+            >
+              <span
+                className={`flex h-5 w-5 items-center justify-center rounded-full text-xs ${
+                  i === 0
+                    ? 'bg-[var(--clay-primary)] text-white'
+                    : 'bg-[var(--clay-surface-soft)] text-[var(--clay-muted)]'
+                }`}
+              >
+                {s.n}
+              </span>
+              {s.label}
+            </a>
+          ))}
+        </nav>
+
         <form onSubmit={handleSubmit} className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_360px]">
           <div className="space-y-6">
-            <section className={panelClasses()}>
+            <section id="sec-thongtin" className={panelClasses()}>
               <div className="mb-5 flex items-center gap-3">
                 <ShieldCheck className="h-5 w-5 text-[var(--clay-primary)]" aria-hidden="true" />
                 <div>
-                  <p className="clay-label">Ballot</p>
-                  <h2 className="mt-2 text-2xl font-semibold tracking-[-0.015em] text-black">
-                    Thông tin cuộc bầu cử
+                  <p className="clay-label">Bước 1</p>
+                  <h2 className="mt-1 text-lg font-semibold tracking-[-0.015em] text-black">
+                    Thông tin đợt bầu cử
                   </h2>
                 </div>
               </div>
 
               <div className="grid gap-4 md:grid-cols-2">
-                <div className="space-y-2 md:col-span-2">
+                <div className="space-y-2">
                   <label htmlFor="ballot-title" className="text-sm font-semibold text-black">
                     Tên cuộc bầu cử
                   </label>
@@ -710,7 +743,7 @@ export default function TaoCuocBauCuPage() {
                   />
                 </div>
 
-                <div className="space-y-2 md:col-span-2">
+                <div className="space-y-2">
                   <label htmlFor="group-key" className="text-sm font-semibold text-black">
                     Group key (tùy chọn)
                   </label>
@@ -728,18 +761,18 @@ export default function TaoCuocBauCuPage() {
               </div>
             </section>
 
-            <section className={panelClasses()}>
+            <section id="sec-cutri" className={panelClasses()}>
               <div className="mb-5 flex items-center gap-3">
                 <Users className="h-5 w-5 text-[var(--clay-primary)]" aria-hidden="true" />
                 <div>
-                  <p className="clay-label">Timeline & voters</p>
-                  <h2 className="mt-2 text-2xl font-semibold tracking-[-0.015em] text-black">
+                  <p className="clay-label">Bước 3</p>
+                  <h2 className="mt-1 text-lg font-semibold tracking-[-0.015em] text-black">
                     Lịch và danh sách cử tri
                   </h2>
                 </div>
               </div>
 
-              <div className="grid gap-4 md:grid-cols-3">
+              <div className="grid gap-4 md:grid-cols-2">
                 <div className="space-y-2">
                   <label htmlFor="commit-start" className="text-sm font-semibold text-black">
                     Commit start
@@ -888,9 +921,9 @@ export default function TaoCuocBauCuPage() {
                 <div className="flex items-center gap-3">
                   <Vote className="h-5 w-5 text-[var(--clay-primary)]" aria-hidden="true" />
                   <div>
-                    <p className="clay-label">Positions</p>
-                    <h2 className="mt-2 text-2xl font-semibold tracking-[-0.015em] text-black">
-                      Chức vụ và ứng viên
+                    <p className="clay-label">Bước 2</p>
+                    <h2 className="mt-1 text-lg font-semibold tracking-[-0.015em] text-black">
+                      Lựa chọn / ứng viên
                     </h2>
                   </div>
                 </div>
@@ -1090,9 +1123,34 @@ export default function TaoCuocBauCuPage() {
             </section>
 
             <section className={panelClasses()}>
-              <p className="clay-label">Submit</p>
-              <h2 className="mt-2 text-2xl font-semibold tracking-[-0.015em] text-black">
-                {voterMode === 'wallets' ? 'Tạo group ballot' : 'Tạo roster xác thực'}
+              <p className="text-sm font-semibold text-black">Xác thực</p>
+              <div className="mt-3 space-y-2.5 text-sm">
+                <div className="flex items-center justify-between gap-4">
+                  <span className="text-[var(--clay-muted)]">Email</span>
+                  <span className="inline-flex items-center gap-1.5 font-medium text-[var(--clay-text)]">
+                    <span className="h-2 w-2 rounded-full bg-emerald-500" aria-hidden="true" />
+                    Sẵn sàng
+                  </span>
+                </div>
+                <div className="flex items-center justify-between gap-4">
+                  <span className="text-[var(--clay-muted)]">QR / OTP</span>
+                  <span className="inline-flex items-center gap-1.5 font-medium text-[var(--clay-text)]">
+                    <span
+                      className={`h-2 w-2 rounded-full ${
+                        voterMode === 'roster' ? 'bg-emerald-500' : 'bg-[var(--clay-muted-soft)]'
+                      }`}
+                      aria-hidden="true"
+                    />
+                    {voterMode === 'roster' ? 'Sẵn sàng' : 'Tắt (nhập ví)'}
+                  </span>
+                </div>
+              </div>
+            </section>
+
+            <section id="sec-xacnhan" className={panelClasses()}>
+              <p className="clay-label">Bước 4</p>
+              <h2 className="mt-1 text-lg font-semibold tracking-[-0.015em] text-black">
+                {voterMode === 'wallets' ? 'Xác nhận & tạo ballot' : 'Xác nhận & tạo roster'}
               </h2>
               <p className="mt-3 text-sm leading-6 text-[var(--clay-muted)]">
                 {voterMode === 'wallets'

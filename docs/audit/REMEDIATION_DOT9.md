@@ -14,9 +14,16 @@
 - scoped tsc file → **0 lỗi do thay đổi** ở vùng sửa (564–655). Lỗi báo ở 363/468 là **nợ type legacy có sẵn** (cùng loại mọi đợt: `string|undefined`, `CandidateDraft.sourceId`), không phải Đợt 9.
 - `docker cp` + Vite **HMR áp sạch** (`hmr update TaoCuocBauCuPage.tsx`), FE **HTTP 200**, log không lỗi.
 
-## Follow-up (ghi nhận trung thực)
+## Bổ sung — hoàn tất khớp toàn bộ ảnh (pass 2, presentational)
 
-- **4-step strip wizard**: trang không phải wizard state-driven; làm stepper thật = đổi luồng tạo election (rủi ro Critical-path) → không fake, cân nhắc thiết kế lại luồng riêng.
-- Tinh chỉnh grid 2-cột từng field + card "Xác thực" Email/QR-OTP: đụng sâu ≥600 dòng vùng form → làm từng khối có kiểm thử để không phá tạo election (Constitution I).
+- **Thanh 4 bước** "Thông tin / Lựa chọn / Cử tri / Xác nhận": `<nav>` chips số, **anchor THẬT** tới section id (`#sec-thongtin`, `#positions-section`, `#sec-cutri`, `#sec-xacnhan`) — không fake stepper, click cuộn tới đúng phần (dùng `scroll-margin` sẵn). Bước 1 active.
+- **Grid 2-cột field**: Tên cuộc bầu cử | Group key cạnh nhau (bỏ `md:col-span-2`), Mô tả full; section lịch `md:grid-cols-3 → md:grid-cols-2`.
+- **Header section gọn**: mọi `clay-label`+`h2 text-2xl` → "Bước N" + `h2 text-lg` (Bước 1 Thông tin / Bước 2 Lựa chọn-ứng viên / Bước 3 Lịch-cử tri / Bước 4 Xác nhận) — đồng bộ ảnh.
+- **Card "Xác thực"** cột phải: Email "Sẵn sàng" + QR/OTP (Sẵn sàng nếu roster, "Tắt (nhập ví)" nếu wallets) với chấm xanh — đúng ảnh.
+- Toàn bộ vẫn presentational; `<form>`/handler/submit/state **bảo toàn**; scoped tsc 0 lỗi do thay đổi (363/468 vẫn là nợ legacy có sẵn); Vite HMR áp sạch, FE 200.
+
+## Không làm (cố ý — trung thực)
+
+- KHÔNG đổi nút submit thật ("Tạo election trên Sepolia"/"Tạo roster") thành "Tiếp tục" như mockup: đó là hành động tạo on-chain thật, mạo "Tiếp tục" sẽ đánh lừa người dùng (Constitution: report/UX trung thực). Giữ nhãn đúng ngữ nghĩa, chỉ đồng bộ kiểu dáng.
 
 > Hard-refresh (Ctrl+Shift+R) trang `/app/tao-phien-bau-cu` để thấy header gọn + chips + Tóm tắt, đồng bộ với shell/dashboard.
