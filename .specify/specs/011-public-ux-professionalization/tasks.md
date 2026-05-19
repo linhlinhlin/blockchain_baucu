@@ -79,11 +79,11 @@ description: "Task list — Đợt 11 Public UX Professionalization"
 
 ## Phase 7: Polish & Cross-Cutting
 
-- [ ] T024 [P] grep trang công khai: 0 `gray-/blue-/sky-` ad-hoc & màu hardcode (#0288D1…)/gradient tự chế còn ở form & marketing (SC-001). **Verify**: grep rỗng / có chứng cứ `file:line`.
-- [ ] T025 [P] grep: 0 `sweetalert2|sonner|react-toastify` ở trang công khai (SC-002); `git diff package.json` không thêm lib UI. **Verify**: rỗng.
-- [ ] T026 a11y sweep trang công khai: keyboard/focus-visible/≥44px/AA (SC-005). **Verify**: checklist đạt.
-- [ ] T027 Full `npm run typecheck:active`=0 + chạy quickstart §B (6 luồng) + ghi SC vào `baseline-metrics.md`. **Verify**: gate xanh.
-- [ ] T028 [P] Cập nhật `docs/audit/REMEDIATION_DOT11.md` (tóm tắt phạm vi/kết quả/cổng auth-OTP/scrollHeight) + CLAUDE.md SPECKIT pointer; dọn scratch nếu có. **Verify**: file + link hợp lệ.
+- [X] T024 [P] grep trang công khai: 0 `gray-/blue-/sky-` ad-hoc & màu hardcode (#0288D1…)/gradient tự chế còn ở form & marketing (SC-001). **Verify**: grep rỗng / có chứng cứ `file:line`.
+- [X] T025 [P] grep: 0 `sweetalert2|sonner|react-toastify` ở trang công khai (SC-002); `git diff package.json` không thêm lib UI. **Verify**: rỗng.
+- [X] T026 a11y sweep trang công khai: keyboard/focus-visible/≥44px/AA (SC-005). **Verify**: checklist đạt.
+- [X] T027 Full `npm run typecheck:active`=0 + chạy quickstart §B (6 luồng) + ghi SC vào `baseline-metrics.md`. **Verify**: gate xanh.
+- [X] T028 [P] Cập nhật `docs/audit/REMEDIATION_DOT11.md` (tóm tắt phạm vi/kết quả/cổng auth-OTP/scrollHeight) + CLAUDE.md SPECKIT pointer; dọn scratch nếu có. **Verify**: file + link hợp lệ.
 
 ---
 
