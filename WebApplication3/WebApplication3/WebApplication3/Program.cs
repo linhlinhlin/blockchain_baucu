@@ -15,7 +15,6 @@ using WebApplication3.Data;
 using WebApplication3.Infrastructure;
 using WebApplication3.Models;
 using WebApplication3.Repositories;
-using WebApplication3.Service;
 using WebApplication3.Services;
 
 // Other using statements...

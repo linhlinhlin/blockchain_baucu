@@ -49,9 +49,18 @@ Lý do (Hiến chương đứng trên mọi yêu cầu khác):
 
 1. **[Làm ngay — rủi ro 0]** Bổ sung `docs/ARCHITECTURE.md` hợp nhất (điểm mạnh
    "comprehensive docs" của repo tham chiếu mà codebase đang thiếu bản gom).
-2. **[Spec-Kit nếu muốn — Med]** Hợp nhất `Service/` vs `Services/` (smell
-   thật, 22 file) — chỉ qua một đợt SDD có scope (đụng namespace nhiều file,
-   gần security ⇒ surgical, không làm tự phát ở đây).
+2. **[✅ RESOLVED 2026-05-20]** "Hợp nhất Service/ vs Services/": phân tích
+   chính xác cho thấy namespace **đã** gần như hợp nhất dưới
+   `WebApplication3.Services` (16/18+4 file); smell thật **chỉ** là 1 file lạc
+   `Service/PinataService.cs` khai báo `namespace WebApplication3.Service` (số
+   ít, không security-sensitive — IPFS pin) + 2 `using` mồ côi
+   (`Program.cs`, `Infrastructure/ServiceCollectionExtensions.cs`). Fix tối
+   thiểu: đổi namespace PinataService → `.Services`, xoá 2 using thừa (mồ côi
+   do chính thay đổi này). Body service **nguyên vẹn** (0 behavior change);
+   `dotnet build` = **Build succeeded, 0 Error(s)**. Tên folder `Service/` vs
+   `Services/` là cosmetic (C# namespace ≠ folder) — **cố ý KHÔNG** di chuyển
+   18 file (churn rủi ro/0 giá trị trên backend security; karpathy: đừng
+   refactor cái không hỏng).
 3. **[Spec-Kit — Low/sau]** Tách `Models/` entity vs DTO; pin Node 20/22 (S19);
    cập nhật runbook (S20). Đều ngoài scope đợt này, đã ghi audit.
 4. **Không** thêm lib/tầng mới chỉ để "giống dự án khác".

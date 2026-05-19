@@ -42,8 +42,10 @@ HMAC-SHA256, ClockSkew=0), CORS (config-driven S10), RateLimiter
 
 **Biên giới:** Controller không chạm DbContext trực tiếp ngoài read mỏng;
 logic nghiệp vụ ở Service; bí mật chỉ qua config/env (không hardcode).
-**Smell đã ghi (ADR 0002 #2):** `Service/` vs `Services/` trùng — chỉ hợp
-nhất qua đợt Spec-Kit có scope.
+**Namespace:** đã hợp nhất dưới `WebApplication3.Services` (ADR 0002 #2 —
+RESOLVED 2026-05-20: sửa 1 file lạc `PinataService` + 2 using mồ côi,
+`dotnet build` 0 error). Tên folder `Service/`↔`Services/` cosmetic (C#
+namespace ≠ folder) — cố ý không churn (karpathy/Principle IV).
 
 ## 4. On-chain (nguồn toàn vẹn)
 
