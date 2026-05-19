@@ -23,6 +23,7 @@ Hệ thống bầu cử sinh viên on-chain. Monorepo 4 module.
 
 ## Quy trình làm việc
 
+- **Kiến trúc**: nguồn sự thật hợp nhất `docs/ARCHITECTURE.md`; quyết định kiến trúc ở `docs/adr/` (ADR 0002: layered, KHÔNG rewrite DDD big-bang — có biện minh).
 - **Spec-Driven Development** qua Spec-Kit. Hiến chương: `.specify/memory/constitution.md` — **Principle I (Security & Integrity First) là blocker tuyệt đối**.
 - Backlog: `docs/audit/REMEDIATION_BACKLOG.md`. Đợt 1 (Critical): `.specify/specs/001-security-remediation-critical/`.
 - Pipeline: `/speckit-specify` → `/speckit-plan` → `/speckit-tasks` → `/speckit-implement`. Mỗi spec atomic, tham chiếu mã issue `S#` từ audit.
