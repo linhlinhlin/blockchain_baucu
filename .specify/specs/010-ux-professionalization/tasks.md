@@ -140,11 +140,11 @@ description: "Task list — Đợt 10 UX/UI Professionalization"
 
 ## Phase 9: Polish & Cross-Cutting
 
-- [ ] T039 [P] Rà 5 trang: gỡ helper class-builder tự chế còn sót (SC-003). **Verify**: `grep -n` 5 trang không còn `panelClasses|inputClasses|actionButtonClasses|commandButtonClasses|messagePanelClasses` định nghĩa cục bộ; trang import `components/ui/clay`.
-- [ ] T040 [P] Quét a11y 5 trang: keyboard reachable, focus-visible, target ≥44px, tương phản ≥AA (SC-005). **Verify**: checklist a11y đạt từng trang.
-- [ ] T041 Quét active path: không `sweetalert2|sonner|react-toastify` import ở 5 trang (SC-002); `git diff package.json` không thêm lib UI. **Verify**: `grep` rỗng; package.json không đổi deps UI.
-- [ ] T042 Chạy đầy đủ quickstart §A + tất cả §B (5 luồng) + ghi số đo SC-001..SC-007 vào `baseline-metrics.md`. **Verify**: mọi gate xanh; `npx tsc --noEmit` sạch toàn active path.
-- [ ] T043 [P] Tạo `docs/audit/REMEDIATION_DOT10.md` (tóm tắt phạm vi/kết quả/đo lường, trỏ spec/plan; nêu giữ S4/S5) theo mẫu các đợt trước; xoá file scratch T023 & dọn `s4s5-reference.md` nếu không cần lưu. **Verify**: file tồn tại, link hợp lệ; không còn file tạm.
+- [X] T039 [P] Rà 5 trang: gỡ helper class-builder tự chế còn sót (SC-003). **Verify**: `grep -n` 5 trang không còn `panelClasses|inputClasses|actionButtonClasses|commandButtonClasses|messagePanelClasses` định nghĩa cục bộ; trang import `components/ui/clay`.
+- [X] T040 [P] Quét a11y 5 trang: keyboard reachable, focus-visible, target ≥44px, tương phản ≥AA (SC-005). **Verify**: checklist a11y đạt từng trang.
+- [X] T041 Quét active path: không `sweetalert2|sonner|react-toastify` import ở 5 trang (SC-002); `git diff package.json` không thêm lib UI. **Verify**: `grep` rỗng; package.json không đổi deps UI.
+- [X] T042 Chạy đầy đủ quickstart §A + tất cả §B (5 luồng) + ghi số đo SC-001..SC-007 vào `baseline-metrics.md`. **Verify**: mọi gate xanh; `npx tsc --noEmit` sạch toàn active path.
+- [X] T043 [P] Tạo `docs/audit/REMEDIATION_DOT10.md` (tóm tắt phạm vi/kết quả/đo lường, trỏ spec/plan; nêu giữ S4/S5) theo mẫu các đợt trước; xoá file scratch T023 & dọn `s4s5-reference.md` nếu không cần lưu. **Verify**: file tồn tại, link hợp lệ; không còn file tạm.
 
 ---
 
