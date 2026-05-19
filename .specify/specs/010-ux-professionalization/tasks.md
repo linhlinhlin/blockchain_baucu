@@ -130,9 +130,9 @@ description: "Task list — Đợt 10 UX/UI Professionalization"
 
 **Independent Test**: xác minh đi từng bước, lỗi inline, OTP không echo/plaintext; QR phản hồi trạng thái rõ.
 
-- [ ] T036 [P] [US6] Tái cấu trúc `frontend/src/pages/VoterVerificationPage.tsx` → `Wizard` (email→OTP→bind ví), lỗi inline qua `Field`; GIỮ luồng OTP/bind & ràng buộc bảo mật (OTP không echo, không lưu plaintext nơi script chạm). **Verify**: luồng §B3; `grep` không echo OTP ra UI/console/localStorage plaintext; `tsc` sạch.
-- [ ] T037 [P] [US6] Tái cấu trúc `frontend/src/pages/QuetMaQRPage.tsx` → bố cục gọn + `EmptyState`/`Loader`/`StatusBadge`; GIỮ logic quét (`html5-qrcode`/`jsqr`) & handler. **Verify**: luồng §B4; `tsc` sạch.
-- [ ] T038 [US6] Checkpoint US6: quickstart §A + luồng §B3 & §B4. **Verify**: cả hai đạt; `tsc` sạch; commit lát US6.
+- [X] T036 [P] [US6] Tái cấu trúc `frontend/src/pages/VoterVerificationPage.tsx` → `Wizard` (email→OTP→bind ví), lỗi inline qua `Field`; GIỮ luồng OTP/bind & ràng buộc bảo mật (OTP không echo, không lưu plaintext nơi script chạm). **Verify**: luồng §B3; `grep` không echo OTP ra UI/console/localStorage plaintext; `tsc` sạch.
+- [X] T037 [P] [US6] Tái cấu trúc `frontend/src/pages/QuetMaQRPage.tsx` → bố cục gọn + `EmptyState`/`Loader`/`StatusBadge`; GIỮ logic quét (`html5-qrcode`/`jsqr`) & handler. **Verify**: luồng §B4; `tsc` sạch.
+- [X] T038 [US6] Checkpoint US6: quickstart §A + luồng §B3 & §B4. **Verify**: cả hai đạt; `tsc` sạch; commit lát US6.
 
 **Checkpoint**: Toàn bộ US1–US6 độc lập hoạt động.
 
