@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { ethers } from 'ethers';
-import { ArrowRight, CheckCircle2, ExternalLink, Loader2, RefreshCw, Vote, Wallet, XCircle } from 'lucide-react';
+import { ArrowRight, ExternalLink, Loader2, RefreshCw, Vote, Wallet } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import {
@@ -95,49 +95,9 @@ type VotePackage = {
   revealedAt?: string;
 };
 
-function panelClasses() {
-  return 'clay-panel p-5 md:p-6';
-}
-
-function commandButtonClasses(tone: 'dark' | 'accent' | 'outline') {
-  const base =
-    'clay-button inline-flex items-center justify-center gap-2 px-4 py-3 text-sm font-semibold focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-40';
-  if (tone === 'accent') {
-    return `${base} clay-button--blueberry`;
-  }
-  if (tone === 'outline') {
-    return `${base} clay-button--ghost`;
-  }
-  return `${base} clay-button--matcha`;
-}
-
-function messagePanelClasses(message: string) {
-  const normalized = message.toLowerCase();
-  if (normalized.includes('thanh cong') || normalized.includes('success')) {
-    return 'border-[rgba(2,73,42,0.18)] bg-[rgba(132,231,165,0.24)] text-[var(--clay-matcha-dark)]';
-  }
-  if (normalized.includes('loi') || normalized.includes('error') || normalized.includes('fail') || normalized.includes('revert')) {
-    return 'border-[rgba(252,121,129,0.22)] bg-[rgba(252,121,129,0.18)] text-[var(--clay-text)]';
-  }
-  return 'border-[rgba(59,211,253,0.22)] bg-[rgba(59,211,253,0.18)] text-[var(--clay-text)]';
-}
-
-function phaseAccentClasses(phaseLabel?: string) {
-  switch (phaseLabel) {
-    case 'Commit':
-      return 'border-[rgba(208,138,17,0.22)] bg-[rgba(248,204,101,0.3)] text-[var(--clay-text)]';
-    case 'Reveal':
-      return 'border-[rgba(1,65,141,0.2)] bg-[rgba(59,211,253,0.24)] text-[var(--clay-text)]';
-    case 'Ended':
-      return 'border-[var(--clay-border)] bg-[rgba(255,255,255,0.78)] text-[var(--clay-text)]';
-    case 'Finalized':
-      return 'border-[rgba(2,73,42,0.18)] bg-[rgba(132,231,165,0.24)] text-[var(--clay-text)]';
-    case 'Canceled':
-      return 'border-[rgba(252,121,129,0.22)] bg-[rgba(252,121,129,0.18)] text-[var(--clay-text)]';
-    default:
-      return 'border-[rgba(67,8,159,0.2)] bg-[rgba(193,176,255,0.24)] text-[var(--clay-text)]';
-  }
-}
+// Đợt 11 cleanup (Đợt 10 follow-up): panelClasses/commandButtonClasses/
+// messagePanelClasses/phaseAccentClasses là dead-code sau khi US4 chuyển sang
+// clay — đã gỡ. KHÔNG đụng vùng S4/S5 (>=176). getEthereum giữ (đang dùng).
 
 function getEthereum() {
   return (window as Window & { ethereum?: any }).ethereum;
@@ -157,19 +117,7 @@ function formatUnix(timestamp?: number | null) {
   return new Date(timestamp * 1000).toLocaleString('vi-VN');
 }
 
-// UX (spec 006/M6): trạng thái không chỉ bằng màu — kèm icon + nhãn + aria.
-function YesNoBadge({ value }: { value?: boolean }) {
-  return (
-    <span className="inline-flex items-center gap-1 text-right" aria-label={value ? 'Có' : 'Không'}>
-      {value ? (
-        <CheckCircle2 className="h-4 w-4 text-emerald-600" aria-hidden />
-      ) : (
-        <XCircle className="h-4 w-4 text-[var(--clay-muted)]" aria-hidden />
-      )}
-      <span className="text-black">{value ? 'Có' : 'Không'}</span>
-    </span>
-  );
-}
+// Đợt 11 cleanup: YesNoBadge dead-code đã gỡ — US4 dùng clay StatusBadge (yesNo()).
 
 function normalizeAddress(value?: string | null) {
   if (!value) {
