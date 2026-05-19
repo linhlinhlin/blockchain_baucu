@@ -16,6 +16,15 @@ import {
   type ElectionV1PublicConfig,
   type ElectionV1Result,
 } from '../api/electionV1Api';
+// Đợt 10 (spec 010) US4: chỉ tái cấu trúc JSX. S4/S5 + handlers (dòng ~176-701)
+// KHÔNG đụng — xem .specify/specs/010-ux-professionalization/s4s5-reference.md.
+import {
+  Button,
+  Panel,
+  StatusBadge,
+  Tabs,
+  type StatusTone,
+} from '../components/ui/clay';
 
 const TARGET_CHAIN_ID = 11155111;
 const TARGET_CHAIN_ID_HEX = '0xaa36a7';
@@ -736,6 +745,17 @@ export default function QuanLySmartContractPage() {
     }
   }
 
+  // Đợt 10 US4: tab cho khu chi tiết (chỉ trình bày, không đụng logic on-chain).
+  const [detailTab, setDetailTab] = useState<'cand' | 'state'>('cand');
+  const phaseTone: StatusTone = (() => {
+    const p = (detail?.onChain?.phaseLabel ?? '').toLowerCase();
+    if (p.includes('commit')) return 'info';
+    if (p.includes('reveal')) return 'warning';
+    if (p.includes('final')) return 'success';
+    if (p.includes('cancel')) return 'danger';
+    return 'neutral';
+  })();
+
   const commitReason = getCommitReason(detail, connectedAccount, busy);
   const revealReason = getRevealReason(detail, connectedAccount, storedVoteEnvelope, busy);
   const finalizeReason = getFinalizeReason(detail, connectedAccount, busy);
@@ -743,283 +763,360 @@ export default function QuanLySmartContractPage() {
   const maxResultCount = Math.max(1, ...(detail?.onChain?.results ?? []).map((item) => item.count));
   const currentPositionTitle = detail?.positionTitle || detail?.manifest?.positionTitle || detail?.title;
 
-  return (
-    <div className="min-h-screen overflow-hidden text-[var(--clay-text)]">
-      <div className="pointer-events-none absolute inset-0">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,_rgba(248,204,101,0.3),_transparent_28%),radial-gradient(circle_at_top_right,_rgba(59,211,253,0.18),_transparent_24%),radial-gradient(circle_at_bottom_left,_rgba(193,176,255,0.15),_transparent_22%)]" />
+  const ballotList = (
+    <Panel>
+      <p className="text-sm font-semibold text-[var(--clay-text)]">Danh sách ballot</p>
+      <div className="mt-3 max-h-[280px] space-y-2 overflow-auto pr-1">
+        {groupItems.map((group) => {
+          const active = selectedGroupKey === group.groupKey;
+          return (
+            <button
+              key={group.groupKey}
+              type="button"
+              onClick={() => openGroup(group.groupKey)}
+              className={`w-full rounded-[12px] border p-3 text-left transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-[var(--clay-primary-focus)] ${
+                active
+                  ? 'border-[var(--clay-primary)] bg-[var(--clay-primary-light)]'
+                  : 'border-[var(--clay-border)] bg-[var(--clay-surface)] hover:bg-[var(--clay-surface-soft)]'
+              }`}
+            >
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-semibold text-[var(--clay-text)]">
+                    {group.title}
+                  </p>
+                  <p className="mt-0.5 text-xs text-[var(--clay-muted)]">
+                    {group.positionCount} chức vụ
+                  </p>
+                </div>
+                <span className="shrink-0 rounded-full border border-[var(--clay-border)] bg-[var(--clay-surface)] px-2 py-0.5 text-[11px] text-[var(--clay-muted)]">
+                  {group.groupKey}
+                </span>
+              </div>
+            </button>
+          );
+        })}
       </div>
+      <div className="mt-4 border-t border-[var(--clay-border)] pt-3">
+        <p className="text-sm font-semibold text-[var(--clay-text)]">Chức vụ trong ballot</p>
+        {groupDetail ? (
+          <div className="mt-3 max-h-[260px] space-y-2 overflow-auto pr-1">
+            {groupDetail.positions.map((position) => {
+              const active =
+                selectedElectionAddress?.toLowerCase() === position.address.toLowerCase();
+              return (
+                <button
+                  key={position.address}
+                  type="button"
+                  onClick={() => openGroup(groupDetail.groupKey, position.address)}
+                  className={`w-full rounded-[12px] border p-3 text-left transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-[var(--clay-primary-focus)] ${
+                    active
+                      ? 'border-[var(--clay-primary)] bg-[var(--clay-primary-light)]'
+                      : 'border-[var(--clay-border)] bg-[var(--clay-surface)] hover:bg-[var(--clay-surface-soft)]'
+                  }`}
+                >
+                  <p className="text-sm font-semibold text-[var(--clay-text)]">
+                    {position.positionTitle || position.title}
+                  </p>
+                  <p className="mt-0.5 text-xs text-[var(--clay-muted)]">
+                    {position.candidates.length} ứng viên · {shortenAddress(position.address)}
+                  </p>
+                </button>
+              );
+            })}
+          </div>
+        ) : (
+          <p className="mt-3 text-sm text-[var(--clay-muted)]">
+            Chọn một ballot để xem các chức vụ.
+          </p>
+        )}
+      </div>
+    </Panel>
+  );
 
-      <div className="relative mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
-        <div className="mb-6 grid gap-6 lg:grid-cols-[minmax(0,1.25fr)_340px]">
-          <div className={panelClasses()}>
-            <div className="clay-badge bg-[rgba(193,176,255,0.42)]">
-              <Vote className="h-3.5 w-3.5" />
-              Group ballot console
-            </div>
-            <h1 className="mt-4 max-w-4xl text-3xl font-extrabold tracking-[-0.05em] text-black md:text-5xl">Quản lý biểu bầu cử nhiều chức vụ</h1>
-            <p className="mt-3 max-w-3xl text-sm leading-7 text-[var(--clay-muted)]">
-              Chọn một ballot group, sau đó chọn từng chức vụ để commit, reveal và finalize. Mỗi chức vụ là một child election riêng trên ElectionV1.
+  const yesNo = (v?: boolean) => (
+    <StatusBadge tone={v ? 'success' : 'neutral'}>{v ? 'Có' : 'Không'}</StatusBadge>
+  );
+
+  return (
+    <div className="text-[var(--clay-text)]">
+      <div className="mx-auto max-w-[1440px]">
+        <div className="mb-5 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+          <div>
+            <h1 className="text-[1.75rem] font-semibold tracking-[-0.015em] text-[var(--clay-text)]">
+              Bảng điều khiển
+            </h1>
+            <p className="mt-1 text-[15px] text-[var(--clay-muted)]">
+              Chọn một ballot group rồi từng chức vụ để commit, reveal và finalize trên Sepolia.
             </p>
-
-            <div className="mt-6 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-              <div className="rounded-[24px] border border-[var(--clay-border)] bg-[rgba(248,204,101,0.24)] p-4 shadow-[var(--clay-shadow)]">
-                <p className="clay-label">Chain</p>
-                <p className="mt-2 text-lg font-semibold text-black">{publicConfig?.chainId ?? TARGET_CHAIN_ID}</p>
-              </div>
-              <div className="rounded-[24px] border border-[var(--clay-border)] bg-[rgba(59,211,253,0.16)] p-4 shadow-[var(--clay-shadow)]">
-                <p className="clay-label">Factory</p>
-                <p className="mt-2 text-lg font-semibold text-black">{shortenAddress(publicConfig?.factoryAddress)}</p>
-              </div>
-              <div className="rounded-[24px] border border-[var(--clay-border)] bg-[rgba(132,231,165,0.18)] p-4 shadow-[var(--clay-shadow)]">
-                <p className="clay-label">Wallet</p>
-                <p className="mt-2 text-lg font-semibold text-black">{shortenAddress(connectedAccount)}</p>
-              </div>
-              <div className="rounded-[24px] border border-[var(--clay-border)] bg-[rgba(252,121,129,0.16)] p-4 shadow-[var(--clay-shadow)]">
-                <p className="clay-label">Balance</p>
-                <p className="mt-2 text-lg font-semibold text-black">{walletBalance ? `${walletBalance} SEP` : 'n/a'}</p>
-              </div>
+            <div className="mt-2 flex flex-wrap gap-1.5">
+              <StatusBadge tone="neutral">Chain {publicConfig?.chainId ?? TARGET_CHAIN_ID}</StatusBadge>
+              <StatusBadge tone="neutral">Factory {shortenAddress(publicConfig?.factoryAddress)}</StatusBadge>
+              <StatusBadge tone={connectedAccount ? 'success' : 'neutral'}>
+                {shortenAddress(connectedAccount)}
+              </StatusBadge>
+              <StatusBadge tone="info">{walletBalance ? `${walletBalance} SEP` : 'n/a'}</StatusBadge>
             </div>
           </div>
-
-          <div className={panelClasses()}>
-            <div className="space-y-3">
-              {!getEthereum() && (
-                <div role="alert" className="rounded-[16px] border border-amber-300 bg-amber-50 p-3 text-xs text-amber-700">
-                  Chưa phát hiện MetaMask. Cần ví MetaMask để kết nối và bỏ phiếu on-chain.{' '}
-                  <a
-                    href="https://metamask.io/download/"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="font-semibold underline"
-                  >
-                    Cài MetaMask
-                  </a>
-                </div>
-              )}
-              <button type="button" onClick={() => void connectWallet()} className={`${commandButtonClasses('dark')} w-full`}>
-                <Wallet className="h-4 w-4" />
-                {connectedAccount ? 'Đổi / kết nối lại MetaMask' : 'Kết nối MetaMask'}
-              </button>
-
-              <button type="button" onClick={() => void refreshAll()} className={`${commandButtonClasses('outline')} w-full`}>
-                <RefreshCw className="h-4 w-4" />
-                Tải lại ballot
-              </button>
-
-              <Link to="/app/tao-phien-bau-cu" className={`${commandButtonClasses('accent')} w-full`}>
-                <ArrowRight className="h-4 w-4" />
-                Tạo ballot mới
-              </Link>
-            </div>
-
-            <div className={`mt-5 rounded-2xl border px-4 py-3 text-sm leading-6 ${messagePanelClasses(message)}`}>
-              <p className="font-semibold text-black">Live status</p>
-              <p className="mt-1">{message}</p>
-            </div>
+          <div className="flex flex-col gap-2 sm:flex-row">
+            <Button
+              type="button"
+              variant="secondary"
+              size="lg"
+              onClick={() => void connectWallet()}
+              iconLeft={<Wallet className="h-4 w-4" aria-hidden="true" />}
+            >
+              {connectedAccount ? 'Đổi / kết nối lại MetaMask' : 'Kết nối MetaMask'}
+            </Button>
+            <Button
+              type="button"
+              variant="ghost"
+              size="lg"
+              onClick={() => void refreshAll()}
+              iconLeft={<RefreshCw className="h-4 w-4" aria-hidden="true" />}
+            >
+              Tải lại
+            </Button>
+            <Link
+              to="/app/tao-phien-bau-cu"
+              className="inline-flex min-h-[44px] items-center justify-center gap-2 rounded-[12px] bg-[var(--clay-primary)] px-5 text-[15px] text-white hover:bg-[var(--clay-primary-focus)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--clay-primary-focus)]"
+            >
+              <ArrowRight className="h-4 w-4" aria-hidden="true" />
+              Tạo bầu cử
+            </Link>
           </div>
         </div>
 
-        <div className="grid gap-6 lg:grid-cols-[280px_minmax(0,240px)_minmax(0,1fr)]">
-          <div className={panelClasses()}>
-            <p className="text-sm font-semibold text-black">Danh sách ballot</p>
-            <div className="mt-4 space-y-3">
-              {groupItems.map((group) => {
-                const active = selectedGroupKey === group.groupKey;
-                return (
-                  <button
-                    key={group.groupKey}
-                    type="button"
-                    onClick={() => openGroup(group.groupKey)}
-                    className={`w-full rounded-[24px] border p-4 text-left shadow-[var(--clay-shadow)] transition ${
-                      active
-                        ? 'border-[rgba(208,138,17,0.25)] bg-[rgba(248,204,101,0.34)]'
-                        : 'border-[var(--clay-border)] bg-[rgba(255,255,255,0.88)] hover:bg-[rgba(132,231,165,0.16)]'
-                    }`}
-                  >
-                    <div className="flex items-start justify-between gap-3">
-                      <div>
-                        <p className="text-sm font-semibold text-black">{group.title}</p>
-                        <p className="mt-1 text-xs text-[var(--clay-muted)]">{group.positionCount} chức vụ</p>
-                      </div>
-                      <span className="rounded-full border border-[var(--clay-border)] bg-white px-2 py-1 text-[11px] text-[var(--clay-muted)]">
-                        {group.groupKey}
-                      </span>
-                    </div>
-                  </button>
-                );
-              })}
-            </div>
+        {!getEthereum() && (
+          <div
+            role="alert"
+            className="mb-4 rounded-[12px] border border-[var(--state-warning)] bg-[var(--state-warning-soft)] p-3 text-xs text-[var(--state-warning)]"
+          >
+            Chưa phát hiện MetaMask. Cần ví MetaMask để kết nối và bỏ phiếu on-chain.{' '}
+            <a
+              href="https://metamask.io/download/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="font-semibold underline"
+            >
+              Cài MetaMask
+            </a>
+          </div>
+        )}
+
+        <div className="grid gap-6 lg:grid-cols-[300px_minmax(0,1fr)]">
+          <div className="space-y-4 lg:sticky lg:top-6 lg:self-start">
+            {ballotList}
+            <Panel className="p-4">
+              <p className="text-[13px] font-semibold text-[var(--clay-text)]">Trạng thái</p>
+              <p className="mt-1 text-[13px] leading-relaxed text-[var(--clay-muted)]" aria-live="polite">
+                {message}
+              </p>
+            </Panel>
           </div>
 
-          <div className={panelClasses()}>
-            <p className="text-sm font-semibold text-black">Chức vụ trong ballot</p>
-            {groupDetail ? (
-              <div className="mt-4 space-y-3">
-                {groupDetail.positions.map((position) => {
-                  const active = selectedElectionAddress?.toLowerCase() === position.address.toLowerCase();
-                  return (
-                    <button
-                      key={position.address}
-                      type="button"
-                      onClick={() => openGroup(groupDetail.groupKey, position.address)}
-                      className={`w-full rounded-[24px] border p-4 text-left shadow-[var(--clay-shadow)] transition ${
-                        active
-                          ? 'border-[rgba(1,65,141,0.22)] bg-[rgba(59,211,253,0.24)]'
-                          : 'border-[var(--clay-border)] bg-[rgba(255,255,255,0.88)] hover:bg-[rgba(193,176,255,0.18)]'
-                      }`}
-                    >
-                      <p className="text-sm font-semibold text-black">{position.positionTitle || position.title}</p>
-                      <p className="mt-1 text-xs text-[var(--clay-muted)]">{position.candidates.length} ứng viên</p>
-                      <p className="mt-2 text-xs text-[var(--clay-muted-soft)]">{shortenAddress(position.address)}</p>
-                    </button>
-                  );
-                })}
-              </div>
-            ) : (
-              <p className="mt-4 text-sm text-[var(--clay-muted)]">Chọn một ballot để xem các chức vụ.</p>
-            )}
-          </div>
-
-          <div className="space-y-6">
-            <div className={panelClasses()}>
-              {detail ? (
-                <div className="space-y-5">
-                  <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-                    <div>
-                      <p className="clay-label">{groupDetail?.title ?? detail.groupTitle ?? 'Ballot group'}</p>
-                      <h2 className="mt-2 text-2xl font-bold tracking-[-0.03em] text-black">{currentPositionTitle}</h2>
-                      <p className="mt-2 text-sm leading-6 text-[var(--clay-muted)]">{detail.description || 'Không có mô tả.'}</p>
-                    </div>
-                    <span className={`inline-flex rounded-full border px-3 py-1 text-xs font-semibold ${phaseAccentClasses(phaseLabel)}`}>
-                      {phaseLabel}
-                    </span>
+          <div className="min-w-0">
+            {detail ? (
+              <Panel>
+                {/* Sticky phase header */}
+                <div className="sticky top-0 z-10 -mx-5 mb-5 flex flex-col gap-3 border-b border-[var(--clay-border)] bg-[var(--clay-surface)] px-5 pb-4 md:-mx-6 md:px-6 sm:flex-row sm:items-start sm:justify-between">
+                  <div className="min-w-0">
+                    <p className="text-xs font-semibold uppercase tracking-[-0.01em] text-[var(--clay-muted)]">
+                      {groupDetail?.title ?? detail.groupTitle ?? 'Ballot group'}
+                    </p>
+                    <h2 className="mt-1 truncate text-2xl font-semibold tracking-[-0.015em] text-[var(--clay-text)]">
+                      {`${currentPositionTitle ?? ''}`}
+                    </h2>
+                    <p className="mt-1 text-sm leading-6 text-[var(--clay-muted)]">
+                      {detail.description || 'Không có mô tả.'}
+                    </p>
                   </div>
-
-                  <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-                    <div className="rounded-[24px] border border-[var(--clay-border)] bg-[rgba(255,255,255,0.88)] p-4 shadow-[var(--clay-shadow)]">
-                      <p className="clay-label">Commit end</p>
-                      <p className="mt-2 text-sm font-semibold text-black">{formatUnix(detail.commitEnd)}</p>
-                    </div>
-                    <div className="rounded-[24px] border border-[var(--clay-border)] bg-[rgba(255,255,255,0.88)] p-4 shadow-[var(--clay-shadow)]">
-                      <p className="clay-label">Reveal end</p>
-                      <p className="mt-2 text-sm font-semibold text-black">{formatUnix(detail.revealEnd)}</p>
-                    </div>
-                    <div className="rounded-[24px] border border-[var(--clay-border)] bg-[rgba(255,255,255,0.88)] p-4 shadow-[var(--clay-shadow)]">
-                      <p className="clay-label">Commits</p>
-                      <p className="mt-2 text-sm font-semibold text-black">{detail.onChain?.totalCommits ?? '0'}</p>
-                    </div>
-                    <div className="rounded-[24px] border border-[var(--clay-border)] bg-[rgba(255,255,255,0.88)] p-4 shadow-[var(--clay-shadow)]">
-                      <p className="clay-label">Reveals</p>
-                      <p className="mt-2 text-sm font-semibold text-black">{detail.onChain?.totalReveals ?? '0'}</p>
-                    </div>
-                  </div>
-
-                  <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_320px]">
-                    <div className="space-y-3">
-                      <p className="text-sm font-semibold text-black">Ứng viên và kết quả đã reveal</p>
-                      {(detail.onChain?.results ?? []).map((candidate) => (
-                        <div key={candidate.candidateId} className="rounded-[24px] border border-[var(--clay-border)] bg-[rgba(255,255,255,0.88)] p-4 shadow-[var(--clay-shadow)]">
-                          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                            <div>
-                              <p className="text-base font-semibold text-black">{candidate.candidateName}</p>
-                              <p className="mt-1 text-xs text-[var(--clay-muted)]">{candidate.candidateWalletAddress || candidate.candidateId}</p>
-                            </div>
-                            <div className="flex items-center gap-3">
-                              <div className="h-2 w-24 overflow-hidden rounded-full bg-[rgba(1,65,141,0.12)]">
-                                <div className="h-full rounded-full bg-[var(--clay-blueberry)]" style={{ width: `${(candidate.count / maxResultCount) * 100}%` }} />
-                              </div>
-                              <span className="min-w-10 text-right text-lg font-semibold text-black">{candidate.count}</span>
-                            </div>
-                          </div>
-
-                          <button
-                            type="button"
-                            onClick={() => void handleCommitVote(candidate)}
-                            disabled={commitReason !== null || busy}
-                            aria-busy={committingCandidateId === candidate.candidateId}
-                            className={`${commandButtonClasses('accent')} mt-4 w-full`}
-                          >
-                            {committingCandidateId === candidate.candidateId ? (
-                              <span className="inline-flex items-center justify-center gap-2">
-                                <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> Đang commit…
-                              </span>
-                            ) : (
-                              'Commit cho ứng viên này'
-                            )}
-                          </button>
-                        </div>
-                      ))}
-                    </div>
-
-                    <div className="space-y-4">
-                      <div className={panelClasses()}>
-                        <p className="text-sm font-semibold text-black">Viewer state</p>
-                        <div className="mt-4 space-y-3 text-sm text-[var(--clay-muted)]">
-                          <div className="flex items-center justify-between gap-4">
-                            <span>Wallet</span>
-                            <span className="text-right text-black">{shortenAddress(connectedAccount)}</span>
-                          </div>
-                          <div className="flex items-center justify-between gap-4">
-                            <span>Đủ điều kiện</span>
-                            <YesNoBadge value={detail.onChain?.viewer?.eligible} />
-                          </div>
-                          <div className="flex items-center justify-between gap-4">
-                            <span>Đã commit</span>
-                            <YesNoBadge value={detail.onChain?.viewer?.hasCommitted} />
-                          </div>
-                          <div className="flex items-center justify-between gap-4">
-                            <span>Đã reveal</span>
-                            <YesNoBadge value={detail.onChain?.viewer?.hasRevealed} />
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className={panelClasses()}>
-                        <p className="text-sm font-semibold text-black">Action rail</p>
-                        <div className="mt-4 space-y-3">
-                          <button type="button" onClick={() => void handleRevealVote()} disabled={revealReason !== null} aria-busy={busy} className={`${commandButtonClasses('outline')} w-full`}>
-                            {busy ? (
-                              <span className="inline-flex items-center justify-center gap-2"><Loader2 className="h-4 w-4 animate-spin" aria-hidden /> Đang xử lý giao dịch…</span>
-                            ) : (
-                              'Reveal vote'
-                            )}
-                          </button>
-                          <p className="text-xs text-[var(--clay-muted)]">{revealReason ?? 'Sẵn sàng reveal cho chức vụ này.'}</p>
-                          <p className="text-[11px] text-amber-600">
-                            ⚠️ Bí mật phiếu được mã hoá cục bộ bằng chữ ký ví. Reveal phải dùng <strong>đúng ví và đúng trình duyệt/thiết bị</strong> đã commit; xoá dữ liệu trình duyệt sẽ mất khả năng reveal.
-                          </p>
-
-                          <button type="button" onClick={() => void handleFinalizeElection()} disabled={finalizeReason !== null} aria-busy={busy} className={`${commandButtonClasses('dark')} w-full`}>
-                            {busy ? (
-                              <span className="inline-flex items-center justify-center gap-2"><Loader2 className="h-4 w-4 animate-spin" aria-hidden /> Đang xử lý giao dịch…</span>
-                            ) : (
-                              'Finalize election'
-                            )}
-                          </button>
-                          <p className="text-xs text-[var(--clay-muted)]">{finalizeReason ?? 'Sẵn sàng finalize.'}</p>
-                        </div>
-                      </div>
-
-                      <div className={panelClasses()}>
-                        <p className="text-sm font-semibold text-black">Explorer</p>
-                        <div className="mt-4 space-y-3">
-                          <a href={detail.links?.contract ?? '#'} target="_blank" rel="noreferrer" className={`${commandButtonClasses('outline')} w-full ${!detail.links?.contract ? 'pointer-events-none opacity-50' : ''}`}>
-                            <ExternalLink className="h-4 w-4" />
-                            Mở contract trên explorer
-                          </a>
-                          <a href={detail.links?.transaction ?? '#'} target="_blank" rel="noreferrer" className={`${commandButtonClasses('outline')} w-full ${!detail.links?.transaction ? 'pointer-events-none opacity-50' : ''}`}>
-                            <ExternalLink className="h-4 w-4" />
-                            Mở giao dịch tạo election
-                          </a>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
+                  <StatusBadge tone={phaseTone}>{phaseLabel}</StatusBadge>
                 </div>
-              ) : (
-                <p className="text-sm text-[var(--clay-muted)]">Chọn một ballot và một chức vụ để bắt đầu bỏ phiếu.</p>
-              )}
-            </div>
+
+                <div className="mb-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+                  {[
+                    ['Commit end', formatUnix(detail.commitEnd)],
+                    ['Reveal end', formatUnix(detail.revealEnd)],
+                    ['Commits', String(detail.onChain?.totalCommits ?? '0')],
+                    ['Reveals', String(detail.onChain?.totalReveals ?? '0')],
+                  ].map(([k, v]) => (
+                    <div
+                      key={k}
+                      className="rounded-[14px] border border-[var(--clay-border)] bg-[var(--clay-surface-soft)] p-4"
+                    >
+                      <p className="text-xs font-semibold uppercase tracking-[-0.01em] text-[var(--clay-muted)]">
+                        {k}
+                      </p>
+                      <p className="mt-1.5 text-sm font-semibold text-[var(--clay-text)]">{v}</p>
+                    </div>
+                  ))}
+                </div>
+
+                <Tabs
+                  value={detailTab}
+                  onValueChange={(k) => setDetailTab(k as 'cand' | 'state')}
+                  items={[
+                    {
+                      key: 'cand',
+                      label: 'Ứng viên & kết quả',
+                      content: (
+                        <div className="space-y-3">
+                          {(detail.onChain?.results ?? []).map((candidate) => (
+                            <div
+                              key={candidate.candidateId}
+                              className="rounded-[14px] border border-[var(--clay-border)] bg-[var(--clay-surface)] p-4"
+                            >
+                              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                                <div className="min-w-0">
+                                  <p className="text-base font-semibold text-[var(--clay-text)]">
+                                    {candidate.candidateName}
+                                  </p>
+                                  <p className="mt-0.5 truncate text-xs text-[var(--clay-muted)]">
+                                    {candidate.candidateWalletAddress || candidate.candidateId}
+                                  </p>
+                                </div>
+                                <div className="flex items-center gap-3">
+                                  <div className="h-2 w-24 overflow-hidden rounded-full bg-[var(--clay-primary-light)]">
+                                    <div
+                                      className="h-full rounded-full bg-[var(--clay-primary)]"
+                                      style={{ width: `${(candidate.count / maxResultCount) * 100}%` }}
+                                    />
+                                  </div>
+                                  <span className="min-w-10 text-right text-lg font-semibold text-[var(--clay-text)]">
+                                    {candidate.count}
+                                  </span>
+                                </div>
+                              </div>
+                              <Button
+                                type="button"
+                                variant="primary"
+                                size="lg"
+                                className="mt-4 w-full"
+                                onClick={() => void handleCommitVote(candidate)}
+                                disabled={commitReason !== null || busy}
+                                loading={committingCandidateId === candidate.candidateId}
+                              >
+                                {committingCandidateId === candidate.candidateId
+                                  ? 'Đang commit…'
+                                  : 'Commit cho ứng viên này'}
+                              </Button>
+                            </div>
+                          ))}
+                          {commitReason && (
+                            <p className="text-xs text-[var(--clay-muted)]">{commitReason}</p>
+                          )}
+                        </div>
+                      ),
+                    },
+                    {
+                      key: 'state',
+                      label: 'Trạng thái & hành động',
+                      content: (
+                        <div className="grid gap-4 lg:grid-cols-2">
+                          <Panel className="bg-[var(--clay-surface-soft)]">
+                            <p className="text-sm font-semibold text-[var(--clay-text)]">
+                              Viewer state
+                            </p>
+                            <div className="mt-3 space-y-2.5 text-sm">
+                              <div className="flex items-center justify-between gap-4">
+                                <span className="text-[var(--clay-muted)]">Wallet</span>
+                                <span className="font-mono text-[12px]">
+                                  {shortenAddress(connectedAccount)}
+                                </span>
+                              </div>
+                              <div className="flex items-center justify-between gap-4">
+                                <span className="text-[var(--clay-muted)]">Đủ điều kiện</span>
+                                {yesNo(detail.onChain?.viewer?.eligible)}
+                              </div>
+                              <div className="flex items-center justify-between gap-4">
+                                <span className="text-[var(--clay-muted)]">Đã commit</span>
+                                {yesNo(detail.onChain?.viewer?.hasCommitted)}
+                              </div>
+                              <div className="flex items-center justify-between gap-4">
+                                <span className="text-[var(--clay-muted)]">Đã reveal</span>
+                                {yesNo(detail.onChain?.viewer?.hasRevealed)}
+                              </div>
+                            </div>
+                          </Panel>
+
+                          <Panel className="bg-[var(--clay-surface-soft)]">
+                            <p className="text-sm font-semibold text-[var(--clay-text)]">
+                              Hành động
+                            </p>
+                            <div className="mt-3 space-y-2.5">
+                              <Button
+                                type="button"
+                                variant="secondary"
+                                size="lg"
+                                className="w-full"
+                                onClick={() => void handleRevealVote()}
+                                disabled={revealReason !== null}
+                                loading={busy}
+                              >
+                                Reveal vote
+                              </Button>
+                              <p className="text-xs text-[var(--clay-muted)]">
+                                {revealReason ?? 'Sẵn sàng reveal cho chức vụ này.'}
+                              </p>
+                              <p className="text-[11px] text-[var(--state-warning)]">
+                                ⚠️ Bí mật phiếu được mã hoá cục bộ bằng chữ ký ví. Reveal phải dùng{' '}
+                                <strong>đúng ví và đúng trình duyệt/thiết bị</strong> đã commit; xoá
+                                dữ liệu trình duyệt sẽ mất khả năng reveal.
+                              </p>
+                              <Button
+                                type="button"
+                                variant="primary"
+                                size="lg"
+                                className="w-full"
+                                onClick={() => void handleFinalizeElection()}
+                                disabled={finalizeReason !== null}
+                                loading={busy}
+                              >
+                                Finalize election
+                              </Button>
+                              <p className="text-xs text-[var(--clay-muted)]">
+                                {finalizeReason ?? 'Sẵn sàng finalize.'}
+                              </p>
+                            </div>
+                          </Panel>
+
+                          <Panel className="bg-[var(--clay-surface-soft)] lg:col-span-2">
+                            <p className="text-sm font-semibold text-[var(--clay-text)]">Explorer</p>
+                            <div className="mt-3 flex flex-col gap-2 sm:flex-row">
+                              <a
+                                href={detail.links?.contract ?? '#'}
+                                target="_blank"
+                                rel="noreferrer"
+                                className={`inline-flex min-h-[44px] flex-1 items-center justify-center gap-2 rounded-[12px] border border-[var(--clay-primary)] px-4 text-sm text-[var(--clay-primary)] hover:bg-[var(--clay-primary-light)] ${!detail.links?.contract ? 'pointer-events-none opacity-50' : ''}`}
+                              >
+                                <ExternalLink className="h-4 w-4" aria-hidden="true" />
+                                Mở contract
+                              </a>
+                              <a
+                                href={detail.links?.transaction ?? '#'}
+                                target="_blank"
+                                rel="noreferrer"
+                                className={`inline-flex min-h-[44px] flex-1 items-center justify-center gap-2 rounded-[12px] border border-[var(--clay-primary)] px-4 text-sm text-[var(--clay-primary)] hover:bg-[var(--clay-primary-light)] ${!detail.links?.transaction ? 'pointer-events-none opacity-50' : ''}`}
+                              >
+                                <ExternalLink className="h-4 w-4" aria-hidden="true" />
+                                Mở giao dịch tạo election
+                              </a>
+                            </div>
+                          </Panel>
+                        </div>
+                      ),
+                    },
+                  ]}
+                />
+              </Panel>
+            ) : (
+              <Panel className="flex items-center justify-center p-12">
+                <p className="text-sm text-[var(--clay-muted)]">
+                  Chọn một ballot và một chức vụ để bắt đầu bỏ phiếu.
+                </p>
+              </Panel>
+            )}
           </div>
         </div>
       </div>
