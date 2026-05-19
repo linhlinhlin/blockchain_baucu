@@ -6,6 +6,7 @@ import { TaiKhoan } from '../store/types';
 import ModalOTP from '../components/ModalOTP';
 import { guiOtp, xacMinhOtp, resetTrangThai } from '../store/slice/maOTPSlice';
 import { RootState, AppDispatch } from '../store/store';
+import { Button, Panel } from '../components/ui/clay';
 
 const GuiOTPPage: React.FC = () => {
   const location = useLocation();
@@ -68,7 +69,7 @@ const GuiOTPPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-white p-4">
+    <div className="flex min-h-[70vh] flex-col items-center justify-center bg-[var(--clay-bg)] p-4 text-[var(--clay-text)]">
       <SEO
         title="Gửi OTP | Nền Tảng Bầu Cử Blockchain"
         description="Trang gửi OTP cho tài khoản của bạn trên hệ thống Bầu Cử Blockchain."
@@ -77,56 +78,74 @@ const GuiOTPPage: React.FC = () => {
         url={window.location.href}
         image={`${window.location.origin}/logo.png`}
       />
-      <div className="w-full max-w-md p-6 bg-white border border-gray-200 rounded-lg shadow-md space-y-6">
-        <h3 className="text-xl md:text-2xl font-semibold text-gray-800">
+      <Panel className="w-full max-w-md space-y-5">
+        <h1 className="text-xl font-semibold tracking-[-0.015em] text-[var(--clay-text)] md:text-2xl">
           Đặt lại mật khẩu của bạn
-        </h3>
-        <div className="p-4 bg-gray-100 border border-gray-300 rounded-lg flex items-center space-x-4">
-          <img src={user.avatar} alt={user.tenDangNhap} className="w-16 h-16 rounded-full" />
-          <div>
-            <h4 className="text-lg font-semibold">{user.tenDangNhap}</h4>
-            <p className="text-gray-600">{maskEmail(user.email ?? '')}</p>
+        </h1>
+        <div className="flex items-center gap-4 rounded-[14px] border border-[var(--clay-border)] bg-[var(--clay-surface-soft)] p-4">
+          <img
+            src={user.avatar}
+            alt={user.tenDangNhap}
+            className="h-14 w-14 rounded-full object-cover"
+          />
+          <div className="min-w-0">
+            <h4 className="font-semibold text-[var(--clay-text)]">{user.tenDangNhap}</h4>
+            <p className="text-sm text-[var(--clay-muted)]">{maskEmail(user.email ?? '')}</p>
           </div>
         </div>
-        <div className="space-y-4">
-          <label className="flex items-center space-x-2">
+        <fieldset className="space-y-3">
+          <legend className="sr-only">Chọn phương thức nhận OTP</legend>
+          <label className="flex min-h-[44px] cursor-pointer items-center gap-3 rounded-[12px] border border-[var(--clay-border)] px-3 text-sm text-[var(--clay-text)] hover:bg-[var(--clay-surface-soft)]">
             <input
               type="radio"
               name="reset-option"
               value="sms"
               checked={selectedOption === 'sms'}
               onChange={handleOptionChange}
-              className="form-radio"
+              className="h-4 w-4"
             />
             <span>Gửi SMS đến {maskPhoneNumber(user.sdt ?? '')}</span>
           </label>
-          <label className="flex items-center space-x-2">
+          <label className="flex min-h-[44px] cursor-pointer items-center gap-3 rounded-[12px] border border-[var(--clay-border)] px-3 text-sm text-[var(--clay-text)] hover:bg-[var(--clay-surface-soft)]">
             <input
               type="radio"
               name="reset-option"
               value="email"
               checked={selectedOption === 'email'}
               onChange={handleOptionChange}
-              className="form-radio"
+              className="h-4 w-4"
             />
             <span>Gửi email đến {maskEmail(user.email ?? '')}</span>
           </label>
+        </fieldset>
+        <div className="space-y-2">
+          <Button
+            type="button"
+            variant="primary"
+            size="lg"
+            className="w-full"
+            onClick={handleContinue}
+            disabled={!selectedOption || dangTai}
+            loading={dangTai}
+          >
+            Tiếp tục
+          </Button>
+          <Button
+            type="button"
+            variant="ghost"
+            size="lg"
+            className="w-full"
+            onClick={handleTryAnotherMethod}
+          >
+            Thử cách khác
+          </Button>
         </div>
-        <button
-          onClick={handleContinue}
-          className="bg-blue-500 text-white px-4 py-2 rounded-lg w-full hover:bg-blue-600 transition-colors duration-300"
-          disabled={!selectedOption || dangTai}
-        >
-          Tiếp tục
-        </button>
-        <button
-          onClick={handleTryAnotherMethod}
-          className="bg-gray-500 text-white px-4 py-2 rounded-lg w-full hover:bg-gray-600 transition-colors duration-300"
-        >
-          Thử Cách Khác
-        </button>
-        {loi && <p className="text-red-500">{loi}</p>}
-      </div>
+        {loi && (
+          <p role="alert" className="text-sm text-[var(--state-danger)]">
+            {loi}
+          </p>
+        )}
+      </Panel>
 
       <ModalOTP
         isOpen={isModalOpen}
