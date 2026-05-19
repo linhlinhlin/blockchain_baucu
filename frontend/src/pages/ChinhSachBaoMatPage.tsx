@@ -125,17 +125,17 @@ const ChinhSachBaoMat = () => {
   };
 
   // Light/dark mode styles
-  const bgColor = theme === 'dark' ? 'bg-[#0A1416]' : 'bg-gray-50';
-  const textColor = theme === 'dark' ? 'text-white' : 'text-gray-800';
-  const textSecondary = theme === 'dark' ? 'text-[#B0BEC5]' : 'text-gray-600';
-  const cardBg = theme === 'dark' ? 'bg-[#263238]' : 'bg-white';
-  const cardBorder = theme === 'dark' ? 'border-[#455A64]' : 'border-gray-200';
-  const highlightBg = theme === 'dark' ? 'bg-[#37474F]' : 'bg-blue-50';
-  const highlightBorder = theme === 'dark' ? 'border-[var(--clay-primary)]' : 'border-blue-200';
+  const bgColor = theme === 'dark' ? 'bg-[var(--clay-bg)]' : 'bg-[var(--clay-surface-soft)]';
+  const textColor = theme === 'dark' ? 'text-white' : 'text-[var(--clay-text)]';
+  const textSecondary = theme === 'dark' ? 'text-[var(--clay-muted-soft)]' : 'text-[var(--clay-muted)]';
+  const cardBg = theme === 'dark' ? 'bg-[var(--clay-surface-soft)]' : 'bg-white';
+  const cardBorder = theme === 'dark' ? 'border-[var(--clay-muted)]' : 'border-[var(--clay-border)]';
+  const highlightBg = theme === 'dark' ? 'bg-[var(--clay-text)]' : 'bg-[var(--clay-primary-light)]';
+  const highlightBorder = theme === 'dark' ? 'border-[var(--clay-primary)]' : 'border-[var(--clay-border)]';
   const linkColor =
     theme === 'dark'
       ? 'text-[var(--clay-primary)] hover:text-[var(--clay-primary-dark)]'
-      : 'text-blue-600 hover:text-purple-700';
+      : 'text-[var(--clay-primary)] hover:text-[var(--clay-primary-dark)]';
 
   return (
     <div className={`min-h-screen ${bgColor} ${textColor} relative overflow-hidden`}>
@@ -152,7 +152,7 @@ const ChinhSachBaoMat = () => {
           <div
             className={`absolute inset-0 ${
               theme === 'dark'
-                ? 'bg-gradient-to-b from-[#0A1416]/80 to-[#0A1416]'
+                ? 'bg-gradient-to-b from-[var(--clay-bg)]/80 to-[var(--clay-bg)]'
                 : 'bg-gradient-to-b from-gray-50/80 to-gray-50'
             }`}
           ></div>
@@ -169,7 +169,7 @@ const ChinhSachBaoMat = () => {
               <div className="absolute inset-0 rounded-full bg-gradient-to-r from-[var(--clay-primary)] to-[var(--clay-primary-dark)] blur-xl opacity-30"></div>
               <div
                 className={`relative w-24 h-24 mx-auto rounded-full ${
-                  theme === 'dark' ? 'bg-[#263238]' : 'bg-white'
+                  theme === 'dark' ? 'bg-[var(--clay-surface-soft)]' : 'bg-white'
                 } flex items-center justify-center border border-[var(--clay-primary)]/30`}
               >
                 <Shield className="w-12 h-12 text-[var(--clay-primary)]" />
@@ -218,7 +218,7 @@ const ChinhSachBaoMat = () => {
           {/* Sidebar - Table of Contents */}
           <aside className="w-full lg:w-1/4 lg:sticky lg:top-24 lg:self-start mb-8 lg:mb-0">
             <div className={`${cardBg} border ${cardBorder} rounded-xl shadow-lg overflow-hidden`}>
-              <div className="p-4 border-b border-gray-200 flex justify-between items-center">
+              <div className="p-4 border-b border-[var(--clay-border)] flex justify-between items-center">
                 <h2 className="text-xl font-bold flex items-center">
                   <FileText className="w-5 h-5 mr-2 text-[var(--clay-primary)]" />
                   Mục Lục
@@ -226,7 +226,7 @@ const ChinhSachBaoMat = () => {
                 <button
                   onClick={() => setIsTocVisible(!isTocVisible)}
                   className={`p-2 rounded-full ${
-                    theme === 'dark' ? 'hover:bg-[#37474F]' : 'hover:bg-gray-100'
+                    theme === 'dark' ? 'hover:bg-[var(--clay-text)]' : 'hover:bg-[var(--clay-surface-soft)]'
                   } transition-colors`}
                   aria-label="Toggle table of contents"
                 >
@@ -249,11 +249,11 @@ const ChinhSachBaoMat = () => {
                             activeSection === section.id
                               ? `${
                                   theme === 'dark'
-                                    ? 'bg-[#37474F] text-white'
-                                    : 'bg-blue-50 text-blue-700'
+                                    ? 'bg-[var(--clay-text)] text-white'
+                                    : 'bg-[var(--clay-primary-light)] text-[var(--clay-primary)]'
                                 }`
                               : `${
-                                  theme === 'dark' ? 'hover:bg-[#37474F]/50' : 'hover:bg-gray-100'
+                                  theme === 'dark' ? 'hover:bg-[var(--clay-text)]/50' : 'hover:bg-[var(--clay-surface-soft)]'
                                 }`
                           }`}
                         >
@@ -350,8 +350,8 @@ const ChinhSachBaoMat = () => {
                 </p>
 
                 <div className="flex items-center mt-6">
-                  <div className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center mr-3">
-                    <CheckCircle className="w-4 h-4 text-green-600" />
+                  <div className="w-8 h-8 rounded-full bg-[var(--state-success-soft)] flex items-center justify-center mr-3">
+                    <CheckCircle className="w-4 h-4 text-[var(--state-success)]" />
                   </div>
                   <p className="italic">Ngày có hiệu lực: 01/03/2025</p>
                 </div>
@@ -381,7 +381,7 @@ const ChinhSachBaoMat = () => {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div
                       className={`p-4 rounded-lg border ${cardBorder} ${
-                        theme === 'dark' ? 'bg-[#37474F]/50' : 'bg-gray-50'
+                        theme === 'dark' ? 'bg-[var(--clay-text)]/50' : 'bg-[var(--clay-surface-soft)]'
                       }`}
                     >
                       <div className="flex items-start">
@@ -402,7 +402,7 @@ const ChinhSachBaoMat = () => {
 
                     <div
                       className={`p-4 rounded-lg border ${cardBorder} ${
-                        theme === 'dark' ? 'bg-[#37474F]/50' : 'bg-gray-50'
+                        theme === 'dark' ? 'bg-[var(--clay-text)]/50' : 'bg-[var(--clay-surface-soft)]'
                       }`}
                     >
                       <div className="flex items-start">
@@ -422,7 +422,7 @@ const ChinhSachBaoMat = () => {
 
                     <div
                       className={`p-4 rounded-lg border ${cardBorder} ${
-                        theme === 'dark' ? 'bg-[#37474F]/50' : 'bg-gray-50'
+                        theme === 'dark' ? 'bg-[var(--clay-text)]/50' : 'bg-[var(--clay-surface-soft)]'
                       }`}
                     >
                       <div className="flex items-start">
@@ -443,7 +443,7 @@ const ChinhSachBaoMat = () => {
 
                     <div
                       className={`p-4 rounded-lg border ${cardBorder} ${
-                        theme === 'dark' ? 'bg-[#37474F]/50' : 'bg-gray-50'
+                        theme === 'dark' ? 'bg-[var(--clay-text)]/50' : 'bg-[var(--clay-surface-soft)]'
                       }`}
                     >
                       <div className="flex items-start">
@@ -528,7 +528,7 @@ const ChinhSachBaoMat = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4">
                   <div
                     className={`p-5 rounded-xl border ${cardBorder} ${
-                      theme === 'dark' ? 'bg-[#37474F]/30' : 'bg-white'
+                      theme === 'dark' ? 'bg-[var(--clay-text)]/30' : 'bg-white'
                     } shadow-sm`}
                   >
                     <h3 className="text-lg font-semibold mb-3 flex items-center">
@@ -562,7 +562,7 @@ const ChinhSachBaoMat = () => {
 
                   <div
                     className={`p-5 rounded-xl border ${cardBorder} ${
-                      theme === 'dark' ? 'bg-[#37474F]/30' : 'bg-white'
+                      theme === 'dark' ? 'bg-[var(--clay-text)]/30' : 'bg-white'
                     } shadow-sm`}
                   >
                     <h3 className="text-lg font-semibold mb-3 flex items-center">
@@ -593,7 +593,7 @@ const ChinhSachBaoMat = () => {
 
                   <div
                     className={`p-5 rounded-xl border ${cardBorder} ${
-                      theme === 'dark' ? 'bg-[#37474F]/30' : 'bg-white'
+                      theme === 'dark' ? 'bg-[var(--clay-text)]/30' : 'bg-white'
                     } shadow-sm`}
                   >
                     <h3 className="text-lg font-semibold mb-3 flex items-center">
@@ -624,7 +624,7 @@ const ChinhSachBaoMat = () => {
 
                   <div
                     className={`p-5 rounded-xl border ${cardBorder} ${
-                      theme === 'dark' ? 'bg-[#37474F]/30' : 'bg-white'
+                      theme === 'dark' ? 'bg-[var(--clay-text)]/30' : 'bg-white'
                     } shadow-sm`}
                   >
                     <h3 className="text-lg font-semibold mb-3 flex items-center">
@@ -690,7 +690,7 @@ const ChinhSachBaoMat = () => {
                 <div className="space-y-4 mt-4">
                   <div
                     className={`p-4 rounded-lg border ${cardBorder} ${
-                      theme === 'dark' ? 'bg-[#37474F]/50' : 'bg-gray-50'
+                      theme === 'dark' ? 'bg-[var(--clay-text)]/50' : 'bg-[var(--clay-surface-soft)]'
                     }`}
                   >
                     <h3 className="font-semibold mb-2">Nhà Cung Cấp Dịch Vụ</h3>
@@ -705,7 +705,7 @@ const ChinhSachBaoMat = () => {
 
                   <div
                     className={`p-4 rounded-lg border ${cardBorder} ${
-                      theme === 'dark' ? 'bg-[#37474F]/50' : 'bg-gray-50'
+                      theme === 'dark' ? 'bg-[var(--clay-text)]/50' : 'bg-[var(--clay-surface-soft)]'
                     }`}
                   >
                     <h3 className="font-semibold mb-2">Yêu Cầu Pháp Lý</h3>
@@ -719,7 +719,7 @@ const ChinhSachBaoMat = () => {
 
                   <div
                     className={`p-4 rounded-lg border ${cardBorder} ${
-                      theme === 'dark' ? 'bg-[#37474F]/50' : 'bg-gray-50'
+                      theme === 'dark' ? 'bg-[var(--clay-text)]/50' : 'bg-[var(--clay-surface-soft)]'
                     }`}
                   >
                     <h3 className="font-semibold mb-2">Dữ Liệu Blockchain Công Khai</h3>
@@ -733,7 +733,7 @@ const ChinhSachBaoMat = () => {
 
                   <div
                     className={`p-4 rounded-lg border ${cardBorder} ${
-                      theme === 'dark' ? 'bg-[#37474F]/50' : 'bg-gray-50'
+                      theme === 'dark' ? 'bg-[var(--clay-text)]/50' : 'bg-[var(--clay-surface-soft)]'
                     }`}
                   >
                     <h3 className="font-semibold mb-2">Với Sự Đồng Ý Của Bạn</h3>
@@ -781,7 +781,7 @@ const ChinhSachBaoMat = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4">
                   <div
                     className={`p-5 rounded-xl border ${cardBorder} ${
-                      theme === 'dark' ? 'bg-[#37474F]/30' : 'bg-white'
+                      theme === 'dark' ? 'bg-[var(--clay-text)]/30' : 'bg-white'
                     } shadow-sm`}
                   >
                     <h3 className="text-lg font-semibold mb-3 flex items-center">
@@ -815,7 +815,7 @@ const ChinhSachBaoMat = () => {
 
                   <div
                     className={`p-5 rounded-xl border ${cardBorder} ${
-                      theme === 'dark' ? 'bg-[#37474F]/30' : 'bg-white'
+                      theme === 'dark' ? 'bg-[var(--clay-text)]/30' : 'bg-white'
                     } shadow-sm`}
                   >
                     <h3 className="text-lg font-semibold mb-3 flex items-center">
@@ -849,7 +849,7 @@ const ChinhSachBaoMat = () => {
 
                   <div
                     className={`p-5 rounded-xl border ${cardBorder} ${
-                      theme === 'dark' ? 'bg-[#37474F]/30' : 'bg-white'
+                      theme === 'dark' ? 'bg-[var(--clay-text)]/30' : 'bg-white'
                     } shadow-sm`}
                   >
                     <h3 className="text-lg font-semibold mb-3 flex items-center">
@@ -883,7 +883,7 @@ const ChinhSachBaoMat = () => {
 
                   <div
                     className={`p-5 rounded-xl border ${cardBorder} ${
-                      theme === 'dark' ? 'bg-[#37474F]/30' : 'bg-white'
+                      theme === 'dark' ? 'bg-[var(--clay-text)]/30' : 'bg-white'
                     } shadow-sm`}
                   >
                     <h3 className="text-lg font-semibold mb-3 flex items-center">
@@ -952,7 +952,7 @@ const ChinhSachBaoMat = () => {
                 <div className="space-y-4 mt-4">
                   <div
                     className={`p-4 rounded-lg border ${cardBorder} ${
-                      theme === 'dark' ? 'bg-[#37474F]/50' : 'bg-gray-50'
+                      theme === 'dark' ? 'bg-[var(--clay-text)]/50' : 'bg-[var(--clay-surface-soft)]'
                     }`}
                   >
                     <div className="flex items-center mb-2">
@@ -970,7 +970,7 @@ const ChinhSachBaoMat = () => {
 
                   <div
                     className={`p-4 rounded-lg border ${cardBorder} ${
-                      theme === 'dark' ? 'bg-[#37474F]/50' : 'bg-gray-50'
+                      theme === 'dark' ? 'bg-[var(--clay-text)]/50' : 'bg-[var(--clay-surface-soft)]'
                     }`}
                   >
                     <div className="flex items-center mb-2">
@@ -988,7 +988,7 @@ const ChinhSachBaoMat = () => {
 
                   <div
                     className={`p-4 rounded-lg border ${cardBorder} ${
-                      theme === 'dark' ? 'bg-[#37474F]/50' : 'bg-gray-50'
+                      theme === 'dark' ? 'bg-[var(--clay-text)]/50' : 'bg-[var(--clay-surface-soft)]'
                     }`}
                   >
                     <div className="flex items-center mb-2">
@@ -1006,7 +1006,7 @@ const ChinhSachBaoMat = () => {
 
                   <div
                     className={`p-4 rounded-lg border ${cardBorder} ${
-                      theme === 'dark' ? 'bg-[#37474F]/50' : 'bg-gray-50'
+                      theme === 'dark' ? 'bg-[var(--clay-text)]/50' : 'bg-[var(--clay-surface-soft)]'
                     }`}
                   >
                     <div className="flex items-center mb-2">
@@ -1024,7 +1024,7 @@ const ChinhSachBaoMat = () => {
 
                   <div
                     className={`p-4 rounded-lg border ${cardBorder} ${
-                      theme === 'dark' ? 'bg-[#37474F]/50' : 'bg-gray-50'
+                      theme === 'dark' ? 'bg-[var(--clay-text)]/50' : 'bg-[var(--clay-surface-soft)]'
                     }`}
                   >
                     <div className="flex items-center mb-2">
@@ -1092,7 +1092,7 @@ const ChinhSachBaoMat = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4">
                   <div
                     className={`p-5 rounded-xl border ${cardBorder} ${
-                      theme === 'dark' ? 'bg-[#37474F]/30' : 'bg-white'
+                      theme === 'dark' ? 'bg-[var(--clay-text)]/30' : 'bg-white'
                     } shadow-sm`}
                   >
                     <h3 className="text-lg font-semibold mb-3 flex items-center">
@@ -1126,7 +1126,7 @@ const ChinhSachBaoMat = () => {
 
                   <div
                     className={`p-5 rounded-xl border ${cardBorder} ${
-                      theme === 'dark' ? 'bg-[#37474F]/30' : 'bg-white'
+                      theme === 'dark' ? 'bg-[var(--clay-text)]/30' : 'bg-white'
                     } shadow-sm`}
                   >
                     <h3 className="text-lg font-semibold mb-3 flex items-center">
@@ -1259,7 +1259,7 @@ const ChinhSachBaoMat = () => {
                   <h3 className="text-xl font-semibold mb-3">Lịch Sử Thay Đổi</h3>
                   <div className={`border ${cardBorder} rounded-lg overflow-hidden`}>
                     <table className="min-w-full divide-y divide-gray-200">
-                      <thead className={theme === 'dark' ? 'bg-[#37474F]' : 'bg-gray-50'}>
+                      <thead className={theme === 'dark' ? 'bg-[var(--clay-text)]' : 'bg-[var(--clay-surface-soft)]'}>
                         <tr>
                           <th
                             scope="col"
@@ -1317,7 +1317,7 @@ const ChinhSachBaoMat = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
                   <div
                     className={`p-5 rounded-xl border ${cardBorder} ${
-                      theme === 'dark' ? 'bg-[#37474F]/30' : 'bg-white'
+                      theme === 'dark' ? 'bg-[var(--clay-text)]/30' : 'bg-white'
                     } shadow-sm`}
                   >
                     <h3 className="text-lg font-semibold mb-4 flex items-center">
@@ -1346,7 +1346,7 @@ const ChinhSachBaoMat = () => {
 
                   <div
                     className={`p-5 rounded-xl border ${cardBorder} ${
-                      theme === 'dark' ? 'bg-[#37474F]/30' : 'bg-white'
+                      theme === 'dark' ? 'bg-[var(--clay-text)]/30' : 'bg-white'
                     } shadow-sm`}
                   >
                     <h3 className="text-lg font-semibold mb-4 flex items-center">
@@ -1404,7 +1404,7 @@ const ChinhSachBaoMat = () => {
       {/* Footer */}
       <footer
         className={`mt-16 py-8 border-t ${cardBorder} ${
-          theme === 'dark' ? 'bg-[#263238]' : 'bg-gray-50'
+          theme === 'dark' ? 'bg-[var(--clay-surface-soft)]' : 'bg-[var(--clay-surface-soft)]'
         }`}
       >
         <div className="container mx-auto px-4 text-center">

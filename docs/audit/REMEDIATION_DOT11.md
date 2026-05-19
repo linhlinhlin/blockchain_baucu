@@ -28,7 +28,7 @@ Frontend-only. Tái dùng lớp `clay` (Đợt 10). Tiền nhiệm: Đợt 10 + 
 - Hạn chế: SC-005 (a11y runtime), SC-006 (legal scrollHeight px) cần `npm run dev` (Node 20/22) — agent không chạy browser; thay đổi US4 chỉ là chuỗi hex (cấu trúc/scroll bất biến → SC-006 đạt theo phân tích tĩnh).
 
 ## Follow-up (ngoài scope, đã ghi)
-- Re-theme đầy đủ 2 trang legal từ dark bespoke (#0A1416/#1E272C/#37474F/#455A64/
+- ✅ Re-theme 2 trang legal dark→light: HOÀN TẤT ở Đợt 12 (`012-legal-light-retheme`).
   #B0BEC5) sang light clay = một **redesign** riêng (không phải token-sync P3);
   rủi ro tương phản cao, cần đợt riêng. Accent đã đồng bộ.
 - Dead-code helper mồ côi `QuanLySmartContractPage` (Đợt 10 follow-up) vẫn treo.

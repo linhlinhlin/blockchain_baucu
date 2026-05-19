@@ -29,7 +29,7 @@ Hệ thống bầu cử sinh viên on-chain. Monorepo 4 module.
 - Thay đổi tối thiểu, đúng scope spec; không mở rộng bề mặt legacy; không commit secret.
 
 <!-- SPECKIT START -->
-- **Đã xong**: Đợt 10 (`010-ux-professionalization`) + 10.1 type-baseline + Đợt 11 (`011-public-ux-professionalization`, trang công khai) — tất cả DONE, `npm run typecheck:active` = 0. Chi tiết: `docs/audit/REMEDIATION_DOT10.md` + `REMEDIATION_DOT11.md`. Cổng tsc tái lập: `npm run typecheck:active` (`frontend/tsconfig.active.json`).
+- **Đã xong**: Đợt 10 (`010-ux-professionalization`) + 10.1 type-baseline + Đợt 11 + Đợt 12 (`012-legal-light-retheme`, re-theme legal dark→light) — tất cả DONE, `npm run typecheck:active` = 0. Chi tiết: `docs/audit/REMEDIATION_DOT10.md` + `REMEDIATION_DOT11.md`. Cổng tsc tái lập: `npm run typecheck:active` (`frontend/tsconfig.active.json`).
 <!-- SPECKIT END -->
 
 ## Cảnh báo bảo mật đang mở (xem audit §2)
