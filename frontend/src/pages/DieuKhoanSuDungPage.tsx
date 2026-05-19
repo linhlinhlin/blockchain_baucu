@@ -142,7 +142,7 @@ const DieuKhoanSuDungPage = () => {
   const cardBg = theme === 'dark' ? 'bg-[#263238]' : 'bg-white';
   const cardBorder = theme === 'dark' ? 'border-[#455A64]' : 'border-gray-200';
   const sectionBg = theme === 'dark' ? 'bg-[#1E272C]' : 'bg-gray-50';
-  const highlightColor = theme === 'dark' ? 'text-[#0288D1]' : 'text-blue-600';
+  const highlightColor = theme === 'dark' ? 'text-[var(--clay-primary)]' : 'text-blue-600';
   const secondaryTextColor = theme === 'dark' ? 'text-[#B0BEC5]' : 'text-gray-600';
 
   return (
@@ -165,13 +165,13 @@ const DieuKhoanSuDungPage = () => {
             } hover:opacity-80 transition-opacity`}
           >
             <div className="relative w-10 h-10">
-              <div className="absolute inset-0 bg-gradient-to-r from-[#0288D1] to-[#6A1B9A] rounded-full blur-sm opacity-70"></div>
+              <div className="absolute inset-0 bg-gradient-to-r from-[var(--clay-primary)] to-[#6A1B9A] rounded-full blur-sm opacity-70"></div>
               <div
                 className={`relative flex items-center justify-center w-full h-full rounded-full ${
                   theme === 'dark' ? 'bg-[#0A1416]' : 'bg-white'
-                } border border-[#0288D1]/30`}
+                } border border-[var(--clay-primary)]/30`}
               >
-                <FileText className="h-5 w-5 text-[#0288D1]" />
+                <FileText className="h-5 w-5 text-[var(--clay-primary)]" />
               </div>
             </div>
             <div>
@@ -207,7 +207,7 @@ const DieuKhoanSuDungPage = () => {
               to="/"
               className={`flex items-center space-x-1 px-3 py-1.5 rounded-full ${
                 theme === 'dark'
-                  ? 'bg-[#0288D1] hover:bg-[#01579B] text-white'
+                  ? 'bg-[var(--clay-primary)] hover:bg-[#01579B] text-white'
                   : 'bg-blue-600 hover:bg-blue-700 text-white'
               } transition-colors`}
             >
@@ -288,7 +288,7 @@ const DieuKhoanSuDungPage = () => {
           >
             <div className="p-4 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
               <h2 className="text-xl font-bold flex items-center">
-                <FileText className="h-5 w-5 mr-2 text-[#0288D1]" />
+                <FileText className="h-5 w-5 mr-2 text-[var(--clay-primary)]" />
                 Mục lục
               </h2>
               <button
@@ -316,7 +316,7 @@ const DieuKhoanSuDungPage = () => {
                         className={`w-full text-left px-3 py-2 rounded-lg flex items-center transition-colors ${
                           activeSection === section.id
                             ? theme === 'dark'
-                              ? 'bg-[#0288D1]/20 text-[#0288D1]'
+                              ? 'bg-[var(--clay-primary)]/20 text-[var(--clay-primary)]'
                               : 'bg-blue-50 text-blue-600'
                             : theme === 'dark'
                               ? 'hover:bg-[#37474F] text-[#B0BEC5]'
@@ -326,7 +326,7 @@ const DieuKhoanSuDungPage = () => {
                         <div
                           className={`w-1.5 h-1.5 rounded-full mr-2 ${
                             activeSection === section.id
-                              ? 'bg-[#0288D1]'
+                              ? 'bg-[var(--clay-primary)]'
                               : theme === 'dark'
                                 ? 'bg-[#455A64]'
                                 : 'bg-gray-300'
@@ -351,7 +351,7 @@ const DieuKhoanSuDungPage = () => {
                     : 'hover:bg-gray-100 text-gray-700'
                 } transition-colors`}
               >
-                <Shield className="h-4 w-4 text-[#0288D1]" />
+                <Shield className="h-4 w-4 text-[var(--clay-primary)]" />
                 <span>Xem Chính Sách Bảo Mật</span>
               </Link>
             </div>
@@ -413,7 +413,7 @@ const DieuKhoanSuDungPage = () => {
                           : 'border-gray-200 bg-white'
                       }`}
                     >
-                      <Shield className="h-8 w-8 text-[#0288D1] mb-2" />
+                      <Shield className="h-8 w-8 text-[var(--clay-primary)] mb-2" />
                       <h3 className="font-semibold mb-2">Bảo Mật Tuyệt Đối</h3>
                       <p className={`text-sm ${secondaryTextColor}`}>
                         Dữ liệu được mã hóa và lưu trữ an toàn trên blockchain
@@ -484,7 +484,7 @@ const DieuKhoanSuDungPage = () => {
                   <div
                     className={`p-4 rounded-lg ${
                       theme === 'dark' ? 'bg-[#37474F]' : 'bg-gray-50'
-                    } border-l-4 border-[#0288D1] mb-4`}
+                    } border-l-4 border-[var(--clay-primary)] mb-4`}
                   >
                     <h4 className="font-semibold mb-2">Lưu ý quan trọng</h4>
                     <p
@@ -713,7 +713,7 @@ const DieuKhoanSuDungPage = () => {
                             theme === 'dark' ? 'bg-[#37474F]' : 'bg-blue-50'
                           } flex items-center justify-center mr-3 flex-shrink-0`}
                         >
-                          <CheckCircle className="h-5 w-5 text-[#0288D1]" />
+                          <CheckCircle className="h-5 w-5 text-[var(--clay-primary)]" />
                         </div>
                         <div>
                           <h4 className="font-medium mb-1">Thiết lập cuộc bầu cử công bằng</h4>
@@ -729,7 +729,7 @@ const DieuKhoanSuDungPage = () => {
                             theme === 'dark' ? 'bg-[#37474F]' : 'bg-blue-50'
                           } flex items-center justify-center mr-3 flex-shrink-0`}
                         >
-                          <CheckCircle className="h-5 w-5 text-[#0288D1]" />
+                          <CheckCircle className="h-5 w-5 text-[var(--clay-primary)]" />
                         </div>
                         <div>
                           <h4 className="font-medium mb-1">Xác minh danh tính người bỏ phiếu</h4>
@@ -745,7 +745,7 @@ const DieuKhoanSuDungPage = () => {
                             theme === 'dark' ? 'bg-[#37474F]' : 'bg-blue-50'
                           } flex items-center justify-center mr-3 flex-shrink-0`}
                         >
-                          <CheckCircle className="h-5 w-5 text-[#0288D1]" />
+                          <CheckCircle className="h-5 w-5 text-[var(--clay-primary)]" />
                         </div>
                         <div>
                           <h4 className="font-medium mb-1">Công bố kết quả chính xác</h4>
@@ -837,7 +837,7 @@ const DieuKhoanSuDungPage = () => {
                   <div
                     className={`p-4 rounded-lg ${
                       theme === 'dark' ? 'bg-[#37474F]' : 'bg-blue-50'
-                    } border-l-4 border-[#0288D1] mb-4`}
+                    } border-l-4 border-[var(--clay-primary)] mb-4`}
                   >
                     <h4 className="font-semibold mb-2">Lưu ý quan trọng</h4>
                     <p
@@ -966,7 +966,7 @@ const DieuKhoanSuDungPage = () => {
                               theme === 'dark' ? 'bg-[#37474F]' : 'bg-blue-50'
                             } flex items-center justify-center mr-3 flex-shrink-0`}
                           >
-                            <span className="font-bold text-[#0288D1]">1</span>
+                            <span className="font-bold text-[var(--clay-primary)]">1</span>
                           </div>
                           <div>
                             <h4 className="font-medium mb-1">Tính Bất Biến</h4>
@@ -983,7 +983,7 @@ const DieuKhoanSuDungPage = () => {
                               theme === 'dark' ? 'bg-[#37474F]' : 'bg-blue-50'
                             } flex items-center justify-center mr-3 flex-shrink-0`}
                           >
-                            <span className="font-bold text-[#0288D1]">2</span>
+                            <span className="font-bold text-[var(--clay-primary)]">2</span>
                           </div>
                           <div>
                             <h4 className="font-medium mb-1">Phân Tán</h4>
@@ -1001,7 +1001,7 @@ const DieuKhoanSuDungPage = () => {
                               theme === 'dark' ? 'bg-[#37474F]' : 'bg-blue-50'
                             } flex items-center justify-center mr-3 flex-shrink-0`}
                           >
-                            <span className="font-bold text-[#0288D1]">3</span>
+                            <span className="font-bold text-[var(--clay-primary)]">3</span>
                           </div>
                           <div>
                             <h4 className="font-medium mb-1">Mã Hóa</h4>
@@ -1018,7 +1018,7 @@ const DieuKhoanSuDungPage = () => {
                               theme === 'dark' ? 'bg-[#37474F]' : 'bg-blue-50'
                             } flex items-center justify-center mr-3 flex-shrink-0`}
                           >
-                            <span className="font-bold text-[#0288D1]">4</span>
+                            <span className="font-bold text-[var(--clay-primary)]">4</span>
                           </div>
                           <div>
                             <h4 className="font-medium mb-1">Minh Bạch</h4>
@@ -1120,7 +1120,7 @@ const DieuKhoanSuDungPage = () => {
                   <div
                     className={`p-4 rounded-lg ${
                       theme === 'dark' ? 'bg-[#37474F]' : 'bg-blue-50'
-                    } border-l-4 border-[#0288D1] mb-4`}
+                    } border-l-4 border-[var(--clay-primary)] mb-4`}
                   >
                     <h4 className="font-semibold mb-2">Lưu ý về phần mềm mã nguồn mở</h4>
                     <p
@@ -1310,7 +1310,7 @@ const DieuKhoanSuDungPage = () => {
                   <div
                     className={`p-4 rounded-lg ${
                       theme === 'dark' ? 'bg-[#37474F]' : 'bg-blue-50'
-                    } border-l-4 border-[#0288D1] mb-4`}
+                    } border-l-4 border-[var(--clay-primary)] mb-4`}
                   >
                     <h4 className="font-semibold mb-2">Lịch sử thay đổi</h4>
                     <ul className="space-y-2 text-sm">
@@ -1359,7 +1359,7 @@ const DieuKhoanSuDungPage = () => {
                         }`}
                       >
                         <svg
-                          className="h-5 w-5 text-[#0288D1]"
+                          className="h-5 w-5 text-[var(--clay-primary)]"
                           fill="none"
                           viewBox="0 0 24 24"
                           stroke="currentColor"
@@ -1395,7 +1395,7 @@ const DieuKhoanSuDungPage = () => {
                         }`}
                       >
                         <svg
-                          className="h-5 w-5 text-[#0288D1]"
+                          className="h-5 w-5 text-[var(--clay-primary)]"
                           fill="none"
                           viewBox="0 0 24 24"
                           stroke="currentColor"
@@ -1428,7 +1428,7 @@ const DieuKhoanSuDungPage = () => {
                         }`}
                       >
                         <svg
-                          className="h-5 w-5 text-[#0288D1]"
+                          className="h-5 w-5 text-[var(--clay-primary)]"
                           fill="none"
                           viewBox="0 0 24 24"
                           stroke="currentColor"
@@ -1467,7 +1467,7 @@ const DieuKhoanSuDungPage = () => {
                         }`}
                       >
                         <svg
-                          className="h-5 w-5 text-[#0288D1]"
+                          className="h-5 w-5 text-[var(--clay-primary)]"
                           fill="none"
                           viewBox="0 0 24 24"
                           stroke="currentColor"
@@ -1534,7 +1534,7 @@ const DieuKhoanSuDungPage = () => {
           onClick={scrollToTop}
           className={`fixed bottom-6 right-6 p-3 rounded-full shadow-lg z-50 transition-all duration-300 ${
             theme === 'dark'
-              ? 'bg-[#0288D1] hover:bg-[#01579B] text-white'
+              ? 'bg-[var(--clay-primary)] hover:bg-[#01579B] text-white'
               : 'bg-blue-600 hover:bg-blue-700 text-white'
           }`}
           aria-label="Lên đầu trang"

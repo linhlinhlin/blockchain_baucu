@@ -71,9 +71,9 @@ description: "Task list — Đợt 11 Public UX Professionalization"
 
 ## Phase 6: User Story 4 — Đồng bộ token trang pháp lý (P3)
 
-- [ ] T021 [P] [US4] `frontend/src/pages/ChinhSachBaoMatPage.tsx`: thay class màu/chữ hardcode → token clay; KHÔNG đụng framer-motion scroll/ToC/back-to-top. **Verify**: `scrollHeight` 1440×900 KHÔNG tăng vs T001; `typecheck:active` sạch.
-- [ ] T022 [P] [US4] `frontend/src/pages/DieuKhoanSuDungPage.tsx`: như trên. **Verify**: `scrollHeight` không tăng; ToC/back-to-top OK; `typecheck:active` sạch.
-- [ ] T023 [US4] Checkpoint US4: quickstart §A + §C SC-006. **Verify**: đạt; commit lát US4.
+- [X] T021 [P] [US4] `frontend/src/pages/ChinhSachBaoMatPage.tsx`: thay class màu/chữ hardcode → token clay; KHÔNG đụng framer-motion scroll/ToC/back-to-top. **Verify**: `scrollHeight` 1440×900 KHÔNG tăng vs T001; `typecheck:active` sạch.
+- [X] T022 [P] [US4] `frontend/src/pages/DieuKhoanSuDungPage.tsx`: như trên. **Verify**: `scrollHeight` không tăng; ToC/back-to-top OK; `typecheck:active` sạch.
+- [X] T023 [US4] Checkpoint US4: quickstart §A + §C SC-006. **Verify**: đạt; commit lát US4.
 
 ---
 
