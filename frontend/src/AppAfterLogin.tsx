@@ -43,9 +43,7 @@ const AppAfterLogin: React.FC = () => {
 
         <main
           id="main-content"
-          className={`flex-1 transition-[margin] duration-300 ease-in-out ${
-            isMobile ? 'mt-[60px] px-4 py-5' : isSidebarOpen ? 'ml-[296px]' : 'ml-[104px]'
-          }`}
+          className="flex-1 mt-[60px] md:mt-0 md:ml-[var(--sidebar-w)]"
         >
           <div className="min-h-screen bg-[var(--clay-bg)] p-4 sm:p-6 lg:p-8">
             <Outlet />
