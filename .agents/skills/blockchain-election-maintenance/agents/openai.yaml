@@ -1,0 +1,4 @@
+interface:
+  display_name: "Blockchain Election Maintenance"
+  short_description: "Maintain ElectionV1 stack safely"
+  default_prompt: "Use $blockchain-election-maintenance to plan or modify the HoLiHu Blockchain Election active stack."
