@@ -370,7 +370,9 @@ export default function TaoCuocBauCuPage() {
         description: position.description || null,
         candidates: position.candidates.map((candidate) => ({
           displayName: candidate.displayName,
-          sourceId: candidate.sourceId,
+          // Đợt 10.1: normalizePositions() gán sourceId tại runtime; type
+          // intersection pre-existing chưa lộ field — assertion type-only.
+          sourceId: (candidate as unknown as { sourceId: string }).sourceId,
           walletAddress: candidate.walletAddress || null,
         })),
       }));

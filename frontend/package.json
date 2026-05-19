@@ -79,7 +79,8 @@
     "build": "vite build",
     "start": "vite",
     "test": "jest --runInBand",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "typecheck:active": "tsc -p tsconfig.active.json"
   },
   "browserslist": {
     "production": [

@@ -38,9 +38,33 @@ Nâng cấp hệ thiết kế Apple-like sáng hiện có cho nhất quán & chu
 - Hạn chế: SC-001 (px cuộn) & SC-004/007 (thao tác) cần chạy `npm run dev`
   (Node 20/22 LTS) — agent không chạy trình duyệt; mọi verify tĩnh đã PASS.
 
-## Follow-up (ngoài scope Đợt 10)
-- Dead code: helper trình bày mồ côi trong `QuanLySmartContractPage.tsx` (1-745,
-  panelClasses/commandButtonClasses/messagePanelClasses/phaseAccentClasses) — cố ý
-  KHÔNG gỡ để không đụng vùng đã qua cổng S4/S5; dọn ở đợt sau.
-- Lỗi tsc pre-existing repo-wide (vite types/store immer) — đợt kỹ thuật riêng.
+## Đợt 10.1 (2026-05-19) — Type-baseline: active path `tsc` = 0
+
+Xử lý **toàn bộ** 16 lỗi tsc pre-existing trong import-graph active path bằng
+thay đổi **type-only / runtime-erased** (assertion/optional — KHÔNG đổi giá trị,
+điều kiện, control-flow, hành vi, bảo mật). Mỗi sửa có comment `Đợt 10.1`.
+
+| File | Lỗi pre-existing | Fix type-only |
+|---|---|---|
+| `src/vite-env.d.ts` (mới) | `import.meta.env` TS2339 ×2 (apiClient/publicApiClient) | `/// <reference types="vite/client" />` |
+| `store/slice/nguoiDungSlice.tsx` | `WritableDraft` ×8 | `as unknown as typeof state.<field>` (immer Draft) |
+| `store/slice/timTaiKhoanSlice.tsx` | `WritableDraft` ×1 | `as unknown as typeof state.foundUsers` |
+| `store/slice/maOTPSlice.tsx` | shape literal lệ ×1 (legacy OTP) | `as unknown as typeof state.thongTinXacThuc` |
+| `api/authenticate.tsx`, `api/authorize.tsx` | type-lie `searchCacTaiKhoan` ×3 | boundary `as unknown as` (KHÔNG đổi so sánh mật khẩu/role) |
+| `pages/TaoCuocBauCuPage.tsx` | `sourceId` ×1 (verbatim logic) | `as unknown as { sourceId: string }` |
+
+- **Cổng tái lập**: `frontend/tsconfig.active.json` + `npm run typecheck:active`
+  → **0 lỗi** (đúng định nghĩa Hiến chương "tsc sạch ở active path"). Commit kèm.
+- **S4/S5**: round này KHÔNG đụng `QuanLySmartContractPage.tsx` → bất biến giữ
+  nguyên như commit `9d4020c` đã qua cổng PRE/POST.
+- Nguyên tắc: assertion bị xoá lúc compile ⇒ 0 rủi ro Principle I. Không sửa
+  hành vi auth/redux; lệ shape literal OTP legacy = follow-up cần spec riêng.
+
+## Follow-up (ngoài scope)
+- Dead code: helper trình bày mồ côi trong `QuanLySmartContractPage.tsx` (1-745) —
+  cố ý KHÔNG gỡ để không đụng vùng đã qua cổng S4/S5; dọn ở đợt sau.
+- Chuẩn hoá shape `thongTinXacThuc`/`searchCacTaiKhoan` (legacy auth/OTP) = cần
+  spec có security-review (không hack hành vi để im lỗi).
+- Lỗi tsc ở trang legacy KHÔNG thuộc active path (không nằm import-graph của 5
+  trang) — Principle III freeze, không đụng.
 - Trang công khai/marketing + đo SC-001 runtime — đợt sau / người dùng xác nhận.

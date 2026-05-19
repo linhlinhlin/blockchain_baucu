@@ -388,6 +388,9 @@ const maOTPSlice = createSlice({
         state.dangTai = false;
         // Lưu trữ thông tin nếu có
         if (action.payload?.data) {
+          // Đợt 10.1: shape literal lệ pre-existing so với VoterVerificationResponse
+          // (legacy OTP). Cast type-only (runtime-noop), KHÔNG đổi giá trị lưu;
+          // chuẩn hoá shape = follow-up cần spec riêng.
           state.thongTinXacThuc = {
             success: true,
             message: 'Tìm thấy thông tin cử tri',
@@ -395,7 +398,7 @@ const maOTPSlice = createSlice({
             hasWallet: action.payload.data.hasBlockchainWallet || false,
             accountId:
               action.payload.data.taiKhoanId > 0 ? action.payload.data.taiKhoanId : undefined,
-          };
+          } as unknown as typeof state.thongTinXacThuc;
         }
       })
       .addCase(kiemTraTrangThaiXacThuc.rejected, (state, action: PayloadAction<any>) => {

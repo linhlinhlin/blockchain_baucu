@@ -39,7 +39,7 @@ Xem `.tsc_baseline.txt` (repo root, dọn ở T043). Chỉ tính **regression do
 | SC-003 | 100% trang dùng component dùng chung, hết builder tự chế | ✅ 5/5 trang import `components/ui/clay`; 0 lời gọi panelClasses/inputClasses/actionButtonClasses/commandButtonClasses/... trong JSX. (Def mồ côi ở QuanLy 1-745 = dead code vô hại, KHÔNG sửa để bảo toàn cổng S4/S5) |
 | SC-004 | 5 luồng không hồi quy | Logic state/handler/effect bảo toàn verbatim mọi trang; S4/S5 byte-identical (T032). **Cần kiểm thử thao tác runtime** (Node 20/22 + ví Sepolia) theo quickstart §B |
 | SC-005 | a11y: keyboard/focus/≥44px/AA | ✅ component clay: focus-visible outline, aria, target ≥44px (Button lg/nav/drawer), Field htmlFor/aria-describedby/aria-invalid, drawer Esc+focus-trap+role=dialog |
-| SC-006 | quality gate | ✅ tsc: 0 lỗi MỚI do Đợt 10 (scoped tsc toàn bộ file Đợt 10 + import graph); chỉ còn 16 lỗi **pre-existing** (api import.meta.env, store WritableDraft, sourceId verbatim HEAD). 0 secret. 0 tăng legacy. package.json không đổi (0 lib UI mới). BE 0 đụng. |
+| SC-006 | quality gate | ✅ **Đợt 10.1**: `npm run typecheck:active` (`tsconfig.active.json`) = **0 lỗi** — toàn bộ 16 lỗi pre-existing active-path đã xử lý bằng thay đổi type-only/runtime-noop. 0 secret · 0 tăng legacy · package.json chỉ thêm script (0 lib mới) · BE 0 đụng · S4/S5 giữ nguyên. |
 | SC-007 | kịch bản tạo bầu cử | Wizard 4 bước, validation đẩy đúng bước/field; **kiểm thử thao tác runtime** theo quickstart §B1 |
 
 > Hạn chế môi trường: agent không chạy được trình duyệt → SC-001 (px cuộn) & SC-004/SC-007 (thao tác) cần người dùng chạy `npm run dev` (Node 20/22 LTS, vì Node 25 quá mới cho Vite 6) theo `quickstart.md`. Mọi verify tĩnh (tsc/diff/grep/cổng S4/S5) đã PASS.

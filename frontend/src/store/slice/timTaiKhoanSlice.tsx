@@ -33,7 +33,7 @@ const timTaiKhoanSlice = createSlice({
       })
       .addCase(fetchTimTaiKhoan.fulfilled, (state, action) => {
         state.status = 'succeeded';
-        state.foundUsers = action.payload;
+        state.foundUsers = action.payload as unknown as typeof state.foundUsers;
       })
       .addCase(fetchTimTaiKhoan.rejected, (state, action) => {
         state.status = 'failed';
