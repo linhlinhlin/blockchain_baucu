@@ -28,9 +28,7 @@ Frontend-only. Tái dùng lớp `clay` (Đợt 10). Tiền nhiệm: Đợt 10 + 
 - Hạn chế: SC-005 (a11y runtime), SC-006 (legal scrollHeight px) cần `npm run dev` (Node 20/22) — agent không chạy browser; thay đổi US4 chỉ là chuỗi hex (cấu trúc/scroll bất biến → SC-006 đạt theo phân tích tĩnh).
 
 ## Follow-up (ngoài scope, đã ghi)
-- ✅ Re-theme 2 trang legal dark→light: HOÀN TẤT ở Đợt 12 (`012-legal-light-retheme`).
-  #B0BEC5) sang light clay = một **redesign** riêng (không phải token-sync P3);
-  rủi ro tương phản cao, cần đợt riêng. Accent đã đồng bộ.
-- Dead-code helper mồ côi `QuanLySmartContractPage` (Đợt 10 follow-up) vẫn treo.
-- Chuẩn hoá shape legacy auth/OTP (Đợt 10.1 follow-up) cần spec security-review.
-- Nghiệm thu runtime mọi đợt: người dùng chạy `npm run dev` (Node 20/22 LTS).
+- ✅ Re-theme 2 trang legal dark→light: **HOÀN TẤT** ở Đợt 12 (`012-legal-light-retheme`) — token map cố định, framer-motion/ToC/scroll verbatim.
+- ✅ Dead-code mồ côi `QuanLySmartContractPage`: **ĐÃ GỠ** (commit `3f729ed`, S4/S5 gate re-verify PASS).
+- ⏳ Chuẩn hoá shape legacy auth/OTP (Đợt 10.1 follow-up): cần spec security-review riêng (Principle I — không hack để im lỗi).
+- ⏳ Nghiệm thu runtime mọi đợt: người dùng chạy `npm run dev` (Node 20/22 LTS) — agent không mở được browser/ví.
