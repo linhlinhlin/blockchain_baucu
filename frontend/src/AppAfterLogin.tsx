@@ -9,11 +9,14 @@ import { useSidebar } from './utils/useSidebar';
 import type { RootState } from './store/store';
 import { ThemeProvider } from './context/ThemeContext';
 import { Toaster } from 'react-hot-toast';
+import { resolveRouteMeta } from './routes/routeMeta';
+import { Breadcrumb } from './components/ui/clay/Breadcrumb';
 
 const AppAfterLogin: React.FC = () => {
   const { isSidebarOpen, toggleSidebar } = useSidebar();
   const [isMobile, setIsMobile] = useState(false);
   const location = useLocation();
+  const routeMeta = resolveRouteMeta(location.pathname);
   const accessToken = useSelector((state: RootState) => state.dangNhapTaiKhoan.accessToken);
 
   useEffect(() => {
@@ -46,6 +49,11 @@ const AppAfterLogin: React.FC = () => {
           className="flex-1 mt-[60px] md:mt-0 md:ml-[var(--sidebar-w)]"
         >
           <div className="min-h-screen bg-[var(--clay-bg)] p-4 sm:p-6 lg:p-8">
+            {routeMeta.breadcrumb.length > 1 && (
+              <div className="mb-4">
+                <Breadcrumb trail={routeMeta.breadcrumb} />
+              </div>
+            )}
             <Outlet />
           </div>
         </main>

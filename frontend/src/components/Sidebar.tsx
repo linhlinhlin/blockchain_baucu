@@ -1,11 +1,10 @@
 'use client';
 
 import type React from 'react';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { NavLink, useSearchParams } from 'react-router-dom';
 import {
   Bell,
-  Code2,
   FolderClosed,
   Home,
   Layers,
@@ -15,6 +14,7 @@ import {
   QrCode,
   Search,
   ShieldCheck,
+  UserCheck,
   UserCog,
   X,
 } from 'lucide-react';
@@ -36,6 +36,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isSidebarOpen, toggleSidebar }) => {
   const currentUser = useSelector((state: RootState) => state.dangNhapTaiKhoan.taiKhoan);
   const [isMobile, setIsMobile] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const drawerRef = useRef<HTMLElement | null>(null);
 
   useEffect(() => {
     const checkMobile = () => setIsMobile(window.innerWidth < 768);
@@ -43,6 +44,48 @@ const Sidebar: React.FC<SidebarProps> = ({ isSidebarOpen, toggleSidebar }) => {
     window.addEventListener('resize', checkMobile);
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
+
+  // Đợt 10 (spec 010) FR-002/FR-013 — drawer a11y: Esc đóng + focus-trap + khôi phục tiêu điểm.
+  useEffect(() => {
+    if (!isMobileMenuOpen) return;
+    const prevActive = document.activeElement as HTMLElement | null;
+    const getFocusable = () => {
+      const node = drawerRef.current;
+      if (!node) return [] as HTMLElement[];
+      return Array.from(
+        node.querySelectorAll<HTMLElement>(
+          'a[href],button:not([disabled]),input,select,textarea,[tabindex]:not([tabindex="-1"])',
+        ),
+      ).filter((el) => el.offsetParent !== null);
+    };
+    const focusTimer = window.setTimeout(() => getFocusable()[0]?.focus(), 0);
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        setIsMobileMenuOpen(false);
+        return;
+      }
+      if (e.key === 'Tab') {
+        const f = getFocusable();
+        if (!f.length) return;
+        const first = f[0];
+        const last = f[f.length - 1];
+        if (e.shiftKey && document.activeElement === first) {
+          e.preventDefault();
+          last.focus();
+        } else if (!e.shiftKey && document.activeElement === last) {
+          e.preventDefault();
+          first.focus();
+        }
+      }
+    };
+    document.addEventListener('keydown', onKey);
+    return () => {
+      window.clearTimeout(focusTimer);
+      document.removeEventListener('keydown', onKey);
+      prevActive?.focus?.();
+    };
+  }, [isMobileMenuOpen]);
 
   const handleSearch = (event: React.ChangeEvent<HTMLInputElement>) => {
     const search = event.target.value.trim();
@@ -55,21 +98,29 @@ const Sidebar: React.FC<SidebarProps> = ({ isSidebarOpen, toggleSidebar }) => {
   const isAdmin = roleNames.includes('Quan Tri Vien') || roleNames.includes('Quản Trị Viên');
 
   const groups = useMemo<NavGroup[]>(() => {
+    // Đợt 10 (spec 010) — IA gọn theo data-model §1; thuật ngữ thống nhất "bầu cử"
+    // đồng bộ routeMeta.ts. KHÔNG xoá route; mục non-active gom nhóm "Khác".
     const base: NavGroup[] = [
       {
-        title: 'Quản lý',
+        title: 'Bầu cử',
         items: [
           { to: '/app/quan-ly-smart-contract', label: 'Bảng điều khiển', icon: <Home className="h-[18px] w-[18px]" /> },
-          { to: '/app/tao-phien-bau-cu', label: 'Tạo ballot', icon: <Plus className="h-[18px] w-[18px]" /> },
-          { to: '/app/user-elections', label: 'Danh sách ballot', icon: <ListChecks className="h-[18px] w-[18px]" /> },
-          { to: '/app/upcoming-elections', label: 'Thông báo', icon: <Bell className="h-[18px] w-[18px]" /> },
+          { to: '/app/tao-phien-bau-cu', label: 'Tạo bầu cử', icon: <Plus className="h-[18px] w-[18px]" /> },
+          { to: '/app/user-elections', label: 'Danh sách bầu cử', icon: <ListChecks className="h-[18px] w-[18px]" /> },
         ],
       },
       {
-        title: 'Công cụ',
+        title: 'Cử tri',
         items: [
-          { to: '/app/quan-ly-file', label: 'Quản lý file', icon: <FolderClosed className="h-[18px] w-[18px]" /> },
+          { to: '/verify-voter', label: 'Xác minh cử tri', icon: <UserCheck className="h-[18px] w-[18px]" /> },
           { to: '/app/quet-ma-qr', label: 'Quét mã QR', icon: <QrCode className="h-[18px] w-[18px]" /> },
+        ],
+      },
+      {
+        title: 'Khác',
+        items: [
+          { to: '/app/upcoming-elections', label: 'Thông báo', icon: <Bell className="h-[18px] w-[18px]" /> },
+          { to: '/app/quan-ly-file', label: 'Quản lý file', icon: <FolderClosed className="h-[18px] w-[18px]" /> },
         ],
       },
     ];
@@ -79,7 +130,6 @@ const Sidebar: React.FC<SidebarProps> = ({ isSidebarOpen, toggleSidebar }) => {
         items: [
           { to: '/app/role-management', label: 'Quản lý vai trò', icon: <ShieldCheck className="h-[18px] w-[18px]" /> },
           { to: '/app/role-assignment', label: 'Phân quyền', icon: <UserCog className="h-[18px] w-[18px]" /> },
-          { to: '/app/quan-ly-smart-contract', label: 'Smart Contract', icon: <Code2 className="h-[18px] w-[18px]" /> },
         ],
       });
     }
@@ -90,7 +140,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isSidebarOpen, toggleSidebar }) => {
 
   const navItemClass = ({ isActive }: { isActive: boolean }) =>
     [
-      'flex items-center gap-3 rounded-[10px] px-3 py-2 text-sm transition-colors',
+      'flex min-h-[44px] items-center gap-3 rounded-[10px] px-3 py-2 text-sm transition-colors',
       isActive
         ? 'bg-[var(--clay-primary-light)] font-semibold text-[var(--clay-primary)]'
         : 'text-[var(--clay-muted)] hover:bg-[var(--clay-surface-soft)] hover:text-[var(--clay-text)]',
@@ -173,8 +223,9 @@ const Sidebar: React.FC<SidebarProps> = ({ isSidebarOpen, toggleSidebar }) => {
         <button
           type="button"
           onClick={() => setIsMobileMenuOpen((v) => !v)}
-          className="inline-flex h-10 w-10 items-center justify-center rounded-[10px] border border-[var(--clay-border)] text-[var(--clay-text)]"
+          className="inline-flex h-11 w-11 items-center justify-center rounded-[10px] border border-[var(--clay-border)] text-[var(--clay-text)]"
           aria-expanded={isMobileMenuOpen}
+          aria-controls="mobile-nav-drawer"
           aria-label={isMobileMenuOpen ? 'Đóng menu' : 'Mở menu'}
         >
           {isMobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
@@ -192,6 +243,11 @@ const Sidebar: React.FC<SidebarProps> = ({ isSidebarOpen, toggleSidebar }) => {
             onClick={() => setIsMobileMenuOpen(false)}
           >
             <motion.aside
+              ref={drawerRef}
+              id="mobile-nav-drawer"
+              role="dialog"
+              aria-modal="true"
+              aria-label="Điều hướng chính"
               initial={{ x: -24, opacity: 0 }}
               animate={{ x: 0, opacity: 1 }}
               exit={{ x: -24, opacity: 0 }}
