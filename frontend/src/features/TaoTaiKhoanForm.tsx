@@ -800,7 +800,7 @@ export function NewAccountForm({ onSave }: Props) {
             <span className="text-sm">
               Tôi đồng ý với{' '}
               <a
-                href="/dieu-khoan-su-dung"
+                href="/terms"
                 className="text-blue-400 hover:text-blue-300 transition-colors duration-200"
                 target="_blank"
                 rel="noreferrer"
@@ -809,7 +809,7 @@ export function NewAccountForm({ onSave }: Props) {
               </a>{' '}
               và{' '}
               <a
-                href="/chinh-sach-bao-mat"
+                href="/privacy"
                 className="text-blue-400 hover:text-blue-300 transition-colors duration-200"
                 target="_blank"
                 rel="noreferrer"

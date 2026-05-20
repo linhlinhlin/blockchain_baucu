@@ -1367,7 +1367,7 @@ const PhienBauCuBlockchainDeploymentPage: React.FC<{
   const handleGoBack = useCallback(() => {
     if (cuocBauCu && phienBauCuId) {
       navigate(
-        `/app/user-elections/elections/${cuocBauCu.id}/election-management/${phienBauCuId}/phien-bau-cu`,
+        `/app/dashboard`,
       );
     } else {
       navigate(-1);

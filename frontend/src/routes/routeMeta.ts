@@ -25,22 +25,22 @@ const ROUTE_META: Record<string, RouteMeta> = {
     section: 'Bầu cử',
     breadcrumb: [{ label: 'Trang chủ' }],
   },
-  '/app/quan-ly-smart-contract': {
+  '/app/dashboard': {
     title: 'Bảng điều khiển',
     section: 'Bầu cử',
     breadcrumb: [HOME, { label: 'Bầu cử' }, { label: 'Bảng điều khiển' }],
   },
-  '/app/tao-phien-bau-cu': {
+  '/app/elections/new': {
     title: 'Tạo bầu cử',
     section: 'Bầu cử',
     breadcrumb: [HOME, { label: 'Bầu cử' }, { label: 'Tạo bầu cử' }],
   },
-  '/app/user-elections': {
+  '/app/elections': {
     title: 'Danh sách bầu cử',
     section: 'Bầu cử',
     breadcrumb: [HOME, { label: 'Bầu cử' }, { label: 'Danh sách bầu cử' }],
   },
-  '/app/quet-ma-qr': {
+  '/app/scan': {
     title: 'Quét mã QR',
     section: 'Cử tri',
     breadcrumb: [HOME, { label: 'Cử tri' }, { label: 'Quét mã QR' }],

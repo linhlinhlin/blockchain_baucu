@@ -92,7 +92,7 @@ const ChinhSuaPhienBauCuPage: React.FC<ChinhSuaPhienBauCuPageProps> = ({
   const handleGoBack = useCallback(() => {
     if (cuocBauCu && idPhien) {
       navigate(
-        `/app/user-elections/elections/${cuocBauCu.id}/election-management/${idPhien}/phien-bau-cu`,
+        `/app/dashboard`,
       );
     } else {
       navigate(-1);
@@ -487,7 +487,7 @@ const ChinhSuaPhienBauCuPage: React.FC<ChinhSuaPhienBauCuPageProps> = ({
                       <Button
                         onClick={() =>
                           navigate(
-                            `/app/user-elections/elections/${cuocBauCu?.id}/election-management`,
+                            `/app/dashboard`,
                           )
                         }
                         className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white shadow-lg hover:shadow-blue-500/20 transition-all duration-300 hover:scale-105 font-medium"

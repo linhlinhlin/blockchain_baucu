@@ -43,7 +43,7 @@ const TaoPhienBauCuPage: React.FC = () => {
 
   const handleConfirm = () => {
     if (savedElectionId) {
-      navigate(`/app/user-elections/elections/${savedElectionId}/election-management`);
+      navigate(`/app/dashboard`);
     }
   };
 

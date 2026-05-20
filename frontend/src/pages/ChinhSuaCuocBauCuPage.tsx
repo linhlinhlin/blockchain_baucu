@@ -71,7 +71,7 @@ const ChinhSuaCuocBauCuPage: React.FC = () => {
 
   // Handle go back
   const handleGoBack = () => {
-    navigate(`/app/user-elections/elections/${id}/election-management`);
+    navigate(`/app/dashboard`);
   };
 
   // Handle form submit
@@ -105,7 +105,7 @@ const ChinhSuaCuocBauCuPage: React.FC = () => {
       // Sau 3 giây sẽ chuyển hướng
       setTimeout(() => {
         setShowSuccessModal(false);
-        navigate(`/app/user-elections/elections/${id}/election-management`);
+        navigate(`/app/dashboard`);
       }, 3000);
     } catch (error: any) {
       const errorMsg =
@@ -422,7 +422,7 @@ const ChinhSuaCuocBauCuPage: React.FC = () => {
 
                     <div className="mt-4 pt-3 border-t border-gray-300 dark:border-gray-700/50">
                       <Button
-                        onClick={() => navigate('/app/tao-phien-bau-cu')}
+                        onClick={() => navigate('/app/elections/new')}
                         className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white shadow-lg hover:shadow-blue-500/20 transition-all duration-300 hover:scale-105 font-medium"
                       >
                         <FileEdit className="mr-2 h-4 w-4" />
@@ -483,7 +483,7 @@ const ChinhSuaCuocBauCuPage: React.FC = () => {
                   <Button
                     onClick={() => {
                       setShowSuccessModal(false);
-                      navigate(`/app/user-elections/elections/${id}/election-management`);
+                      navigate(`/app/dashboard`);
                     }}
                     className="bg-white hover:bg-gray-100 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-800 dark:text-gray-200 border-2 border-gray-300 dark:border-gray-600 font-medium"
                   >

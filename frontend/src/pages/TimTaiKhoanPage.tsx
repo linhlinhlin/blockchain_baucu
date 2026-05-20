@@ -22,7 +22,7 @@ const TimTaiKhoanPage: React.FC = () => {
 
   const handleSelectAccount = (user: any) => {
     const randomCode = Math.random().toString(36).substring(2, 15);
-    navigate(`/tim-tai-khoan/${user.tenDangNhap}/${randomCode}/tuy-chon`, {
+    navigate(`/forgot-password/account/${user.tenDangNhap}/${randomCode}/options`, {
       state: { user },
     });
   };

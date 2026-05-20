@@ -125,7 +125,7 @@ const BlockchainDeploymentPage = () => {
 
   // Handle back button
   const handleGoBack = () => {
-    navigate(`/app/user-elections/elections/${cuocBauCuId}/election-management`);
+    navigate(`/app/dashboard`);
   };
 
   // Format date using useMemo to avoid recalculations

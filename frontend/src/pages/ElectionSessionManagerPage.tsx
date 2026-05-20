@@ -267,7 +267,7 @@ const ElectionSessionManagerPage: React.FC = () => {
 
   // Go back to election list - Memoized with useCallback
   const goBack = useCallback(() => {
-    navigate('/app/user-elections');
+    navigate('/app/elections');
   }, [navigate]);
 
   // Handle election selection - Memoized with useCallback

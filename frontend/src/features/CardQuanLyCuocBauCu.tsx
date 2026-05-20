@@ -135,7 +135,7 @@ const CardQuanLyCuocBauCu: React.FC<ElectionCardProps> = ({
   };
 
   const handleManageClick = () => {
-    navigate('/app/user-elections');
+    navigate('/app/elections');
   };
 
   return (

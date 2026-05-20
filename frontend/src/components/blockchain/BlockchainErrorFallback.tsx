@@ -78,7 +78,7 @@ const BlockchainErrorFallback: React.FC<BlockchainErrorFallbackProps> = ({
           <Button
             variant="outline"
             onClick={() => {
-              window.location.href = '/app/user-elections';
+              window.location.href = '/app/elections';
             }}
           >
             <ArrowLeft className="h-4 w-4 mr-2" />

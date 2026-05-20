@@ -104,23 +104,23 @@ const Sidebar: React.FC<SidebarProps> = ({ isSidebarOpen, toggleSidebar }) => {
       {
         title: 'Bầu cử',
         items: [
-          { to: '/app/quan-ly-smart-contract', label: 'Bảng điều khiển', icon: <Home className="h-[18px] w-[18px]" /> },
-          { to: '/app/tao-phien-bau-cu', label: 'Tạo bầu cử', icon: <Plus className="h-[18px] w-[18px]" /> },
-          { to: '/app/user-elections', label: 'Danh sách bầu cử', icon: <ListChecks className="h-[18px] w-[18px]" /> },
+          { to: '/app/dashboard', label: 'Bảng điều khiển', icon: <Home className="h-[18px] w-[18px]" /> },
+          { to: '/app/elections/new', label: 'Tạo bầu cử', icon: <Plus className="h-[18px] w-[18px]" /> },
+          { to: '/app/elections', label: 'Danh sách bầu cử', icon: <ListChecks className="h-[18px] w-[18px]" /> },
         ],
       },
       {
         title: 'Cử tri',
         items: [
           { to: '/verify-voter', label: 'Xác minh cử tri', icon: <UserCheck className="h-[18px] w-[18px]" /> },
-          { to: '/app/quet-ma-qr', label: 'Quét mã QR', icon: <QrCode className="h-[18px] w-[18px]" /> },
+          { to: '/app/scan', label: 'Quét mã QR', icon: <QrCode className="h-[18px] w-[18px]" /> },
         ],
       },
       {
         title: 'Khác',
         items: [
-          { to: '/app/upcoming-elections', label: 'Thông báo', icon: <Bell className="h-[18px] w-[18px]" /> },
-          { to: '/app/quan-ly-file', label: 'Quản lý file', icon: <FolderClosed className="h-[18px] w-[18px]" /> },
+          { to: '/app/notifications', label: 'Thông báo', icon: <Bell className="h-[18px] w-[18px]" /> },
+          { to: '/app/files', label: 'Quản lý file', icon: <FolderClosed className="h-[18px] w-[18px]" /> },
         ],
       },
     ];
@@ -128,8 +128,8 @@ const Sidebar: React.FC<SidebarProps> = ({ isSidebarOpen, toggleSidebar }) => {
       base.push({
         title: 'Quản trị',
         items: [
-          { to: '/app/role-management', label: 'Quản lý vai trò', icon: <ShieldCheck className="h-[18px] w-[18px]" /> },
-          { to: '/app/role-assignment', label: 'Phân quyền', icon: <UserCog className="h-[18px] w-[18px]" /> },
+          { to: '/app/admin/roles', label: 'Quản lý vai trò', icon: <ShieldCheck className="h-[18px] w-[18px]" /> },
+          { to: '/app/admin/permissions', label: 'Phân quyền', icon: <UserCog className="h-[18px] w-[18px]" /> },
         ],
       });
     }
@@ -214,7 +214,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isSidebarOpen, toggleSidebar }) => {
     <>
       {/* Mobile top bar */}
       <div className="fixed inset-x-0 top-0 z-50 flex h-[60px] items-center justify-between border-b border-[var(--clay-border)] bg-[var(--clay-surface)] px-4 md:hidden">
-        <NavLink to="/app/quan-ly-smart-contract" className="flex items-center gap-2">
+        <NavLink to="/app/dashboard" className="flex items-center gap-2">
           <div className="flex h-8 w-8 items-center justify-center rounded-[10px] bg-[var(--clay-text)] text-white">
             <Layers className="h-4 w-4" aria-hidden="true" />
           </div>

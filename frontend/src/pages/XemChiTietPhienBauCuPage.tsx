@@ -1017,7 +1017,7 @@ const XemChiTietPhienBauCu: React.FC<XemChiTietPhienBauCuProps> = ({
                             className="w-full bg-white text-blue-700 hover:bg-gray-100"
                             onClick={() =>
                               navigate(
-                                `/app/user-elections/elections/${cuocBauCu?.id}/session/${idPhien}/results`,
+                                `/app/dashboard`,
                               )
                             }
                           >

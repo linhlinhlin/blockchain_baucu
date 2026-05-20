@@ -43,7 +43,7 @@ export function InvitationModal({ isOpen, onClose, phienBauCuId }: InvitationMod
       const token = new URL(result).searchParams.get('invite');
       if (token) {
         setInviteLink(
-          `https://localhost:3000/app/user-elections/elections/${phienBauCuId}/election-management/voter-management?invite=${token}`,
+          `https://localhost:3000/app/elections/new?invite=${token}`,
         );
       } else {
         throw new Error('Invalid invite link format');

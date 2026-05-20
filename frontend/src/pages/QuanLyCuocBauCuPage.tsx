@@ -155,7 +155,7 @@ const QuanLyCuocBauCuPage: React.FC = () => {
   // Navigate to blockchain deployment page
   const handleBlockchainDeployment = () => {
     if (cuocBauCuId) {
-      navigate(`/app/user-elections/elections/${cuocBauCuId}/blockchain-deployment`);
+      navigate(`/app/dashboard`);
     }
   };
 
@@ -529,7 +529,7 @@ const QuanLyCuocBauCuPage: React.FC = () => {
                   className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg h-auto py-3"
                   onClick={() => {
                     if (cuocBauCuId) {
-                      navigate(`/app/user-elections/elections/${cuocBauCuId}/rules`);
+                      navigate(`/app/elections/${cuocBauCuId}/rules`);
                     }
                   }}
                 >
@@ -629,7 +629,7 @@ const QuanLyCuocBauCuPage: React.FC = () => {
               <Button
                 variant="outline"
                 className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg"
-                onClick={() => navigate(`/app/user-elections/elections/${cuocBauCuId}/edit`)}
+                onClick={() => navigate(`/app/elections/new`)}
               >
                 <Edit className="mr-2 h-4 w-4" />
                 Chỉnh sửa

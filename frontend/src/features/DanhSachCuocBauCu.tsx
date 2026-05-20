@@ -149,7 +149,7 @@ const DanhSachCuocBauCu: React.FC<ElectionListItemProps> = ({
   };
 
   const handleManageClick = () => {
-    navigate(`/app/user-elections/elections/${election.id}/election-management`);
+    navigate(`/app/dashboard`);
   };
 
   return (

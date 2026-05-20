@@ -539,7 +539,7 @@ export default function VoterVerificationPage() {
                   Đăng nhập tài khoản thường
                 </Link>
                 <Link
-                  to="/app/user-elections"
+                  to="/app/elections"
                   className="inline-flex min-h-[44px] items-center justify-center rounded-[12px] border border-[var(--clay-border)] px-4 text-sm text-[var(--clay-text)] hover:bg-[var(--clay-surface-soft)]"
                 >
                   Mở danh sách bầu cử

@@ -20,7 +20,7 @@ const GuiOTPPage: React.FC = () => {
 
   useEffect(() => {
     if (xacMinhOtpThanhCong) {
-      navigate(`/tim-tai-khoan/${username}/${randomCode}/tuy-chon/gui-otp/dat-lai-mat-khau`);
+      navigate(`/forgot-password/account/${username}/${randomCode}/reset`);
     }
   }, [xacMinhOtpThanhCong, navigate, username, randomCode]);
 
@@ -31,7 +31,7 @@ const GuiOTPPage: React.FC = () => {
   }, [dispatch]);
 
   if (!user) {
-    navigate('/tim-tai-khoan');
+    navigate('/forgot-password');
     return null;
   }
 
@@ -54,7 +54,7 @@ const GuiOTPPage: React.FC = () => {
 
   const handleTryAnotherMethod = () => {
     dispatch(resetTrangThai());
-    navigate(`/tim-tai-khoan/${username}/${randomCode}/tuy-chon`, { state: { user } });
+    navigate(`/forgot-password/account/${username}/${randomCode}/options`, { state: { user } });
   };
 
   const maskPhoneNumber = (phone: string | undefined) => {

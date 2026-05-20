@@ -1,0 +1,18 @@
+== build ==
+build_exit=0
+✓ built in 39.70s
+== rebuild frontend container ==
+dc_exit=0
+ Container holihu-frontend Recreated 
+ Container holihu-frontend Starting 
+ Container holihu-frontend Started 
+== wait :3000 ==
+fe_up=4x5s
+fe_3000=200
+== Suspense trong AppAfterLogin served? ==
+RouteFallback 
+== Suspense trong AppBeforeLogin served? ==
+RouteFallback 
+holihu-frontend | Up About a minute | created=2026-05-20 10:49:46 +0700 +07
+FIX2_DONE
+WRAP exit=0

@@ -35,7 +35,7 @@ export default function DatLaiMatKhauPage() {
   useEffect(() => {
     if (!user || !user.id) {
       alert('Không tìm thấy thông tin người dùng. Vui lòng thử lại.');
-      navigate('/tim-tai-khoan');
+      navigate('/forgot-password');
     }
   }, [user, navigate]);
 

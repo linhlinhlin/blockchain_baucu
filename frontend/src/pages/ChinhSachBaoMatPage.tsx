@@ -298,7 +298,7 @@ const ChinhSachBaoMat = () => {
                 Nếu bạn có thắc mắc về chính sách bảo mật, hãy liên hệ với chúng tôi.
               </p>
               <Link
-                to="/lien-he"
+                to="/contact"
                 className="text-sm px-4 py-2 bg-gradient-to-r from-[var(--clay-primary)] to-[var(--clay-primary-dark)] text-white rounded-full inline-flex items-center hover:shadow-lg transition-all duration-300"
               >
                 <Mail className="w-3 h-3 mr-2" />
@@ -1055,7 +1055,7 @@ const ChinhSachBaoMat = () => {
                       <Globe className="w-5 h-5 mr-2 text-[var(--clay-primary)]" />
                       <span>
                         Mẫu yêu cầu trực tuyến:{' '}
-                        <Link to="/lien-he" className={linkColor}>
+                        <Link to="/contact" className={linkColor}>
                           Liên hệ
                         </Link>
                       </span>
@@ -1365,7 +1365,7 @@ const ChinhSachBaoMat = () => {
 
                 <div className="mt-6 flex flex-col sm:flex-row gap-4">
                   <Link
-                    to="/lien-he"
+                    to="/contact"
                     className="px-6 py-3 bg-gradient-to-r from-[var(--clay-primary)] to-[var(--clay-primary-dark)] text-white rounded-full font-medium hover:shadow-lg hover:shadow-[var(--clay-primary)]/20 transition-all duration-300 transform hover:scale-105 flex items-center justify-center"
                   >
                     <Mail className="w-4 h-4 mr-2" />
@@ -1415,10 +1415,10 @@ const ChinhSachBaoMat = () => {
             <Link to="/" className={linkColor}>
               Trang Chủ
             </Link>
-            <Link to="/dieu-khoan-su-dung" className={linkColor}>
+            <Link to="/terms" className={linkColor}>
               Điều Khoản Sử Dụng
             </Link>
-            <Link to="/lien-he" className={linkColor}>
+            <Link to="/contact" className={linkColor}>
               Liên Hệ
             </Link>
           </div>

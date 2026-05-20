@@ -162,7 +162,7 @@ export default function CuocBauCuCuaNguoiDungPage() {
             disabled={!firstPosition}
             onClick={() =>
               navigate(
-                `/app/quan-ly-smart-contract?group=${encodeURIComponent(r.groupKey)}&election=${firstPosition.address}`,
+                `/app/dashboard?group=${encodeURIComponent(r.groupKey)}&election=${firstPosition.address}`,
               )
             }
             iconRight={<ArrowRight className="h-4 w-4" aria-hidden="true" />}
@@ -205,7 +205,7 @@ export default function CuocBauCuCuaNguoiDungPage() {
             {currentAccount ? 'Đổi / kết nối lại MetaMask' : 'Kết nối MetaMask'}
           </Button>
           <Link
-            to="/app/tao-phien-bau-cu"
+            to="/app/elections/new"
             className="inline-flex min-h-[44px] items-center justify-center gap-2 rounded-[12px] bg-[var(--clay-primary)] px-5 text-[15px] text-white hover:bg-[var(--clay-primary-focus)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--clay-primary-focus)]"
           >
             <Plus className="h-4 w-4" aria-hidden="true" />
@@ -274,7 +274,7 @@ export default function CuocBauCuCuaNguoiDungPage() {
           description='Hãy tạo một ballot mới hoặc tắt bộ lọc "chỉ của tôi".'
           action={
             <Link
-              to="/app/tao-phien-bau-cu"
+              to="/app/elections/new"
               className="inline-flex min-h-[44px] items-center justify-center gap-2 rounded-[12px] bg-[var(--clay-primary)] px-5 text-[15px] text-white hover:bg-[var(--clay-primary-focus)]"
             >
               <Plus className="h-4 w-4" aria-hidden="true" />

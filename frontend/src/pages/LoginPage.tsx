@@ -512,7 +512,7 @@ export default function LoginPage() {
                       />
                       Ghi nhớ tên đăng nhập
                     </label>
-                    <Link to="/tim-tai-khoan" className="clay-link text-sm">
+                    <Link to="/forgot-password" className="clay-link text-sm">
                       Quên mật khẩu?
                     </Link>
                   </div>

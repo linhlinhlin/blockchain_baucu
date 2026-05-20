@@ -393,10 +393,10 @@ export default function TaoCuocBauCuPage() {
         setMessage(`Tạo nhóm bầu cử thành công: ${response.created.groupKey}`);
         if (firstElectionAddress) {
           navigate(
-            `/app/quan-ly-smart-contract?group=${response.created.groupKey}&election=${firstElectionAddress}`,
+            `/app/dashboard?group=${response.created.groupKey}&election=${firstElectionAddress}`,
           );
         } else {
-          navigate('/app/quan-ly-smart-contract');
+          navigate('/app/dashboard');
         }
       } else {
         const payload: ElectionV1CreateRosterDraftRequest = {
@@ -419,7 +419,7 @@ export default function TaoCuocBauCuPage() {
         setMessage(
           `Đã tạo bản nháp roster xác thực ${response.draft.groupKey}. Gửi QR chung cho cử tri, sau đó deploy ballot khi đã bind ví.`,
         );
-        navigate(`/app/tao-phien-bau-cu?draft=${encodeURIComponent(response.draft.groupKey)}`, {
+        navigate(`/app/elections/new?draft=${encodeURIComponent(response.draft.groupKey)}`, {
           replace: true,
         });
       }
@@ -454,7 +454,7 @@ export default function TaoCuocBauCuPage() {
       const firstElectionAddress = response.created.created[0]?.address;
       if (firstElectionAddress) {
         navigate(
-          `/app/quan-ly-smart-contract?group=${response.created.groupKey}&election=${firstElectionAddress}`,
+          `/app/dashboard?group=${response.created.groupKey}&election=${firstElectionAddress}`,
         );
       }
     } catch (error) {
@@ -559,7 +559,7 @@ export default function TaoCuocBauCuPage() {
           {currentAccount ? 'Đổi / kết nối lại MetaMask' : 'Kết nối MetaMask'}
         </Button>
         <Link
-          to="/app/quan-ly-smart-contract"
+          to="/app/dashboard"
           className="inline-flex min-h-[44px] items-center justify-center gap-2 rounded-[12px] border border-[var(--clay-primary)] px-5 text-[15px] text-[var(--clay-primary)] hover:bg-[var(--clay-primary-light)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--clay-primary-focus)]"
         >
           <ArrowRight className="h-4 w-4" aria-hidden="true" />

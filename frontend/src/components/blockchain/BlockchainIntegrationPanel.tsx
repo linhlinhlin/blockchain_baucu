@@ -245,7 +245,7 @@ const BlockchainIntegrationPanel: React.FC<BlockchainIntegrationPanelProps> = ({
 
   // Navigate to blockchain deployment page
   const handleBlockchainDeployment = () => {
-    navigate(`/app/user-elections/elections/${cuocBauCuId}/blockchain-deployment`);
+    navigate(`/app/dashboard`);
   };
 
   // Sync data between SQL and blockchain

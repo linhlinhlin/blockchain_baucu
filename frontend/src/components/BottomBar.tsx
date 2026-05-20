@@ -23,14 +23,14 @@ const BottomBar: React.FC<BottomBarProps> = ({ cuocBauCuId, electionName }) => {
         </div>
         <nav aria-label="Điều hướng cuộc bầu cử" className="flex-1 ml-48 sm:ml-56">
           <ul className="flex justify-around h-full">
-            <BottomBarItem icon={BarChart} label="Tổng Quan" to="/app/user-elections" />
+            <BottomBarItem icon={BarChart} label="Tổng Quan" to="/app/elections" />
             <BottomBarItem
               icon={FileText}
               label="Thể Lệ"
-              to={`/app/user-elections/elections/${cuocBauCuId}/rules`}
+              to={`/app/elections/${cuocBauCuId}/rules`}
             />
-            <BottomBarItem icon={Cpu} label="Blockchain" to="/app/quan-ly-smart-contract" />
-            <BottomBarItem icon={Settings} label="Tạo phiên" to="/app/tao-phien-bau-cu" />
+            <BottomBarItem icon={Cpu} label="Blockchain" to="/app/dashboard" />
+            <BottomBarItem icon={Settings} label="Tạo phiên" to="/app/elections/new" />
           </ul>
         </nav>
       </div>

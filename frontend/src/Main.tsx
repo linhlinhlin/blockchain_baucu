@@ -157,7 +157,7 @@ export default function Main() {
               </div>
               <button
                 type="button"
-                onClick={() => navigate('/app/quan-ly-smart-contract')}
+                onClick={() => navigate('/app/dashboard')}
                 className="rounded-lg border border-blue-500/30 px-4 py-2 text-sm text-blue-200 transition hover:bg-blue-500/10"
               >
                 Mở Console Sepolia
@@ -306,7 +306,7 @@ export default function Main() {
 
                 <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
                   <NavLink
-                    to="/app/quan-ly-smart-contract"
+                    to="/app/dashboard"
                     className="group rounded-xl border border-[#334155]/50 bg-gradient-to-br from-[#1E293B]/50 to-[#1E293B]/30 p-6 transition hover:border-blue-500/30 hover:shadow-[0_0_20px_rgba(59,130,246,0.1)]"
                   >
                     <div className="flex items-start">
@@ -348,7 +348,7 @@ export default function Main() {
                   </NavLink>
 
                   <NavLink
-                    to="/app/user-elections"
+                    to="/app/elections"
                     className="group rounded-xl border border-[#334155]/50 bg-gradient-to-br from-[#1E293B]/50 to-[#1E293B]/30 p-6 transition hover:border-blue-500/30 hover:shadow-[0_0_20px_rgba(59,130,246,0.1)]"
                   >
                     <div className="flex items-start">
@@ -369,7 +369,7 @@ export default function Main() {
                   </NavLink>
 
                   <NavLink
-                    to="/app/account-info"
+                    to="/app/account"
                     className="group rounded-xl border border-[#334155]/50 bg-gradient-to-br from-[#1E293B]/50 to-[#1E293B]/30 p-6 transition hover:border-blue-500/30 hover:shadow-[0_0_20px_rgba(59,130,246,0.1)]"
                   >
                     <div className="flex items-start">

@@ -1,6 +1,24 @@
 import type React from 'react';
-import { createBrowserRouter, Navigate, RouterProvider } from 'react-router-dom';
+import { createBrowserRouter, Navigate, RouterProvider, useParams } from 'react-router-dom';
 import { lazy, Suspense } from 'react';
+
+// Đợt 14: redirect giữ params cho luồng forgot-password (legacy VN → EN canonical).
+const ForgotOptionsRedirect = () => {
+  const { username, randomCode } = useParams<{ username: string; randomCode: string }>();
+  return <Navigate to={`/forgot-password/account/${username}/${randomCode}/options`} replace />;
+};
+const ForgotSendOtpRedirect = () => {
+  const { username, randomCode } = useParams<{ username: string; randomCode: string }>();
+  return <Navigate to={`/forgot-password/account/${username}/${randomCode}/send-otp`} replace />;
+};
+const ForgotResetRedirect = () => {
+  const { username, randomCode } = useParams<{ username: string; randomCode: string }>();
+  return <Navigate to={`/forgot-password/account/${username}/${randomCode}/reset`} replace />;
+};
+const RulesRedirect = () => {
+  const { id } = useParams<{ id: string }>();
+  return <Navigate to={`/app/elections/${id}/rules`} replace />;
+};
 import { GoogleReCaptchaProvider } from 'react-google-recaptcha-v3';
 
 // Đợt 13 (hiệu năng): route-level code-splitting. Shell/ErrorPage/HOC/provider
@@ -136,26 +154,42 @@ const router = createBrowserRouter([
         path: 'elections',
         element: <CacPhienBauCuPage />,
       },
+      // === Forgot password flow (canonical EN, Đợt 14) ===
       {
-        path: 'tim-tai-khoan',
+        path: 'forgot-password',
         element: <FindAccountPage />,
       },
       {
-        path: 'tim-tai-khoan/:username/:randomCode/tuy-chon',
+        path: 'forgot-password/account/:username/:randomCode/options',
         element: <AccountOptionsPage />,
       },
       {
-        path: 'tim-tai-khoan/:username/:randomCode/tuy-chon/gui-otp',
+        path: 'forgot-password/account/:username/:randomCode/send-otp',
         element: <GuiOTPPage />,
       },
       {
-        path: 'tim-tai-khoan/:username/:randomCode/tuy-chon/gui-otp/dat-lai-mat-khau',
+        path: 'forgot-password/account/:username/:randomCode/reset',
         element: <DatLaiMatKhauPage />,
       },
+      // Legacy VN redirect (backward compat)
+      { path: 'tim-tai-khoan', element: <Navigate to="/forgot-password" replace /> },
       {
-        path: 'chua-xac-thuc',
+        path: 'tim-tai-khoan/:username/:randomCode/tuy-chon',
+        element: <ForgotOptionsRedirect />,
+      },
+      {
+        path: 'tim-tai-khoan/:username/:randomCode/tuy-chon/gui-otp',
+        element: <ForgotSendOtpRedirect />,
+      },
+      {
+        path: 'tim-tai-khoan/:username/:randomCode/tuy-chon/gui-otp/dat-lai-mat-khau',
+        element: <ForgotResetRedirect />,
+      },
+      {
+        path: 'unauthorized',
         element: <UnauthorizedPage />,
       },
+      { path: 'chua-xac-thuc', element: <Navigate to="/unauthorized" replace /> },
       {
         path: 'register',
         element: (
@@ -194,7 +228,7 @@ const router = createBrowserRouter([
     ),
   },
   {
-    path: 'chinh-sach-bao-mat',
+    path: 'privacy',
     element: (
       <AppWithProviders>
         <ChinhSachBaoMat />
@@ -206,8 +240,9 @@ const router = createBrowserRouter([
       </AppWithProviders>
     ),
   },
+  { path: 'chinh-sach-bao-mat', element: <Navigate to="/privacy" replace /> },
   {
-    path: 'dieu-khoan-su-dung',
+    path: 'terms',
     element: (
       <AppWithProviders>
         <DieuKhoanSuDung />
@@ -219,6 +254,7 @@ const router = createBrowserRouter([
       </AppWithProviders>
     ),
   },
+  { path: 'dieu-khoan-su-dung', element: <Navigate to="/terms" replace /> },
   {
     path: 'faq',
     element: (
@@ -233,7 +269,7 @@ const router = createBrowserRouter([
     ),
   },
   {
-    path: 'lien-he',
+    path: 'contact',
     element: (
       <AppWithProviders>
         <LienHePage />
@@ -245,6 +281,7 @@ const router = createBrowserRouter([
       </AppWithProviders>
     ),
   },
+  { path: 'lien-he', element: <Navigate to="/contact" replace /> },
   {
     path: 'blockchain-setup',
     element: (
@@ -272,7 +309,7 @@ const router = createBrowserRouter([
     ),
   },
   {
-    path: 'thank-you',
+    path: 'thanks',
     element: (
       <AppWithProviders>
         <ThankYouPage />
@@ -284,11 +321,12 @@ const router = createBrowserRouter([
       </AppWithProviders>
     ),
   },
+  { path: 'thank-you', element: <Navigate to="/thanks" replace /> },
   {
     path: '/invite',
     element: (
       <AppWithProviders>
-        <Navigate to="/app/quet-ma-qr" replace />
+        <Navigate to="/app/scan" replace />
       </AppWithProviders>
     ),
   },
@@ -296,7 +334,7 @@ const router = createBrowserRouter([
     path: 'bat-dau-cuoc-bau-cu',
     element: (
       <AppWithProviders>
-        <Navigate to="/app/tao-phien-bau-cu" replace />
+        <Navigate to="/app/elections/new" replace />
       </AppWithProviders>
     ),
   },
@@ -304,7 +342,7 @@ const router = createBrowserRouter([
     path: 'cap-phieu-bau',
     element: (
       <AppWithProviders>
-        <Navigate to="/app/quet-ma-qr" replace />
+        <Navigate to="/app/scan" replace />
       </AppWithProviders>
     ),
   },
@@ -327,22 +365,21 @@ const router = createBrowserRouter([
         index: true,
         element: <HomePage />,
       },
-      {
-        path: 'elections',
-        element: <Navigate to="/app/user-elections" replace />,
-      },
+      // Đợt 14: 'elections' canonical = UserElectionsPage (định nghĩa bên dưới).
+      // 'elections/new' canonical = TaoCuocBauCuPage. Sub-path redirect cũ:
       {
         path: 'elections/:id',
-        element: <Navigate to="/app/user-elections" replace />,
+        element: <Navigate to="/app/elections" replace />,
       },
       {
         path: 'elections/:id/session/:idPhien',
-        element: <Navigate to="/app/quan-ly-smart-contract" replace />,
+        element: <Navigate to="/app/dashboard" replace />,
       },
       {
-        path: 'tao-phien-bau-cu',
+        path: 'elections/new',
         element: <TaoPhienBauCuPage />,
       },
+      { path: 'tao-phien-bau-cu', element: <Navigate to="/app/elections/new" replace /> },
       {
         path: 'elections/:id/elections-tienhanh',
         element: (
@@ -355,13 +392,15 @@ const router = createBrowserRouter([
         ),
       },
       {
-        path: 'account-info',
+        path: 'account',
         element: <AccountInfoPage />,
       },
+      { path: 'account-info', element: <Navigate to="/app/account" replace /> },
       {
-        path: 'upcoming-elections',
+        path: 'notifications',
         element: <UpcomingElectionsPage />,
       },
+      { path: 'upcoming-elections', element: <Navigate to="/app/notifications" replace /> },
       {
         path: 'admin',
         element: (
@@ -373,94 +412,100 @@ const router = createBrowserRouter([
         ),
       },
       {
-        path: 'role-management',
+        path: 'admin/roles',
         element: (
           <ProtectedRoute requiredPermissions={['Quan Tri Vien', 'Quản Lý Vai Trò']}>
             <RoleManagementPage />
           </ProtectedRoute>
         ),
       },
+      { path: 'role-management', element: <Navigate to="/app/admin/roles" replace /> },
       {
-        path: 'role-assignment',
+        path: 'admin/permissions',
         element: (
           <ProtectedRoute requiredPermissions={['Quan Tri Vien', 'Quản Lý Vai Trò']}>
             <RoleAssignmentPage />
           </ProtectedRoute>
         ),
       },
+      { path: 'role-assignment', element: <Navigate to="/app/admin/permissions" replace /> },
       {
         path: 'settings',
         element: <SettingsPage />,
       },
       {
-        path: 'quan-ly-file',
+        path: 'files',
         element: <QuanLyFilePage />,
       },
+      { path: 'quan-ly-file', element: <Navigate to="/app/files" replace /> },
       {
-        path: 'quet-ma-qr',
-        element: <QuetMaQRPage />, // Thêm đường dẫn cho QuetMaQRPage
+        path: 'scan',
+        element: <QuetMaQRPage />,
       },
+      { path: 'quet-ma-qr', element: <Navigate to="/app/scan" replace /> },
       {
-        path: 'user-elections',
+        path: 'elections',
         element: <UserElectionsPage />,
       },
+      { path: 'user-elections', element: <Navigate to="/app/elections" replace /> },
       // Thêm route trực tiếp cho trang quản lý phiên bầu cử blockchain
       {
         path: 'election-session-manager',
-        element: <Navigate to="/app/quan-ly-smart-contract" replace />,
+        element: <Navigate to="/app/dashboard" replace />,
       },
       // Thêm route cho trang quản lý phiên bầu cử blockchain với tham số ID
       {
         path: 'election-session-manager/:id',
-        element: <Navigate to="/app/quan-ly-smart-contract" replace />,
+        element: <Navigate to="/app/dashboard" replace />,
       },
       {
         path: 'user-elections/elections/:id/election-management',
-        element: <Navigate to="/app/quan-ly-smart-contract" replace />,
+        element: <Navigate to="/app/dashboard" replace />,
       },
       {
         path: 'user-elections/elections/:id/election-management/:idPhien/phien-bau-cu',
-        element: <Navigate to="/app/quan-ly-smart-contract" replace />,
+        element: <Navigate to="/app/dashboard" replace />,
       },
       // Thêm route mới cho trang triển khai phiên bầu cử lên blockchain
       {
         path: 'user-elections/elections/:id/session/:sessionId/deploy',
-        element: <Navigate to="/app/quan-ly-smart-contract" replace />,
+        element: <Navigate to="/app/dashboard" replace />,
       },
       {
         path: 'user-elections/elections/:id/edit',
-        element: <Navigate to="/app/tao-phien-bau-cu" replace />,
+        element: <Navigate to="/app/elections/new" replace />,
       },
       {
         path: 'user-elections/elections/:id/election-management/candidate-management',
-        element: <Navigate to="/app/tao-phien-bau-cu" replace />,
+        element: <Navigate to="/app/elections/new" replace />,
       },
       {
         path: 'user-elections/elections/:id/election-management/voter-management',
-        element: <Navigate to="/app/tao-phien-bau-cu" replace />,
+        element: <Navigate to="/app/elections/new" replace />,
       },
       {
         path: 'invite',
-        element: <Navigate to="/app/quet-ma-qr" replace />,
+        element: <Navigate to="/app/scan" replace />,
       },
       {
         path: 'quan-ly-thanh-tuu',
-        element: <Navigate to="/app/user-elections" replace />,
+        element: <Navigate to="/app/elections" replace />,
       },
       {
         path: 'ket-qua-bau-cu',
-        element: <Navigate to="/app/user-elections" replace />,
+        element: <Navigate to="/app/elections" replace />,
       },
       {
-        path: 'quan-ly-smart-contract',
+        path: 'dashboard',
         element: <QuanLySmartContractPage />,
       },
+      { path: 'quan-ly-smart-contract', element: <Navigate to="/app/dashboard" replace /> },
       {
         path: 'user-elections/elections/:id/blockchain-deployment',
-        element: <Navigate to="/app/quan-ly-smart-contract" replace />,
+        element: <Navigate to="/app/dashboard" replace />,
       },
       {
-        path: 'user-elections/elections/:id/rules',
+        path: 'elections/:id/rules',
         element: (
           <ProtectedRoute
             requiredPermissions={['Quan Tri Vien', 'Nguoi Dung']}
@@ -469,6 +514,11 @@ const router = createBrowserRouter([
             <DieuLePage />
           </ProtectedRoute>
         ),
+      },
+      // Legacy redirect (giữ :id qua params).
+      {
+        path: 'user-elections/elections/:id/rules',
+        element: <RulesRedirect />,
       },
       // Thêm route cho trang ThamGiaBauCu
       {
@@ -481,7 +531,7 @@ const router = createBrowserRouter([
       },
       {
         path: 'user-elections/elections/:id/session/:idPhien/edit',
-        element: <Navigate to="/app/tao-phien-bau-cu" replace />,
+        element: <Navigate to="/app/elections/new" replace />,
       },
     ],
   },

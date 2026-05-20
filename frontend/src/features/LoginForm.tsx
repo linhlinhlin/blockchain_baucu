@@ -223,7 +223,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ onClose, onRecaptchaVerify }) => 
   };
 
   const handleForgotPassword = () => {
-    navigate('/tim-tai-khoan');
+    navigate('/forgot-password');
   };
 
   const handleCreateAccount = () => {

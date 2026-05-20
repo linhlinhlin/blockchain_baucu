@@ -76,21 +76,21 @@ export default function HomePage() {
   const recentItems = useMemo(() => items.slice(0, 6), [items]);
   const nextActions = [
     {
-      to: '/app/tao-phien-bau-cu',
+      to: '/app/elections/new',
       title: 'Tạo ballot',
       description: 'Tạo đợt bầu cử, chức vụ, ứng viên và danh sách cử tri trong một luồng.',
       icon: <Plus className="h-5 w-5" />,
       tone: 'bg-[var(--clay-primary-light)]',
     },
     {
-      to: '/app/user-elections',
+      to: '/app/elections',
       title: 'Theo dõi ballot',
       description: 'Xem trạng thái chờ, bỏ phiếu, kiểm phiếu và đã kết thúc.',
       icon: <ListChecks className="h-5 w-5" />,
       tone: 'bg-[var(--clay-primary-light)]',
     },
     {
-      to: '/app/quet-ma-qr',
+      to: '/app/scan',
       title: 'Quét QR / OTP',
       description: 'Xác thực lời mời và liên kết ví cho cử tri trước khi bỏ phiếu.',
       icon: <QrCode className="h-5 w-5" />,
@@ -139,21 +139,21 @@ export default function HomePage() {
               {currentAccount ? 'Kết nối lại MetaMask' : 'Kết nối MetaMask'}
             </button>
             <Link
-              to="/app/tao-phien-bau-cu"
+              to="/app/elections/new"
               className="clay-button clay-button--blueberry inline-flex items-center justify-center gap-2 px-5 py-3 text-sm font-semibold"
             >
               <Plus className="h-4 w-4" />
               Tạo ballot mới
             </Link>
             <Link
-              to="/app/user-elections"
+              to="/app/elections"
               className="clay-button inline-flex items-center justify-center gap-2 px-5 py-3 text-sm font-semibold"
             >
               <Layers3 className="h-4 w-4" />
               Xem nhóm ballot
             </Link>
             <Link
-              to="/app/quan-ly-smart-contract"
+              to="/app/dashboard"
               className="clay-button inline-flex items-center justify-center gap-2 px-5 py-3 text-sm font-semibold"
             >
               <Vote className="h-4 w-4" />
@@ -227,7 +227,7 @@ export default function HomePage() {
               <h2 className="mt-3 text-2xl font-bold tracking-[-0.04em] text-black">Nhóm ballot gần đây</h2>
               <p aria-live="polite" className="mt-2 text-sm text-[var(--clay-muted)]">{message}</p>
             </div>
-            <Link to="/app/user-elections" className="clay-link">
+            <Link to="/app/elections" className="clay-link">
               Xem tất cả
             </Link>
           </div>
@@ -246,8 +246,8 @@ export default function HomePage() {
                 const phase = getPhaseLabel(item);
                 const firstPosition = item.positions[0];
                 const targetHref = firstPosition
-                  ? `/app/quan-ly-smart-contract?group=${encodeURIComponent(item.groupKey)}&election=${encodeURIComponent(firstPosition.address)}`
-                  : '/app/quan-ly-smart-contract';
+                  ? `/app/dashboard?group=${encodeURIComponent(item.groupKey)}&election=${encodeURIComponent(firstPosition.address)}`
+                  : '/app/dashboard';
 
                 return (
                   <Link
@@ -361,14 +361,14 @@ export default function HomePage() {
 
             <div className="mt-5 flex flex-col gap-3">
               <Link
-                to="/app/tao-phien-bau-cu"
+                to="/app/elections/new"
                 className="clay-button clay-button--blueberry inline-flex items-center justify-center gap-2 px-4 py-3 text-sm font-semibold"
               >
                 <Plus className="h-4 w-4" />
                 Tạo đợt bầu mới
               </Link>
               <Link
-                to="/app/quet-ma-qr"
+                to="/app/scan"
                 className="clay-button inline-flex items-center justify-center gap-2 px-4 py-3 text-sm font-semibold"
               >
                 <ShieldCheck className="h-4 w-4" />

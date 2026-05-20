@@ -11,7 +11,7 @@ const TuyChonTaiKhoanPage: React.FC = () => {
   const [selectedOption, setSelectedOption] = useState<string>('');
 
   if (!user) {
-    navigate('/tim-tai-khoan');
+    navigate('/forgot-password');
     return null;
   }
 
@@ -24,12 +24,12 @@ const TuyChonTaiKhoanPage: React.FC = () => {
       navigate('/login', { state: { user } });
     } else if (selectedOption === 'reset-password') {
       localStorage.setItem('user', JSON.stringify(user));
-      navigate(`/tim-tai-khoan/${username}/${randomCode}/tuy-chon/gui-otp`, { state: { user } });
+      navigate(`/forgot-password/account/${username}/${randomCode}/send-otp`, { state: { user } });
     }
   };
 
   const handleNotYou = () => {
-    navigate('/tim-tai-khoan');
+    navigate('/forgot-password');
   };
 
   const maskPhoneNumber = (phone: string | undefined) => {

@@ -344,7 +344,7 @@ const DieuKhoanSuDungPage = () => {
               className={`p-4 border-t ${theme === 'dark' ? 'border-[var(--clay-border)]' : 'border-[var(--clay-border)]'}`}
             >
               <Link
-                to="/chinh-sach-bao-mat"
+                to="/privacy"
                 className={`flex items-center space-x-2 px-3 py-2 rounded-lg ${
                   theme === 'dark'
                     ? 'hover:bg-[var(--clay-text)] text-[var(--clay-muted-soft)]'
@@ -508,7 +508,7 @@ const DieuKhoanSuDungPage = () => {
                       </div>
                     </div>
                     <Link
-                      to="/chinh-sach-bao-mat"
+                      to="/privacy"
                       className="px-4 py-2 bg-white text-[var(--clay-primary)] rounded-lg font-medium hover:bg-[var(--clay-primary-light)] transition-colors"
                     >
                       Tìm hiểu thêm
@@ -924,7 +924,7 @@ const DieuKhoanSuDungPage = () => {
                   <p className={`${secondaryTextColor} mb-4 leading-relaxed`}>
                     Để biết thêm chi tiết về cách chúng tôi thu thập, sử dụng và bảo vệ thông tin cá
                     nhân của bạn, vui lòng tham khảo{' '}
-                    <Link to="/chinh-sach-bao-mat" className={`${highlightColor} hover:underline`}>
+                    <Link to="/privacy" className={`${highlightColor} hover:underline`}>
                       Chính Sách Bảo Mật
                     </Link>{' '}
                     của chúng tôi.
@@ -1482,7 +1482,7 @@ const DieuKhoanSuDungPage = () => {
                       </div>
                       <div>
                         <h3 className="font-semibold mb-1">Hỗ Trợ</h3>
-                        <Link to="/lien-he" className={`${highlightColor} hover:underline`}>
+                        <Link to="/contact" className={`${highlightColor} hover:underline`}>
                           Gửi yêu cầu hỗ trợ
                         </Link>
                       </div>
@@ -1497,7 +1497,7 @@ const DieuKhoanSuDungPage = () => {
                       </p>
                     </div>
                     <Link
-                      to="/lien-he"
+                      to="/contact"
                       className="px-6 py-3 bg-white text-[var(--clay-primary)] rounded-lg font-medium hover:bg-[var(--clay-primary-light)] transition-colors shadow-lg"
                     >
                       Liên Hệ Ngay
@@ -1516,11 +1516,11 @@ const DieuKhoanSuDungPage = () => {
                 Trang Chủ
               </Link>
               <span className={secondaryTextColor}>•</span>
-              <Link to="/chinh-sach-bao-mat" className={`${highlightColor} hover:underline`}>
+              <Link to="/privacy" className={`${highlightColor} hover:underline`}>
                 Chính Sách Bảo Mật
               </Link>
               <span className={secondaryTextColor}>•</span>
-              <Link to="/lien-he" className={`${highlightColor} hover:underline`}>
+              <Link to="/contact" className={`${highlightColor} hover:underline`}>
                 Liên Hệ
               </Link>
             </div>

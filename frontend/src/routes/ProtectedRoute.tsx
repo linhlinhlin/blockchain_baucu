@@ -104,7 +104,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
     const isLoggedOut = localStorage.getItem('isLoggedOut') === 'true';
     if (isLoggedOut && !redirectingRef.current) {
       redirectingRef.current = true;
-      navigate('/thank-you');
+      navigate('/thanks');
     }
   }, [navigate]);
 
@@ -272,7 +272,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
         `[Redirect] Không có quyền truy cập ${location.pathname}, chuyển hướng đến trang không có quyền`,
       );
       redirectingRef.current = true;
-      navigate('/chua-xac-thuc');
+      navigate('/unauthorized');
     }
   }, [accessResult, loading, user, requiredPermissions, navigate, location.pathname]);
 
@@ -306,7 +306,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
 
   // Nếu không có quyền vai trò hoặc không có quyền truy cập
   if (!hasPermission || !accessResult) {
-    return <Navigate to="/chua-xac-thuc" />;
+    return <Navigate to="/unauthorized" />;
   }
 
   // Nếu có đủ quyền, render children

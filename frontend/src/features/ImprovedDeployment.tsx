@@ -1128,7 +1128,7 @@ const BlockchainDeployment: React.FC = () => {
 
   // Quay lại trang quản lý cuộc bầu cử
   const handleBackToElection = useCallback(() => {
-    navigate(`/app/user-elections/elections/${electionId}`);
+    navigate(`/app/elections`);
   }, [navigate, electionId]);
 
   return (

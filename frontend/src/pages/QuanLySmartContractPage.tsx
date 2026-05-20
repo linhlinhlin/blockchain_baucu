@@ -684,8 +684,8 @@ export default function QuanLySmartContractPage() {
     const group = groupItems.find((item) => item.groupKey === groupKey);
     const firstPosition = electionAddress ?? group?.positions[0]?.address;
     const next = firstPosition
-      ? `/app/quan-ly-smart-contract?group=${encodeURIComponent(groupKey)}&election=${firstPosition}`
-      : `/app/quan-ly-smart-contract?group=${encodeURIComponent(groupKey)}`;
+      ? `/app/dashboard?group=${encodeURIComponent(groupKey)}&election=${firstPosition}`
+      : `/app/dashboard?group=${encodeURIComponent(groupKey)}`;
     navigate(next);
     setSelectedGroupKey(groupKey);
     if (firstPosition) {
@@ -826,7 +826,7 @@ export default function QuanLySmartContractPage() {
               Tải lại
             </Button>
             <Link
-              to="/app/tao-phien-bau-cu"
+              to="/app/elections/new"
               className="inline-flex min-h-[44px] items-center justify-center gap-2 rounded-[12px] bg-[var(--clay-primary)] px-5 text-[15px] text-white hover:bg-[var(--clay-primary-focus)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--clay-primary-focus)]"
             >
               <ArrowRight className="h-4 w-4" aria-hidden="true" />
