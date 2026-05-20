@@ -526,7 +526,14 @@ const router = createBrowserRouter([
       </AppWithProviders>
     ),
   },
-]);
+], {
+  // Đợt 13.1: hết warning "A component suspended while responding to synchronous
+  // input" khi navigation tải lazy route — react-router tự bọc state-update
+  // điều hướng trong startTransition (chuẩn v7).
+  future: {
+    v7_startTransition: true,
+  },
+});
 
 export function AppRoutes() {
   return <RouterProvider router={router} />;
