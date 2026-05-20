@@ -1,7 +1,7 @@
 'use client';
 
 import type React from 'react';
-import { useEffect, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import Sidebar from './components/Sidebar';
@@ -11,6 +11,7 @@ import { ThemeProvider } from './context/ThemeContext';
 import { Toaster } from 'react-hot-toast';
 import { resolveRouteMeta } from './routes/routeMeta';
 import { Breadcrumb } from './components/ui/clay/Breadcrumb';
+import { RouteFallback } from './components/RouteFallback';
 
 const AppAfterLogin: React.FC = () => {
   const { isSidebarOpen, toggleSidebar } = useSidebar();
@@ -54,7 +55,10 @@ const AppAfterLogin: React.FC = () => {
                 <Breadcrumb trail={routeMeta.breadcrumb} />
               </div>
             )}
-            <Outlet />
+            {/* Đợt 13.2: Suspense ngay trên Outlet — bắt suspend lazy route. */}
+            <Suspense fallback={<RouteFallback />}>
+              <Outlet />
+            </Suspense>
           </div>
         </main>
       </div>

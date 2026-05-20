@@ -1,9 +1,11 @@
 import type React from 'react';
+import { Suspense } from 'react';
 import { Outlet } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import Header from './components/Header';
 import { Footer } from './components/Footer';
 import { ThemeProvider } from './context/ThemeContext';
+import { RouteFallback } from './components/RouteFallback';
 
 const AppBeforeLogin: React.FC = () => {
   return (
@@ -14,7 +16,10 @@ const AppBeforeLogin: React.FC = () => {
         </a>
         <Header />
         <main id="main-content" className="flex-grow">
-          <Outlet />
+          {/* Đợt 13.2: Suspense ngay trên Outlet — bắt suspend lazy route. */}
+          <Suspense fallback={<RouteFallback />}>
+            <Outlet />
+          </Suspense>
         </main>
         <Footer />
       </div>

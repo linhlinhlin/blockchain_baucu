@@ -58,36 +58,8 @@ const XemChiTietPhienBauCuPage = lazy(() => import('../pages/XemChiTietPhienBauC
 
 const AdminPage = lazy(() => import('../pages/AdminPage'));
 
-function RouteFallback() {
-  return (
-    <div
-      style={{
-        minHeight: '60vh',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        color: 'var(--clay-muted)',
-        fontSize: 14,
-      }}
-      role="status"
-      aria-live="polite"
-    >
-      <span
-        style={{
-          width: 22,
-          height: 22,
-          border: '3px solid currentColor',
-          borderRightColor: 'transparent',
-          borderRadius: '50%',
-          display: 'inline-block',
-          animation: 'spin 0.7s linear infinite',
-        }}
-        aria-hidden="true"
-      />
-      <span style={{ marginLeft: 10 }}>Đang tải…</span>
-    </div>
-  );
-}
+// Đợt 13.2: RouteFallback dedupe sang components/RouteFallback (dùng ở 3 nơi).
+import { RouteFallback } from '../components/RouteFallback';
 
 const XemChiTietCuocBauCuPageWithId = withElectionId(XemChiTietCuocBauCuPage);
 // Using type assertion to resolve the type incompatibility
