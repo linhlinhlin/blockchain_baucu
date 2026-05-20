@@ -81,3 +81,5 @@ desktop.ini
 # Đợt 10 temp (không commit)
 .tsc_*.txt
 frontend/tsconfig.clay.json
+.fix2.txt
+.tmp_*.cjs
