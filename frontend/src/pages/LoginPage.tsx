@@ -27,6 +27,7 @@ import { useToast } from '../components/ui/Use-toast';
 import { useGoogleReCaptcha } from 'react-google-recaptcha-v3';
 import { isRecaptchaEnabled } from '../config/runtimeFlags';
 import { clearAllAccessCache, resetSecurityState } from '../utils/authUtils';
+import { normalizeLoginRedirect } from '../utils/loginRedirect';
 import SEO from '../components/SEO';
 
 declare global {
@@ -98,7 +99,7 @@ export default function LoginPage() {
 
   const redirectAfterLogin = useCallback(() => {
     const redirectTo = searchParams.get('redirectTo');
-    navigate(redirectTo ? decodeURIComponent(redirectTo) : '/app');
+    navigate(normalizeLoginRedirect(redirectTo));
   }, [navigate, searchParams]);
 
   const getRecaptchaToken = useCallback(async () => {
