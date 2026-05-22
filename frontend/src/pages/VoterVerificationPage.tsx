@@ -92,8 +92,10 @@ export default function VoterVerificationPage() {
 
     async function loadInvite() {
       if (!tokenParam && !groupKey) {
-        setStatus('error');
-        setMessage('Token lời mời không hợp lệ.');
+        setStatus('ready');
+        setMessage(
+          'Trang này dùng để xác minh lời mời bầu cử. Hãy quét mã QR hoặc mở link mời có token/groupKey để gửi OTP và bind MetaMask.',
+        );
         return;
       }
 
@@ -315,7 +317,7 @@ export default function VoterVerificationPage() {
             Xác minh cử tri
           </h1>
           <p className="mt-1 text-[15px] text-[var(--clay-muted)]">
-            Xác thực OTP và bind MetaMask cho ElectionV1 theo từng bước.
+            Cử tri dùng trang này sau khi nhận QR/email mời: xác thực OTP, rồi liên kết ví MetaMask với suất bầu ElectionV1.
           </p>
           <div className="mt-4 overflow-x-auto">
             <Stepper steps={steps} />
@@ -443,6 +445,12 @@ export default function VoterVerificationPage() {
               <p className="text-lg font-semibold tracking-[-0.01em] text-[var(--clay-text)]">
                 Hành động
               </p>
+
+              {!invite && !publicInvite && (
+                <p className="mt-3 rounded-[12px] border border-[var(--clay-border)] bg-[var(--clay-surface-soft)] p-3 text-sm leading-6 text-[var(--clay-muted)]">
+                  Bạn đang mở trang xác minh trực tiếp nên chưa có lời mời nào được nạp. Hãy vào Quét mã QR hoặc mở link mời từ email để hệ thống biết ballot và cử tri cần xác minh.
+                </p>
+              )}
 
               {!accessToken && (
                 <div

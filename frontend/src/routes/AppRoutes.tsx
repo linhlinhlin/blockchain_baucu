@@ -1,6 +1,7 @@
 import type React from 'react';
-import { createBrowserRouter, Navigate, RouterProvider, useParams } from 'react-router-dom';
+import { createBrowserRouter, Navigate, RouterProvider, useLocation, useParams } from 'react-router-dom';
 import { lazy, Suspense } from 'react';
+import { useSelector } from 'react-redux';
 
 // Đợt 14: redirect giữ params cho luồng forgot-password (legacy VN → EN canonical).
 const ForgotOptionsRedirect = () => {
@@ -19,6 +20,19 @@ const RulesRedirect = () => {
   const { id } = useParams<{ id: string }>();
   return <Navigate to={`/app/elections/${id}/rules`} replace />;
 };
+const VoterVerificationPublicEntry = () => {
+  const location = useLocation();
+  const hasSession = useSelector((state: RootState) =>
+    Boolean(state.dangNhapTaiKhoan.accessToken || state.dangNhapTaiKhoan.taiKhoan),
+  );
+  const hasStoredToken = Boolean(window.localStorage.getItem('accessToken'));
+
+  if (hasSession || hasStoredToken) {
+    return <Navigate to={`/app/verify-voter${location.search}`} replace />;
+  }
+
+  return <VoterVerificationPage />;
+};
 import { GoogleReCaptchaProvider } from 'react-google-recaptcha-v3';
 
 // Đợt 13 (hiệu năng): route-level code-splitting. Shell/ErrorPage/HOC/provider
@@ -34,6 +48,7 @@ import { ThemeProvider } from '../context/ThemeContext';
 import { ToastProvider } from '../components/ui/Use-toast';
 import { ReCaptchaProvider } from '../components/ui/Use-recaptcha';
 import { isRecaptchaEnabled } from '../config/runtimeFlags';
+import type { RootState } from '../store/store';
 
 const CacPhienBauCuPage = lazy(() => import('../pages/CacCuocBauCuPage'));
 const LoginPage = lazy(() => import('../pages/LoginPage'));
@@ -146,7 +161,7 @@ const router = createBrowserRouter([
       },
       {
         path: 'verify-voter',
-        element: <VoterVerificationPage />,
+        element: <VoterVerificationPublicEntry />,
       },
       // === Forgot password flow (canonical EN, Đợt 14) ===
       {
@@ -423,6 +438,10 @@ const router = createBrowserRouter([
         element: <QuetMaQRPage />,
       },
       { path: 'quet-ma-qr', element: <Navigate to="/app/scan" replace /> },
+      {
+        path: 'verify-voter',
+        element: <VoterVerificationPage />,
+      },
       {
         path: 'elections',
         element: <UserElectionsPage />,

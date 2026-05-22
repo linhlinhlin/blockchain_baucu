@@ -13,7 +13,7 @@ export interface RouteMeta {
   title: string;
   section: Section;
   breadcrumb: Crumb[];
-  /** /verify-voter chạy ngoài shell /app (không sidebar). */
+  /** Public QR/email entry can redirect into the app shell after login. */
   outsideShell?: boolean;
 }
 
@@ -44,6 +44,11 @@ const ROUTE_META: Record<string, RouteMeta> = {
     title: 'Quét mã QR',
     section: 'Cử tri',
     breadcrumb: [HOME, { label: 'Cử tri' }, { label: 'Quét mã QR' }],
+  },
+  '/app/verify-voter': {
+    title: 'Xác minh cử tri',
+    section: 'Cử tri',
+    breadcrumb: [HOME, { label: 'Cử tri' }, { label: 'Xác minh cử tri' }],
   },
   '/verify-voter': {
     title: 'Xác minh cử tri',
