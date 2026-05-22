@@ -90,6 +90,32 @@ describe('electionCreateFlow utilities', () => {
     expect(getFirstInvalidRequirement(requirements)?.id).toBe('title');
   });
 
+  test('uses Vietnamese-first requirement labels for the QR/OTP flow', () => {
+    const requirements = buildCreateFlowRequirements({
+      accessToken: 'token',
+      currentAccount: validWalletA,
+      isNetworkConnected: false,
+      voterMode: 'roster',
+      title: 'Bầu cử lớp',
+      scheduleIsValid: false,
+      positions: [],
+      invalidCandidateWalletCount: 0,
+      voterWalletCount: 0,
+      invalidVoterWalletCount: 0,
+      duplicateVoterWalletCount: 0,
+      rosterVoterCount: 0,
+      invalidRosterRowCount: 1,
+    });
+
+    expect(requirements.find((item) => item.id === 'schedule')?.label).toBe('Lịch bầu cử hợp lệ');
+    expect(requirements.find((item) => item.id === 'roster')?.label).toBe(
+      'Danh sách cử tri xác thực (0 dòng)',
+    );
+    expect(requirements.find((item) => item.id === 'roster-format')?.label).toBe(
+      'Mỗi dòng cử tri có họ tên và email hợp lệ',
+    );
+  });
+
   test('shortens long wallet addresses without losing both ends', () => {
     expect(shortenAddress(validWalletA)).toBe('0xea6e…3456');
   });
