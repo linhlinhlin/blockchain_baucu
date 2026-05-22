@@ -542,18 +542,30 @@ export default function TaoCuocBauCuPage() {
         setCommitStart(toDateTimeLocalValue(new Date(draft.commitStart)));
         setCommitEnd(toDateTimeLocalValue(new Date(draft.commitEnd)));
         setRevealEnd(toDateTimeLocalValue(new Date(draft.revealEnd)));
-        setPositions(
-          draft.positions.map((position, positionIndex) => ({
-            id: `${position.positionId}-${positionIndex + 1}`,
-            title: position.title,
-            description: position.description || '',
-            candidates: position.candidates.map((candidate, candidateIndex) => ({
-              id: `${position.positionId}-candidate-${candidateIndex + 1}`,
-              displayName: candidate.displayName,
-              walletAddress: candidate.walletAddress || '',
-            })),
-          })),
+        setRosterInput(
+          draft.invites
+            .map((invite) =>
+              [invite.fullName, invite.email, invite.studentCode ?? '']
+                .map((value) => value.trim())
+                .join(','),
+            )
+            .join('\n'),
         );
+        setPositions(
+          draft.positions.length > 0
+            ? draft.positions.map((position, positionIndex) => ({
+                id: `${position.positionId}-${positionIndex + 1}`,
+                title: position.title,
+                description: position.description || '',
+                candidates: position.candidates.map((candidate, candidateIndex) => ({
+                  id: `${position.positionId}-candidate-${candidateIndex + 1}`,
+                  displayName: candidate.displayName,
+                  walletAddress: candidate.walletAddress || '',
+                })),
+              }))
+            : [createPositionDraft(1)],
+        );
+        setStep('b4');
         setMessage(`Đã nạp lại bản nháp xác thực ${draft.groupKey}.`);
       } catch (error) {
         if (active) {
