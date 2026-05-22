@@ -366,5 +366,9 @@ app.MapControllerRoute(
 //    pattern: "api/{controller}/{action=Index}/{id?}");
 
 app.MapControllers(); // Thêm dòng này để map các controller
+
+// S15 (spec 004): health endpoint cho Docker healthcheck (không cần auth).
+app.MapGet("/health", () => Results.Ok(new { status = "ok" })).AllowAnonymous();
+
 // Chạy ứng dụng
 app.Run();

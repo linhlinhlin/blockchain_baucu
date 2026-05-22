@@ -14,7 +14,7 @@ Legacy SQL Server / Azure / Geth khong phai la dependency bat buoc cua stack nay
 ## Chay stack
 
 ```powershell
-cd E:\test_thacsi\blockchain
+cd E:\Sach\Sua\blockchain_baucu
 docker compose -f .\docker-compose.active.yml up --build
 ```
 

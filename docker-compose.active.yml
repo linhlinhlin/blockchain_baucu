@@ -49,6 +49,16 @@ services:
       JwtSettings__RefreshTokenExpirationDays: "7"
     ports:
       - "5293:5293"
+    # S15 (spec 004): persist deployment records qua recreate container.
+    volumes:
+      - holihu_deployments:/workspace/blockchain_sm/deployments
+    # S15: healthcheck de frontend doi backend san sang.
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:5293/health || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+      start_period: 40s
 
   frontend:
     build:
@@ -57,7 +67,8 @@ services:
     container_name: holihu-frontend
     restart: unless-stopped
     depends_on:
-      - backend
+      backend:
+        condition: service_healthy
     environment:
       VITE_API_BASE_URL: http://localhost:5293
       VITE_RECAPTCHA_ENABLED: "false"
@@ -65,5 +76,17 @@ services:
     ports:
       - "3000:3000"
 
+  # S-infra (spec 004): local chain tuỳ chọn (opt-in).
+  #   docker compose --profile local-chain up
+  # Wiring tự deploy ElectionFactoryV1 lên anvil + set FACTORY_ADDRESS = follow-up.
+  anvil:
+    image: ghcr.io/foundry-rs/foundry:latest
+    container_name: holihu-anvil
+    profiles: ["local-chain"]
+    entrypoint: ["anvil", "--host", "0.0.0.0", "--chain-id", "31337"]
+    ports:
+      - "8545:8545"
+
 volumes:
   holihu_postgres_data:
+  holihu_deployments:

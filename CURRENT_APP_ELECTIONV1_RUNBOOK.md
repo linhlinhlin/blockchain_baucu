@@ -2,9 +2,9 @@
 
 Runbook này áp dụng cho:
 
-- FE hiện tại: `E:\test_thacsi\blockchain\frontend`
-- BE hiện tại: `E:\test_thacsi\blockchain\WebApplication3\WebApplication3\WebApplication3`
-- Smart contract repo: `E:\test_thacsi\blockchain\blockchain_sm`
+- FE hiện tại: `E:\Sach\Sua\blockchain_baucu\frontend`
+- BE hiện tại: `E:\Sach\Sua\blockchain_baucu\WebApplication3\WebApplication3\WebApplication3`
+- Smart contract repo: `E:\Sach\Sua\blockchain_baucu\blockchain_sm`
 
 ## 1. Điều kiện trước khi chạy
 
@@ -20,8 +20,8 @@ Runbook này áp dụng cho:
 Tại PowerShell:
 
 ```powershell
-cd E:\test_thacsi\blockchain
-dotnet run --project E:\test_thacsi\blockchain\WebApplication3\WebApplication3\WebApplication3\WebApplication3.csproj --launch-profile http
+cd E:\Sach\Sua\blockchain_baucu
+dotnet run --project E:\Sach\Sua\blockchain_baucu\WebApplication3\WebApplication3\WebApplication3\WebApplication3.csproj --launch-profile http
 ```
 
 Backend chạy ở:
@@ -41,7 +41,7 @@ API mới đã dùng:
 Mở terminal khác:
 
 ```powershell
-cd E:\test_thacsi\blockchain\frontend
+cd E:\Sach\Sua\blockchain_baucu\frontend
 npm install --legacy-peer-deps
 npm run dev -- --host 127.0.0.1 --port 3000
 ```
