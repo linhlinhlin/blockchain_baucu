@@ -17,6 +17,12 @@
     "_note": "true => seed devadmin/Admin@123, devuser/User@123 va cho phep DevOtpCode tra ve client. KHONG bat tren moi truong that.",
     "Enabled": true
   },
+  "RecaptchaSettings": {
+    "_note": "Local dev co the dat Enabled=false. Moi truong that phai Enabled=true va SecretKey lay tu secret store.",
+    "Enabled": false,
+    "SecretKey": "",
+    "ScoreThreshold": 0.5
+  },
   "JwtSettings": {
     "_note": "BAT BUOC. Sinh chuoi ngau nhien >=32 ky tu, vi du: openssl rand -base64 48",
     "Secret": "<DAN_CHUOI_NGAU_NHIEN_>=32_KY_TU>",

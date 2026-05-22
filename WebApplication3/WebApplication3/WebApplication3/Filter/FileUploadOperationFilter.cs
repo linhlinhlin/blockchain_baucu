@@ -11,6 +11,8 @@ public class FileUploadOperationFilter : IOperationFilter
 
         if (fileParams.Any())
         {
+            var fileParamName = fileParams.First().Name ?? "file";
+
             operation.RequestBody = new OpenApiRequestBody
             {
                 Content = new Dictionary<string, OpenApiMediaType>
@@ -22,7 +24,7 @@ public class FileUploadOperationFilter : IOperationFilter
                             Type = "object",
                             Properties = new Dictionary<string, OpenApiSchema>
                             {
-                                { fileParams.First().Name, new OpenApiSchema { Type = "string", Format = "binary" } }
+                                { fileParamName, new OpenApiSchema { Type = "string", Format = "binary" } }
                             }
                         }
                     }

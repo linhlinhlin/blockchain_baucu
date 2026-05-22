@@ -21,13 +21,13 @@ namespace WebApplication3.Controllers
         private readonly ApplicationDbContext _context;
         private readonly ILogger<UngCuVienController> _logger;
         private readonly IAzureBlobService _azureBlobService;
-        private readonly IBlockchainLookupService _blockchainLookupService;
+        private readonly IBlockchainLookupService? _blockchainLookupService;
 
         public UngCuVienController(
             ApplicationDbContext context,
             ILogger<UngCuVienController> logger,
             IAzureBlobService azureBlobService,
-            IBlockchainLookupService blockchainLookupService = null) // Cho phép null để tương thích với code cũ
+            IBlockchainLookupService? blockchainLookupService = null) // Cho phép null để tương thích với code cũ
         {
             _context = context;
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
@@ -89,7 +89,7 @@ namespace WebApplication3.Controllers
                 .Include(u => u.PhienBauCu)
                 .Include(u => u.TaiKhoan)
                 .Include(u => u.CuTri)
-                .ThenInclude(c => c.TaiKhoan)
+                .ThenInclude(c => c!.TaiKhoan)
                 .FirstOrDefaultAsync(u => u.Id == id);
 
             if (ungCuVien == null)
@@ -98,7 +98,7 @@ namespace WebApplication3.Controllers
             }
 
             // Tạo URL có SAS token nếu có ảnh
-            string anhUrl = null;
+            string? anhUrl = null;
             if (!string.IsNullOrEmpty(ungCuVien.Anh))
             {
                 bool blobExists = await _azureBlobService.BlobExistsAsync(ungCuVien.Anh);
@@ -109,7 +109,7 @@ namespace WebApplication3.Controllers
             }
 
             // Lấy địa chỉ ví blockchain của ứng viên (nếu có BlockchainLookupService)
-            string diaChiVi = null;
+            string? diaChiVi = null;
             if (_blockchainLookupService != null)
             {
                 diaChiVi = await _blockchainLookupService.GetCandidateBlockchainAddress(ungCuVien.Id);
@@ -180,7 +180,7 @@ namespace WebApplication3.Controllers
         public async Task<ActionResult<IEnumerable<UngCuVienDTO>>> GetUngCuViensByTenPhienBauCu(string tenPhienBauCu)
         {
             return await _context.UngCuViens
-                .Where(u => u.PhienBauCu.TenPhienBauCu == tenPhienBauCu)
+                .Where(u => u.PhienBauCu != null && u.PhienBauCu.TenPhienBauCu == tenPhienBauCu)
                 .Select(u => new UngCuVienDTO
                 {
                     Id = u.Id,
@@ -469,7 +469,7 @@ namespace WebApplication3.Controllers
 
                 var ungCuVien = new UngCuVien
                 {
-                    HoTen = ungCuVienDTO.HoTen ?? taiKhoan.TenHienThi,
+                    HoTen = ungCuVienDTO.HoTen ?? taiKhoan.TenHienThi ?? string.Empty,
                     Anh = ungCuVienDTO.Anh,
                     MoTa = ungCuVienDTO.MoTa,
                     ViTriUngCuId = ungCuVienDTO.ViTriUngCuId,
@@ -570,7 +570,7 @@ namespace WebApplication3.Controllers
                 // Tạo ứng viên mới
                 var ungCuVien = new UngCuVien
                 {
-                    HoTen = registrationDTO.HoTen ?? taiKhoan.TenHienThi,
+                    HoTen = registrationDTO.HoTen ?? taiKhoan.TenHienThi ?? string.Empty,
                     Anh = registrationDTO.Anh,
                     MoTa = registrationDTO.MoTa,
                     ViTriUngCuId = registrationDTO.ViTriUngCuId,
@@ -617,7 +617,7 @@ namespace WebApplication3.Controllers
                 // Lọc ra các CuTriId
                 var cuTriIds = ungCuVienDTOs
                     .Where(u => u.CuTriId.HasValue)
-                    .Select(u => u.CuTriId.Value)
+                    .Select(u => u.CuTriId.GetValueOrDefault())
                     .Distinct()
                     .ToList();
 
@@ -945,6 +945,11 @@ namespace WebApplication3.Controllers
                 ungCuVien.Anh = uniqueFileName;
 
                 // 2. Lưu thông tin vào bảng UploadFile
+                if (!ungCuVien.PhienBauCuId.HasValue)
+                {
+                    return BadRequest(new { success = false, message = "Ứng cử viên chưa thuộc phiên bầu cử nào." });
+                }
+
                 var uploadFile = new UploadFile
                 {
                     FileURL = fileUrl,
@@ -954,7 +959,7 @@ namespace WebApplication3.Controllers
                     KichThuoc = imageFile.Length,
                     NgayUpload = uploadTimeUtc.UtcDateTime,
                     TaiKhoanUploadId = userId,
-                    PhienBauCuUploadId = (int)ungCuVien.PhienBauCuId,
+                    PhienBauCuUploadId = ungCuVien.PhienBauCuId.Value,
                     CuocBauCuUploadId = ungCuVien.CuocBauCuId,
                     KichThuocHienThi = FormatFileSize(imageFile.Length),
                     NgayHienThi = uploadTimeUtc7.ToString("dd/MM/yyyy HH:mm")
@@ -1165,7 +1170,7 @@ namespace WebApplication3.Controllers
                 }
 
                 // Lấy danh sách các tên file ảnh
-                var fileNames = ungCuViens.Select(u => u.Anh).ToList();
+                var fileNames = ungCuViens.Select(u => u.Anh!).ToList();
 
                 // Lấy thông tin file từ UploadFile
                 var uploadFiles = await _context.UploadFiles
@@ -1176,12 +1181,18 @@ namespace WebApplication3.Controllers
 
                 foreach (var ungCuVien in ungCuViens)
                 {
-                    bool blobExists = await _azureBlobService.BlobExistsAsync(ungCuVien.Anh);
+                    var imageFileName = ungCuVien.Anh;
+                    if (string.IsNullOrWhiteSpace(imageFileName))
+                    {
+                        continue;
+                    }
+
+                    bool blobExists = await _azureBlobService.BlobExistsAsync(imageFileName);
                     if (blobExists)
                     {
-                        string sasUrl = _azureBlobService.GenerateSasToken(ungCuVien.Anh, 60);
+                        string sasUrl = _azureBlobService.GenerateSasToken(imageFileName, 60);
 
-                        var uploadFile = uploadFiles.FirstOrDefault(f => f.TenFileDuocTao == ungCuVien.Anh && f.CuocBauCuUploadId == ungCuVien.CuocBauCuId);
+                        var uploadFile = uploadFiles.FirstOrDefault(f => f.TenFileDuocTao == imageFileName && f.CuocBauCuUploadId == ungCuVien.CuocBauCuId);
 
                         var imageInfo = new
                         {
@@ -1246,7 +1257,7 @@ namespace WebApplication3.Controllers
                 }
 
                 // Lấy danh sách các tên file ảnh
-                var fileNames = ungCuViens.Select(u => u.Anh).ToList();
+                var fileNames = ungCuViens.Select(u => u.Anh!).ToList();
 
                 // Lấy thông tin file từ UploadFile
                 var uploadFiles = await _context.UploadFiles
@@ -1257,12 +1268,18 @@ namespace WebApplication3.Controllers
 
                 foreach (var ungCuVien in ungCuViens)
                 {
+                    var imageFileName = ungCuVien.Anh;
+                    if (string.IsNullOrWhiteSpace(imageFileName))
+                    {
+                        continue;
+                    }
+
                     // Kiểm tra xem blob có tồn tại không
-                    bool blobExists = await _azureBlobService.BlobExistsAsync(ungCuVien.Anh);
+                    bool blobExists = await _azureBlobService.BlobExistsAsync(imageFileName);
                     if (blobExists)
                     {
                         // Tạo URL có SAS token
-                        string sasUrl = _azureBlobService.GenerateSasToken(ungCuVien.Anh, 60);
+                        string sasUrl = _azureBlobService.GenerateSasToken(imageFileName, 60);
 
                         // Tạo đối tượng ứng cử viên
                         var candidate = new UngCuVienWithImageDTO
@@ -1323,7 +1340,7 @@ namespace WebApplication3.Controllers
                 }
 
                 // Lấy danh sách các tên file ảnh
-                var fileNames = ungCuViens.Select(u => u.Anh).ToList();
+                var fileNames = ungCuViens.Select(u => u.Anh!).ToList();
 
                 // Lấy thông tin file từ UploadFile
                 var uploadFiles = await _context.UploadFiles
@@ -1334,12 +1351,18 @@ namespace WebApplication3.Controllers
 
                 foreach (var ungCuVien in ungCuViens)
                 {
+                    var imageFileName = ungCuVien.Anh;
+                    if (string.IsNullOrWhiteSpace(imageFileName))
+                    {
+                        continue;
+                    }
+
                     // Kiểm tra xem blob có tồn tại không
-                    bool blobExists = await _azureBlobService.BlobExistsAsync(ungCuVien.Anh);
+                    bool blobExists = await _azureBlobService.BlobExistsAsync(imageFileName);
                     if (blobExists)
                     {
                         // Tạo URL có SAS token
-                        string sasUrl = _azureBlobService.GenerateSasToken(ungCuVien.Anh, 60);
+                        string sasUrl = _azureBlobService.GenerateSasToken(imageFileName, 60);
 
                         // Tạo đối tượng ứng cử viên
                         var candidate = new UngCuVienWithImageDTO
@@ -1426,7 +1449,7 @@ namespace WebApplication3.Controllers
     // Model cho việc đăng ký ứng viên kèm tạo cử tri
     public class UngVienRegistrationDTO
     {
-        public string HoTen { get; set; }
+        public string HoTen { get; set; } = string.Empty;
         public string? Anh { get; set; }
         public string MoTa { get; set; } = "Ứng viên mới";
         public int ViTriUngCuId { get; set; }
@@ -1435,24 +1458,24 @@ namespace WebApplication3.Controllers
         public int? TaiKhoanId { get; set; }
 
         // Thông tin cử tri
-        public string Sdt { get; set; }
-        public string Email { get; set; }
+        public string Sdt { get; set; } = string.Empty;
+        public string Email { get; set; } = string.Empty;
     }
 
     // Model với hình ảnh
     public class UngCuVienWithImageDTO
     {
         public int Id { get; set; }
-        public string HoTen { get; set; }
+        public string HoTen { get; set; } = string.Empty;
         public string? Anh { get; set; }
         public string? AnhUrl { get; set; }
-        public string MoTa { get; set; }
+        public string MoTa { get; set; } = string.Empty;
         public int ViTriUngCuId { get; set; }
         public int CuocBauCuId { get; set; }
         public int? PhienBauCuId { get; set; }
         public int? TaiKhoanId { get; set; }
         public int? CuTriId { get; set; }
-        public object FileInfo { get; set; }
+        public object? FileInfo { get; set; }
     }
 
     #endregion

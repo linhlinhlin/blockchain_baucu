@@ -20,9 +20,15 @@ Kiểm chứng độc lập theo yêu cầu (sau Đợt 10–12). Phương pháp
 
 ### OTP (S2/S6) — RESOLVED ✅
 - `ElectionV1RosterService`: `LastOtpCode = BCrypt.HashPassword(otp)` (hash, không plaintext); `BCrypt.Verify` so khớp; dev-echo chỉ khi `DevelopmentAuthSettings:Enabled`; lockout 5 lần → 15′; `Program.cs` rate-limit policy `voter-invites` 20 req/phút áp lên 5 endpoint OTP/bind.
+- Follow-up 2026-05-22: legacy/public `OtpController` now uses `RandomNumberGenerator.GetInt32` for 6-digit OTP generation and `RandomNumberGenerator.GetBytes(32)` for verification links; obsolete `RNGCryptoServiceProvider` usage removed.
+
+### reCAPTCHA auth gate — RESOLVED ✅
+- Follow-up 2026-05-22: `RecaptchaService` now reads `RecaptchaSettings:*`, posts to Google `siteverify`, enforces success + score threshold + expected action, and fails closed when the secret key is missing or a placeholder.
+- Removed hardcoded bypass logic (`Score = 20`, `isValid = true`) and deleted unused `TwoCaptchaService` / `TwoCaptcha` config from the active backend.
+- `TaiKhoanController` validates expected actions (`login_page`, `register`) to match the React reCAPTCHA calls.
 
 ### S1 / secrets — RESOLVED ✅
-- `git ls-files` (loại test/docs/example): **0 private-key/secret hardcode**. 3 chuỗi 64-hex còn lại đã phân loại benign: `BundlerService.cs:1144` Keccak typehash EIP-4337; `ElectionV1ReadService.cs:16` ZeroBytes32; `simple-flow-election.sample.json` candidateId (hash công khai).
+- `git ls-files` (excluding docs/example): **0 private-key/secret hardcode**. Legacy `BundlerService.cs` was removed in cleanup 2026-05-20; remaining active-source 64-hex strings are benign, such as `ElectionV1ReadService.cs:16` ZeroBytes32.
 - `frontend/src/test`: file chứa key đã xoá (chỉ còn `components/`), 0 key.
 
 ### S4/S5 vote-secret — RESOLVED ✅
@@ -34,4 +40,4 @@ Kiểm chứng độc lập theo yêu cầu (sau Đợt 10–12). Phương pháp
 - Sửa `CLAUDE.md` mục "Cảnh báo bảo mật" — trước ghi sai "S1–S5 Chưa vá" (gây hiểu lầm toàn team/agent; vi phạm Principle V tài liệu-đúng). Nay phản ánh đúng: S1–S13 RESOLVED + bằng chứng.
 
 ## Còn lại (Low/Accepted — không blocker)
-S14 timestamp skew (testnet, accepted) · S18 warning/RNG obsolete (Low) · S19 Node 25 vs LTS 20/22 (pin toolchain) · S20 runbook lệch path/version. Production: bật reCAPTCHA + JWT secret từ secret store. Lưu ý vận hành: login endpoint chưa có `[EnableRateLimiting]` riêng (reCAPTCHA che) — cân nhắc thêm trước mainnet.
+S14 timestamp skew (testnet, accepted) · S18 backend warning/RNG cleanup resolved 2026-05-22 (`--no-incremental` build: 0 warnings) · S19 Node 25 vs LTS 20/22 (pin toolchain) · S20 runbook lệch path/version. Production: bật reCAPTCHA + JWT secret từ secret store. Lưu ý vận hành: login endpoint chưa có `[EnableRateLimiting]` riêng (reCAPTCHA che) — cân nhắc thêm trước mainnet.

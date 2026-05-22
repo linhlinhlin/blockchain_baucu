@@ -101,7 +101,7 @@ namespace WebApplication3.Services
             return blobItems;
         }
 
-        public async Task<string> GenerateBlobUrl(string fileName)
+        public string GenerateBlobUrl(string fileName)
         {
             var containerClient = _blobServiceClient.GetBlobContainerClient(_containerName);
             var blobClient = containerClient.GetBlobClient(fileName);

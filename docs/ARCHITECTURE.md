@@ -26,7 +26,7 @@ Browser ──HTTPS──> Frontend (React/Vite SPA)
 | Path | Stack | Vai trò |
 |---|---|---|
 | `blockchain_sm/` | Hardhat 2.22 + Foundry + Solidity 0.8.28, OZ v5 | `ElectionFactoryV1`/`ElectionV1` (commit-reveal) = active; `legacy/` AA stack = đóng băng |
-| `WebApplication3/.../WebApplication3/` | ASP.NET Core net9.0 | API `/api/election-v1/*`; legacy sau cờ `LegacyBlockchainSettings.Enabled` |
+| `WebApplication3/.../WebApplication3/` | ASP.NET Core net9.0 | API `/api/election-v1/*`; legacy AA/private-chain services/controllers removed; wallet DB lookup retained |
 | `frontend/` | React 18 + Vite 6 + TS, ethers v6, Redux Toolkit | 5 trang app + công khai; lớp `components/ui/clay` (Đợt 10–12) |
 | `docker/` + `docker-compose.active.yml` | postgres17 + backend net9 + frontend | active stack (`up --build`) |
 

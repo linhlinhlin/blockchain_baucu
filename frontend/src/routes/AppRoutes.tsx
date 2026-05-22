@@ -27,10 +27,8 @@ import { GoogleReCaptchaProvider } from 'react-google-recaptcha-v3';
 import AppBeforeLogin from '../AppBeforeLogin';
 import AppAfterLogin from '../AppAfterLogin';
 import ErrorPage from '../pages/ErrorPage';
-import withElectionId from '../components/withElectionId';
 import ThongBaoKhongCoPhien from '../components/ThongBaoKhongCoCuocBauCu';
 import ProtectedRoute from '../routes/ProtectedRoute';
-import withPhienBauCuId from '../components/withPhienBauCuId';
 import { Web3Provider } from '../context/Web3Context';
 import { ThemeProvider } from '../context/ThemeContext';
 import { ToastProvider } from '../components/ui/Use-toast';
@@ -38,7 +36,6 @@ import { ReCaptchaProvider } from '../components/ui/Use-recaptcha';
 import { isRecaptchaEnabled } from '../config/runtimeFlags';
 
 const CacPhienBauCuPage = lazy(() => import('../pages/CacCuocBauCuPage'));
-const XemChiTietCuocBauCuPage = lazy(() => import('../pages/XemChiTietCuocBauCuPage'));
 const HomePage = lazy(() => import('../pages/HomePage'));
 const LoginPage = lazy(() => import('../pages/LoginPage'));
 const RoleManagementPage = lazy(() => import('../pages/QuanLyVaiTroAdminPage'));
@@ -66,24 +63,12 @@ const QuanLySmartContractPage = lazy(() => import('../pages/QuanLySmartContractP
 const FAQ = lazy(() => import('../pages/FaqPage'));
 const BlockchainSetupPage = lazy(() => import('../pages/BlockchainSetupPage'));
 const DieuLePage = lazy(() => import('../pages/DieuLePage'));
-const PhienBauCuBlockchainDeploymentPage = lazy(
-  () => import('../pages/PhienBauCuBlockchainDeploymentPage'),
-);
-const ChinhSuaPhienBauCuPage = lazy(() => import('../pages/ChinhSuaPhienBauCuPage'));
 const VoterVerificationPage = lazy(() => import('../pages/VoterVerificationPage'));
-const ElectionSessionManagerPage = lazy(() => import('../pages/ElectionSessionManagerPage'));
-const XemChiTietPhienBauCuPage = lazy(() => import('../pages/XemChiTietPhienBauCuPage'));
 
 const AdminPage = lazy(() => import('../pages/AdminPage'));
 
 // Đợt 13.2: RouteFallback dedupe sang components/RouteFallback (dùng ở 3 nơi).
 import { RouteFallback } from '../components/RouteFallback';
-
-const XemChiTietCuocBauCuPageWithId = withElectionId(XemChiTietCuocBauCuPage);
-// Using type assertion to resolve the type incompatibility
-const XemChiTietPhienBauCuPageWithId = withPhienBauCuId(
-  XemChiTietPhienBauCuPage as React.ComponentType<any>,
-);
 
 // Bọc toàn bộ ứng dụng trong các providers cần thiết
 const AppWithProviders = ({
@@ -97,7 +82,7 @@ const AppWithProviders = ({
     <ToastProvider>
       {useRecaptcha && isRecaptchaEnabled ? (
         <GoogleReCaptchaProvider
-          reCaptchaKey="6LdKGRYrAAAAAARohWQGLhHKWuVQE_PnjDbfA_Wb"
+          reCaptchaKey={import.meta.env.VITE_RECAPTCHA_SITE_KEY ?? ''}
           scriptProps={{
             async: false,
             defer: true,

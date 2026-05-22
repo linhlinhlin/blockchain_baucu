@@ -10,7 +10,7 @@ namespace WebApplication3.Repositories
     {
         Task<UploadFile> AddAsync(UploadFile fileMetadata);
         Task<IEnumerable<UploadFile>> GetAllAsync();
-        Task<UploadFile> GetByIdAsync(int id);
+        Task<UploadFile?> GetByIdAsync(int id);
     }
 
     public class FileRepository : IFileRepository
@@ -34,7 +34,7 @@ namespace WebApplication3.Repositories
             return await _context.UploadFiles.ToListAsync();
         }
 
-        public async Task<UploadFile> GetByIdAsync(int id)
+        public async Task<UploadFile?> GetByIdAsync(int id)
         {
             return await _context.UploadFiles.FindAsync(id);
         }

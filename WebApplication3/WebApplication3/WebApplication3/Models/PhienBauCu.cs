@@ -29,6 +29,6 @@ public partial class PhienBauCu
 
     public virtual ICollection<ViTriUngCu> ViTriUngCus { get; set; } = new List<ViTriUngCu>();
 
-    public virtual ICollection<PhieuMoiPhienBauCu> PhieuMoiPhienBauCus { get; set; }
-    public virtual ICollection<UploadFile> UploadFiles { get; set; }
+    public virtual ICollection<PhieuMoiPhienBauCu> PhieuMoiPhienBauCus { get; set; } = new List<PhieuMoiPhienBauCu>();
+    public virtual ICollection<UploadFile> UploadFiles { get; set; } = new List<UploadFile>();
 }

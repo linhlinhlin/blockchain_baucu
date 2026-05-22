@@ -30,10 +30,8 @@ import uploadFileReducer from './slice/uploadFileSlice';
 import dangXuatTaiKhoanReducer from './slice/dangXuatTaiKhoanSlice';
 import lienHeReducer from './slice/lienHeSlice';
 import nhanThongTinReducer from './slice/nhanThongTinSlice';
-import blockchainReducer from './sliceBlockchain/blockchainSlice';
 import cuocBauCuImageReducer from './slice/cuocBauCuImageSlice';
 import dieuLeReducer from './slice/dieuLeSlice';
-import viBlockchainReducer from './sliceBlockchain/viBlockchainSlice';
 import cuocBauCuAccessReducer from './slice/cuocBauCuAccessSlice'; // Thêm import này
 import uploadFileBallotReducer from './slice/uploadFileBallotSlice'; // Thêm import này
 import { uploadFile } from '../api/uploadFileApi';
@@ -70,10 +68,8 @@ export const store = configureStore({
     dangXuatTaiKhoan: dangXuatTaiKhoanReducer,
     lienHe: lienHeReducer,
     nhanThongTin: nhanThongTinReducer,
-    blockchain: blockchainReducer,
     cuocBauCuImage: cuocBauCuImageReducer,
     dieuLe: dieuLeReducer,
-    viBlockchain: viBlockchainReducer,
     cuocBauCuAccess: cuocBauCuAccessReducer, // Thêm reducer mới này
     uploadFileBallot: uploadFileBallotReducer, // Thêm reducer mới này
   },

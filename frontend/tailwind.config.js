@@ -82,14 +82,10 @@ module.exports = {
         'accordion-up': 'accordion-up 0.2s ease-out',
         'caret-blink': 'caret-blink 1.25s ease-out infinite',
       },
-      textShadow: {
-        blue: '0 0 10px rgba(0, 0, 255, 0.5)',
-      },
     },
   },
   plugins: [
     require('tailwindcss-animate'),
-    require('tailwindcss-textshadow'),
     require('@tailwindcss/forms'),
     require('@tailwindcss/typography'),
   ],

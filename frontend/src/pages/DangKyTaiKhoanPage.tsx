@@ -4,10 +4,10 @@ import type React from 'react';
 import { useEffect, useState, useRef } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
-import { NewAccountForm } from '../features/TaoTaiKhoanForm';
+import type { ThunkDispatch, UnknownAction } from '@reduxjs/toolkit';
+import { NewAccountForm, type RegistrationFormValues } from '../features/TaoTaiKhoanForm';
 import { registerAccount, resetTrangThai } from '../store/slice/dangKyTaiKhoanSlice';
-import type { TaoTaiKhoanTamThoi } from '../store/types';
-import type { RootState, AppDispatch } from '../store/store';
+import type { TaoTaiKhoanTamThoi, TrangThaiDangKyTaiKhoan } from '../store/types';
 import SEO from '../components/SEO';
 import { GoogleReCaptchaProvider } from 'react-google-recaptcha-v3';
 import { isRecaptchaEnabled } from '../config/runtimeFlags';
@@ -24,18 +24,23 @@ import {
   Database,
 } from 'lucide-react';
 import { FaEthereum } from 'react-icons/fa';
-import { Button, Panel, StatusBadge } from '../components/ui/clay';
+import { Button, Panel } from '../components/ui/clay';
+
+type RegistrationRootState = {
+  dangKyTaiKhoan: TrangThaiDangKyTaiKhoan;
+};
+
+type RegistrationDispatch = ThunkDispatch<RegistrationRootState, unknown, UnknownAction>;
 
 const RegisterPage: React.FC = () => {
   const navigate = useNavigate();
-  const dispatch = useDispatch<AppDispatch>();
+  const dispatch = useDispatch<RegistrationDispatch>();
   const { dangTai, loi, thanhCong, wallets } = useSelector(
-    (state: RootState) => state.dangKyTaiKhoan,
+    (state: RegistrationRootState) => state.dangKyTaiKhoan,
   );
   const [showDialog, setShowDialog] = useState(false);
   const formRef = useRef<HTMLDivElement>(null);
   const [user, setUser] = useState<any>(null);
-  const [hluBalance, setHluBalance] = useState('0.00');
 
   useEffect(() => {
     if (thanhCong) {
@@ -48,7 +53,7 @@ const RegisterPage: React.FC = () => {
     return date.toISOString().split('T')[0];
   };
 
-  const handleSave = async (data: TaoTaiKhoanTamThoi, recaptchaToken: string) => {
+  const handleSave = async (data: RegistrationFormValues, recaptchaToken: string) => {
     const newAccount: TaoTaiKhoanTamThoi = {
       ...data,
       id: '0',
@@ -114,7 +119,7 @@ const RegisterPage: React.FC = () => {
 
   return (
     <GoogleReCaptchaProvider
-      reCaptchaKey="6LdKGRYrAAAAAARohWQGLhHKWuVQE_PnjDbfA_Wb"
+      reCaptchaKey={import.meta.env.VITE_RECAPTCHA_SITE_KEY ?? ''}
       scriptProps={{
         async: false,
         defer: true,
@@ -301,29 +306,6 @@ const RegisterPage: React.FC = () => {
                   </span>
                 </div>
               </div>
-
-              {user?.diaChiVi && (
-                <div className="mt-4 rounded-[14px] border border-[var(--clay-border)] bg-[var(--clay-surface-soft)] p-4">
-                  <h4 className="mb-3 flex items-center gap-2 font-medium text-[var(--clay-text)]">
-                    <Wallet className="h-4 w-4 text-[var(--clay-primary)]" aria-hidden="true" />
-                    Số dư HLU Token
-                  </h4>
-                  <div className="flex items-center gap-3">
-                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[var(--clay-primary-light)]">
-                      <span className="text-xs font-bold text-[var(--clay-primary)]">HLU</span>
-                    </div>
-                    <div>
-                      <p className="text-xl font-semibold text-[var(--clay-text)]">
-                        {hluBalance}{' '}
-                        <span className="ml-1 text-sm text-[var(--clay-primary)]">HLU</span>
-                      </p>
-                      <p className="text-xs text-[var(--clay-muted)]">
-                        Bạn sẽ nhận HLU Token khi tham gia các hoạt động trên hệ thống
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              )}
 
               <div className="mt-6 flex justify-center">
                 <Button type="button" variant="primary" size="lg" onClick={handleConfirm}>

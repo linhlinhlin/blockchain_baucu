@@ -9,9 +9,9 @@ namespace WebApplication3.Services
 {
     public interface IBlockchainLookupService
     {
-        Task<string> GetVoterBlockchainAddress(int cuTriId);
-        Task<string> GetCandidateBlockchainAddress(int ungCuVienId);
-        Task<string> GetPrimaryWalletByAccountId(int taiKhoanId);
+        Task<string?> GetVoterBlockchainAddress(int cuTriId);
+        Task<string?> GetCandidateBlockchainAddress(int ungCuVienId);
+        Task<string?> GetPrimaryWalletByAccountId(int taiKhoanId);
     }
 
     public class BlockchainLookupService : IBlockchainLookupService
@@ -30,7 +30,7 @@ namespace WebApplication3.Services
         /// <summary>
         /// Lấy địa chỉ blockchain của cử tri, ưu tiên ví SCW (LoaiVi = 2)
         /// </summary>
-        public async Task<string> GetVoterBlockchainAddress(int cuTriId)
+        public async Task<string?> GetVoterBlockchainAddress(int cuTriId)
         {
             try
             {
@@ -107,7 +107,7 @@ namespace WebApplication3.Services
         /// <summary>
         /// Lấy địa chỉ blockchain của ứng viên, ưu tiên ví SCW (LoaiVi = 2)
         /// </summary>
-        public async Task<string> GetCandidateBlockchainAddress(int ungCuVienId)
+        public async Task<string?> GetCandidateBlockchainAddress(int ungCuVienId)
         {
             try
             {
@@ -251,7 +251,7 @@ namespace WebApplication3.Services
         /// <summary>
         /// Lấy ví của tài khoản, ưu tiên ví SCW (LoaiVi = 2)
         /// </summary>
-        public async Task<string> GetPrimaryWalletByAccountId(int taiKhoanId)
+        public async Task<string?> GetPrimaryWalletByAccountId(int taiKhoanId)
         {
             try
             {

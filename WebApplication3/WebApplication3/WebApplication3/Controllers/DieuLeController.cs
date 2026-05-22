@@ -209,6 +209,12 @@ namespace WebApplication3.Controllers
         [HttpPost]
         public async Task<IActionResult> CreateDieuLe([FromBody] DieuLeDTO dto)
         {
+            if (!dto.CuocBauCuId.HasValue)
+            {
+                return BadRequest(new { message = "Thiếu ID cuộc bầu cử." });
+            }
+
+            var cuocBauCuId = dto.CuocBauCuId.Value;
             var userIdClaim = User.FindFirst("UserID")?.Value;
             if (string.IsNullOrEmpty(userIdClaim) || !int.TryParse(userIdClaim, out int userId))
             {
@@ -216,7 +222,7 @@ namespace WebApplication3.Controllers
             }
 
             // Kiểm tra quyền với cuộc bầu cử
-            var cuocBauCu = await _context.CuocBauCus.FindAsync(dto.CuocBauCuId);
+            var cuocBauCu = await _context.CuocBauCus.FindAsync(cuocBauCuId);
             if (cuocBauCu == null)
             {
                 return NotFound(new { message = "Không tìm thấy cuộc bầu cử." });
@@ -224,14 +230,14 @@ namespace WebApplication3.Controllers
 
             if (cuocBauCu.TaiKhoanId != userId)
             {
-                _logger.LogWarning("Người dùng {UserId} không có quyền tạo điều lệ cho cuộc bầu cử ID {Id}", userId, dto.CuocBauCuId);
+                _logger.LogWarning("Người dùng {UserId} không có quyền tạo điều lệ cho cuộc bầu cử ID {Id}", userId, cuocBauCuId);
                 return StatusCode(403, new { message = "Bạn không có quyền tạo điều lệ cho cuộc bầu cử này." });
             }
 
             // Xác định phiên bản mới
             int phienBanMoi = 1;
             var dieuLeMoiNhat = await _context.DieuLes
-                .Where(d => d.CuocBauCuId == dto.CuocBauCuId)
+                .Where(d => d.CuocBauCuId == cuocBauCuId)
                 .OrderByDescending(d => d.PhienBan)
                 .FirstOrDefaultAsync();
 
@@ -243,7 +249,7 @@ namespace WebApplication3.Controllers
             // Tạo điều lệ mới
             var dieuLeMoi = new DieuLe
             {
-                CuocBauCuId = (int)dto.CuocBauCuId,
+                CuocBauCuId = cuocBauCuId,
                 TieuDe = dto.TieuDe,
                 NoiDung = dto.NoiDung,
                 PhienBan = phienBanMoi,

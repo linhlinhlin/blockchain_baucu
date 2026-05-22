@@ -3,7 +3,7 @@
     // DTO mở rộng để bao gồm URL ảnh
     public class UngCuVienWithImageDTO : UngCuVienDTO
     {
-        public string AnhUrl { get; set; }
-        public object FileInfo { get; set; }
+        public string AnhUrl { get; set; } = string.Empty;
+        public object? FileInfo { get; set; }
     }
 }

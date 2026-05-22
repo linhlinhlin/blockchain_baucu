@@ -4,7 +4,7 @@ Applies to: ASP.NET Core backend work under `WebApplication3/WebApplication3/Web
 
 ## Context
 
-The backend targets `net9.0`. The active path is `/api/election-v1/*` backed by ElectionV1 services and PostgreSQL store. Legacy blockchain services remain behind `LegacyBlockchainSettings.Enabled` and should not be expanded.
+The backend targets `net9.0`. The active path is `/api/election-v1/*` backed by ElectionV1 services and PostgreSQL store. Legacy account-abstraction/private-chain services have been removed; keep wallet DB lookup separate from ElectionV1 chain writes.
 
 ## Commands
 

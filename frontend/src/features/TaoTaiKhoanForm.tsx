@@ -7,8 +7,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { PhoneInput } from 'react-international-phone';
 import 'react-international-phone/style.css';
 import { useSelector } from 'react-redux';
-import type { RootState } from '../store/store/store';
-import type { TaoTaiKhoanTamThoi } from '../store/types';
+import type { TrangThaiDangKyTaiKhoan } from '../store/types';
 import { useGoogleReCaptcha } from 'react-google-recaptcha-v3';
 import { kiemTraTenDangNhapTonTai } from '../api/dangKyTaiKhoanApi';
 import { isRecaptchaEnabled } from '../config/runtimeFlags';
@@ -30,7 +29,26 @@ import {
 } from 'lucide-react';
 
 type Props = {
-  onSave: (newAccount: TaoTaiKhoanTamThoi, recaptchaToken: string) => void;
+  onSave: (newAccount: RegistrationFormValues, recaptchaToken: string) => void;
+};
+
+export type RegistrationFormValues = {
+  ho?: string;
+  ten?: string;
+  email: string;
+  sdt?: string;
+  ngaySinh?: Date | string;
+  tenDangNhap: string;
+  matKhau: string;
+  xacNhanMatKhau?: string;
+  gioiTinh?: boolean | string;
+  agreeTerms?: boolean;
+  recaptcha?: string;
+  apiError?: string;
+};
+
+type RegistrationRootState = {
+  dangKyTaiKhoan: TrangThaiDangKyTaiKhoan;
 };
 
 export function NewAccountForm({ onSave }: Props) {
@@ -42,12 +60,14 @@ export function NewAccountForm({ onSave }: Props) {
     setError,
     clearErrors,
     formState: { errors, isSubmitting: formSubmitting },
-  } = useForm<TaoTaiKhoanTamThoi>({
+  } = useForm<RegistrationFormValues>({
     mode: 'onBlur',
     reValidateMode: 'onBlur',
   });
 
-  const { dangTai, loi } = useSelector((state: RootState) => state.dangKyTaiKhoan);
+  const { dangTai, loi } = useSelector(
+    (state: RegistrationRootState) => state.dangKyTaiKhoan,
+  );
 
   // Local state
   const [usernameChecking, setUsernameChecking] = useState(false);
@@ -92,7 +112,7 @@ export function NewAccountForm({ onSave }: Props) {
 
   // Hiệu ứng tiến trình đăng ký
   useEffect(() => {
-    let interval: NodeJS.Timeout;
+    let interval: ReturnType<typeof setInterval>;
 
     if (isSubmitting && (registrationStage || dangTai)) {
       // Bắt đầu từ 0% và tăng dần đến 95% trong khoảng 15 giây
@@ -191,7 +211,7 @@ export function NewAccountForm({ onSave }: Props) {
     }
   };
 
-  const onSubmit = async (data: TaoTaiKhoanTamThoi) => {
+  const onSubmit = async (data: RegistrationFormValues) => {
     if (!agreeTerms) {
       setError('agreeTerms', {
         type: 'manual',

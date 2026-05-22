@@ -4,7 +4,11 @@
   // shell + lớp clay + routeMeta và toàn bộ import-graph của chúng.
   // Dùng: npm run typecheck:active
   "extends": "./tsconfig.json",
-  "compilerOptions": { "noEmit": true },
+  "compilerOptions": {
+    "noEmit": true,
+    "allowJs": false,
+    "types": []
+  },
   "include": [
     "src/vite-env.d.ts",
     "src/components/ui/clay",
