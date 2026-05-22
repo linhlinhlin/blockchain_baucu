@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react';
-import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import {
+  ArrowLeft,
   ArrowRight,
   CheckCircle2,
   CircleAlert,
@@ -88,6 +89,71 @@ function buildSharedRosterInviteUrl(draft: ElectionV1RosterDraft) {
 
   const origin = typeof window === 'undefined' ? 'http://localhost:3000' : window.location.origin;
   return `${origin}/verify-voter?groupKey=${encodeURIComponent(draft.groupKey)}`;
+}
+
+function getRequirementAction(requirement: Requirement | null) {
+  if (!requirement) {
+    return {
+      label: 'Đã đủ điều kiện tạo ballot',
+      detail: 'Kiểm tra lần cuối ở bước xác nhận rồi tạo ballot hoặc roster xác thực.',
+    };
+  }
+
+  const copy: Record<string, { label: string; detail: string }> = {
+    jwt: {
+      label: 'Đăng nhập lại tài khoản quản trị',
+      detail: 'Phiên đăng nhập cần hợp lệ trước khi backend nhận yêu cầu tạo ballot.',
+    },
+    wallet: {
+      label: 'Kết nối ví MetaMask',
+      detail: 'Ví này sẽ là admin wallet của các ballot được tạo trên Sepolia.',
+    },
+    network: {
+      label: 'Chuyển MetaMask sang Sepolia',
+      detail: 'Mạng ví phải là Sepolia trước khi tạo ballot bằng danh sách ví trực tiếp.',
+    },
+    title: {
+      label: 'Nhập tên đợt bầu cử',
+      detail: 'Tên giúp admin và cử tri nhận diện đúng ballot trong dashboard.',
+    },
+    schedule: {
+      label: 'Kiểm tra lại lịch commit/reveal',
+      detail: 'Commit start phải ở tương lai và thứ tự phải là start < end < reveal.',
+    },
+    positions: {
+      label: 'Hoàn thiện chức vụ và ứng viên',
+      detail: 'Cần ít nhất 1 chức vụ, mỗi chức vụ có từ 2 ứng viên có tên.',
+    },
+    'candidate-wallets': {
+      label: 'Sửa ví ứng viên sai định dạng',
+      detail: 'Ví ứng viên là tùy chọn, nhưng nếu nhập thì phải đúng dạng 0x…40 ký tự.',
+    },
+    'voter-wallets': {
+      label: 'Thêm ví cử tri',
+      detail: 'Danh sách ví trực tiếp cần ít nhất 1 ví cử tri hợp lệ.',
+    },
+    'voter-wallet-format': {
+      label: 'Sửa địa chỉ ví cử tri',
+      detail: 'Mỗi địa chỉ phải đúng dạng 0x…40 ký tự để tạo Merkle eligibility.',
+    },
+    'voter-wallet-duplicates': {
+      label: 'Xóa ví cử tri bị trùng',
+      detail: 'Một ví chỉ được xuất hiện một lần trong cùng ballot.',
+    },
+    roster: {
+      label: 'Nhập roster cử tri',
+      detail: 'Mỗi dòng roster gồm họ tên, email và mã sinh viên nếu có.',
+    },
+    'roster-format': {
+      label: 'Sửa dòng roster thiếu tên/email',
+      detail: 'Roster cần họ tên và email hợp lệ để gửi OTP xác thực.',
+    },
+  };
+
+  return copy[requirement.id] ?? {
+    label: requirement.label,
+    detail: 'Hoàn tất mục này trước khi chuyển sang bước tạo ballot.',
+  };
 }
 
 export default function TaoCuocBauCuPage() {
@@ -196,6 +262,26 @@ export default function TaoCuocBauCuPage() {
   );
   const isReadyToSubmit = !firstInvalidRequirement;
   const showInlineErrors = submitAttempted;
+  const filledPositionCount = normalizedPositions.length;
+  const filledCandidateCount = normalizedPositions.reduce(
+    (total, position) => total + position.candidates.length,
+    0,
+  );
+  const voterCount =
+    voterMode === 'wallets' ? parsedVoterWallets.length : parsedRosterVoters.length;
+  const outstandingRequirements = requirements.filter((requirement) => !requirement.ok);
+  const nextAction = getRequirementAction(firstInvalidRequirement);
+  const walletTone = currentAccount ? (isNetworkConnected ? 'success' : 'warning') : 'neutral';
+  const walletLabel = currentAccount
+    ? isNetworkConnected
+      ? 'Ví Sepolia'
+      : 'Cần Sepolia'
+    : 'Chưa nối ví';
+  const walletActionLabel = !isMetaMaskInstalled
+    ? 'Cài MetaMask'
+    : currentAccount
+      ? 'Kiểm tra Sepolia'
+      : 'Kết nối MetaMask';
 
   useEffect(() => {
     if (!draftKeyFromUrl || !accessToken) {
@@ -464,6 +550,20 @@ export default function TaoCuocBauCuPage() {
     }
   }
 
+  async function handleWalletSetup() {
+    if (!isMetaMaskInstalled) {
+      window.open('https://metamask.io/download/', '_blank', 'noopener,noreferrer');
+      return;
+    }
+
+    if (currentAccount) {
+      await ensureNetworkAndToken();
+      return;
+    }
+
+    await connectWallet();
+  }
+
   // ── Đợt 10 US3: trạng thái bước (chỉ trình bày; suy từ điều kiện inline cũ) ──
   const stepError = {
     b1: showInlineErrors && title.trim().length === 0,
@@ -483,7 +583,7 @@ export default function TaoCuocBauCuPage() {
   const stepOrder: Array<'b1' | 'b2' | 'b3' | 'b4'> = ['b1', 'b2', 'b3', 'b4'];
   const stepTitles: Record<'b1' | 'b2' | 'b3' | 'b4', string> = {
     b1: 'Thông tin',
-    b2: 'Vị trí & ứng viên',
+    b2: 'Chức vụ & ứng viên',
     b3: 'Lịch & cử tri',
     b4: 'Xác nhận & triển khai',
   };
@@ -502,7 +602,8 @@ export default function TaoCuocBauCuPage() {
 
   const rail = (
     <SummaryRail
-      title="Tóm tắt & trạng thái"
+      title="Tình trạng tạo ballot"
+      className="xl:max-h-[calc(100vh-14rem)] xl:overflow-auto"
       footer={
         <div
           className="rounded-[12px] border border-[var(--clay-border)] bg-[var(--clay-surface-soft)] px-3 py-2 text-[13px] leading-relaxed text-[var(--clay-text)]"
@@ -513,58 +614,89 @@ export default function TaoCuocBauCuPage() {
       }
     >
       <div className="flex flex-wrap gap-1.5">
-        <StatusBadge tone={isNetworkConnected ? 'success' : 'danger'}>
-          {isNetworkConnected ? 'Sepolia' : 'Sai mạng'}
-        </StatusBadge>
-        <StatusBadge tone={currentAccount ? 'success' : 'neutral'}>
-          {currentAccount ? 'Ví đã kết nối' : 'Chưa kết nối ví'}
-        </StatusBadge>
         <StatusBadge tone={accessToken ? 'success' : 'warning'}>
-          JWT {accessToken ? 'sẵn sàng' : 'thiếu'}
+          {accessToken ? 'Đã đăng nhập' : 'Cần đăng nhập'}
+        </StatusBadge>
+        <StatusBadge tone={walletTone}>{walletLabel}</StatusBadge>
+        <StatusBadge tone={voterMode === 'wallets' ? 'neutral' : 'warning'}>
+          {voterMode === 'wallets' ? 'Ví trực tiếp' : 'Roster OTP'}
         </StatusBadge>
       </div>
-      <SummaryRow label="Admin wallet" value={shortenAddress(currentAccount)} />
-      <SummaryRow
-        label="Tài khoản"
-        value={currentUser?.tenHienThi ?? currentUser?.tenDangNhap ?? 'n/a'}
-      />
-      <SummaryRow label="Số chức vụ" value={normalizedPositions.length} />
-      <SummaryRow
-        label={voterMode === 'wallets' ? 'Cử tri hợp lệ' : 'Dòng roster'}
-        value={voterMode === 'wallets' ? parsedVoterWallets.length : parsedRosterVoters.length}
-      />
-      <div className="space-y-1.5 border-t border-[var(--clay-border)] pt-3">
-        {requirements.map((r) => (
-          <div key={r.id} className="flex items-start gap-2 text-[13px]">
-            {r.ok ? (
-              <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[var(--state-success)]" aria-hidden="true" />
-            ) : (
-              <XCircle className="mt-0.5 h-4 w-4 shrink-0 text-[var(--state-danger)]" aria-hidden="true" />
-            )}
-            <span className={r.ok ? 'text-[var(--clay-muted)]' : 'text-[var(--clay-text)]'}>
-              {r.label}
-            </span>
-          </div>
-        ))}
+
+      <div className="grid gap-2">
+        <SummaryRow
+          label="Tài khoản"
+          value={currentUser?.tenHienThi ?? currentUser?.tenDangNhap ?? 'n/a'}
+        />
+        <SummaryRow label="Ví tạo" value={currentAccount ? shortenAddress(currentAccount) : 'Chưa nối'} />
+        <SummaryRow
+          label="Chức vụ"
+          value={`${filledPositionCount}/${positions.length} · ${filledCandidateCount} ứng viên`}
+        />
+        <SummaryRow
+          label={voterMode === 'wallets' ? 'Cử tri ví' : 'Cử tri roster'}
+          value={voterCount}
+        />
+        <SummaryRow label="Lịch" value={scheduleState.isValid ? 'Hợp lệ' : 'Cần sửa'} />
       </div>
+
+      <div className="rounded-[14px] border border-[var(--clay-border)] bg-[var(--clay-surface-soft)] p-3">
+        <p className="text-[11px] font-semibold uppercase text-[var(--clay-muted)]">Cần làm tiếp</p>
+        <p className="mt-1 text-[15px] font-semibold text-[var(--clay-text)]">{nextAction.label}</p>
+        <p className="mt-1 text-[13px] leading-relaxed text-[var(--clay-muted)]">{nextAction.detail}</p>
+        <Button
+          type="button"
+          variant={firstInvalidRequirement ? 'secondary' : 'primary'}
+          size="sm"
+          className="mt-3 w-full"
+          onClick={() =>
+            firstInvalidRequirement ? focusRequirement(firstInvalidRequirement) : goto('b4')
+          }
+          iconRight={<ArrowRight className="h-4 w-4" aria-hidden="true" />}
+        >
+          {firstInvalidRequirement ? 'Đi tới mục cần sửa' : 'Tới bước xác nhận'}
+        </Button>
+      </div>
+
       <div className="grid gap-2 border-t border-[var(--clay-border)] pt-3">
         <Button
           id="connect-wallet-button"
           type="button"
-          variant="secondary"
-          size="lg"
-          onClick={() => void connectWallet()}
+          variant={currentAccount ? 'ghost' : 'secondary'}
+          size="md"
+          onClick={() => void handleWalletSetup()}
           iconLeft={<Wallet className="h-4 w-4" aria-hidden="true" />}
         >
-          {currentAccount ? 'Đổi / kết nối lại MetaMask' : 'Kết nối MetaMask'}
+          {walletActionLabel}
         </Button>
-        <Link
-          to="/app/dashboard"
-          className="inline-flex min-h-[44px] items-center justify-center gap-2 rounded-[12px] border border-[var(--clay-primary)] px-5 text-[15px] text-[var(--clay-primary)] hover:bg-[var(--clay-primary-light)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--clay-primary-focus)]"
-        >
-          <ArrowRight className="h-4 w-4" aria-hidden="true" />
-          Về bảng điều khiển
-        </Link>
+      </div>
+
+      <div className="space-y-2 border-t border-[var(--clay-border)] pt-3">
+        <div className="flex items-center gap-2 text-[13px] font-medium text-[var(--clay-text)]">
+          {outstandingRequirements.length === 0 ? (
+            <CheckCircle2 className="h-4 w-4 text-[var(--state-success)]" aria-hidden="true" />
+          ) : (
+            <XCircle className="h-4 w-4 text-[var(--state-danger)]" aria-hidden="true" />
+          )}
+          {outstandingRequirements.length === 0
+            ? 'Đã đủ điều kiện'
+            : `Còn ${outstandingRequirements.length} mục cần hoàn tất`}
+        </div>
+        {outstandingRequirements.slice(0, 3).map((requirement) => (
+          <button
+            key={requirement.id}
+            type="button"
+            onClick={() => focusRequirement(requirement)}
+            className="block w-full rounded-[10px] px-2 py-1.5 text-left text-[13px] leading-snug text-[var(--clay-muted)] hover:bg-[var(--clay-surface-soft)] hover:text-[var(--clay-text)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[var(--clay-primary-focus)]"
+          >
+            {requirement.label}
+          </button>
+        ))}
+        {outstandingRequirements.length > 3 && (
+          <p className="px-2 text-[12px] text-[var(--clay-muted)]">
+            +{outstandingRequirements.length - 3} mục khác
+          </p>
+        )}
       </div>
     </SummaryRail>
   );
@@ -572,15 +704,25 @@ export default function TaoCuocBauCuPage() {
   const stepNavButtons = (prev?: 'b1' | 'b2' | 'b3', next?: 'b2' | 'b3' | 'b4') => (
     <div className="mt-6 flex items-center justify-between gap-3">
       {prev ? (
-        <Button type="button" variant="ghost" onClick={() => goto(prev)}>
-          ← Quay lại
+        <Button
+          type="button"
+          variant="ghost"
+          onClick={() => goto(prev)}
+          iconLeft={<ArrowLeft className="h-4 w-4" aria-hidden="true" />}
+        >
+          Quay lại
         </Button>
       ) : (
         <span />
       )}
       {next && (
-        <Button type="button" variant="primary" onClick={() => goto(next)}>
-          Tiếp tục →
+        <Button
+          type="button"
+          variant="primary"
+          onClick={() => goto(next)}
+          iconRight={<ArrowRight className="h-4 w-4" aria-hidden="true" />}
+        >
+          Tiếp tục
         </Button>
       )}
     </div>
@@ -594,7 +736,7 @@ export default function TaoCuocBauCuPage() {
             Tạo bầu cử
           </h1>
           <p className="mt-1 text-[15px] text-[var(--clay-muted)]">
-            Thiết lập thông tin, vị trí, lịch và danh sách cử tri cho đợt bầu cử trên Sepolia.
+            Thiết lập thông tin, chức vụ, lịch và danh sách cử tri cho đợt bầu cử trên Sepolia.
           </p>
         </div>
 
@@ -655,11 +797,11 @@ export default function TaoCuocBauCuPage() {
               </div>
             </Wizard.Panel>
 
-            {/* ───────── Bước 2: Vị trí & ứng viên ───────── */}
+            {/* ───────── Bước 2: Chức vụ & ứng viên ───────── */}
             <Wizard.Panel value="b2">
               <div data-wizard-step="b2" id="positions-section">
                 <SectionCard
-                  title="Vị trí & ứng viên"
+                  title="Chức vụ & ứng viên"
                   description="Mỗi chức vụ cần ≥ 2 ứng viên có tên."
                   actions={
                     <Button
@@ -963,9 +1105,9 @@ export default function TaoCuocBauCuPage() {
                   }
                 >
                   <div className="grid gap-3 sm:grid-cols-2">
-                    <SummaryRow label="Admin wallet" value={shortenAddress(currentAccount)} />
-                    <SummaryRow label="Mạng ví" value={isNetworkConnected ? 'Sepolia' : 'Sai mạng'} />
-                    <SummaryRow label="Số chức vụ" value={normalizedPositions.length} />
+                    <SummaryRow label="Ví tạo" value={currentAccount ? shortenAddress(currentAccount) : 'Chưa nối'} />
+                    <SummaryRow label="Mạng ví" value={currentAccount ? (isNetworkConnected ? 'Sepolia' : 'Cần Sepolia') : 'Chưa nối ví'} />
+                    <SummaryRow label="Chức vụ" value={`${filledPositionCount}/${positions.length} đã nhập`} />
                     <SummaryRow
                       label={voterMode === 'wallets' ? 'Cử tri hợp lệ' : 'Dòng roster'}
                       value={
@@ -995,8 +1137,13 @@ export default function TaoCuocBauCuPage() {
                     </Button>
                   </div>
                   <div className="mt-4">
-                    <Button type="button" variant="ghost" onClick={() => goto('b3')}>
-                      ← Quay lại
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      onClick={() => goto('b3')}
+                      iconLeft={<ArrowLeft className="h-4 w-4" aria-hidden="true" />}
+                    >
+                      Quay lại
                     </Button>
                   </div>
                 </SectionCard>

@@ -220,12 +220,12 @@ export function buildCreateFlowRequirements(input: {
   return [
     {
       id: 'jwt',
-      label: 'JWT hợp lệ',
+      label: 'Phiên đăng nhập hợp lệ',
       ok: Boolean(input.accessToken),
     },
     {
       id: 'wallet',
-      label: 'MetaMask đã kết nối',
+      label: 'Kết nối ví MetaMask',
       ok: Boolean(input.currentAccount),
       targetId: 'connect-wallet-button',
     },
@@ -233,7 +233,7 @@ export function buildCreateFlowRequirements(input: {
       ? [
           {
             id: 'network',
-            label: 'Mạng Sepolia',
+            label: 'Ví đang ở mạng Sepolia',
             ok: input.isNetworkConnected,
             targetId: 'connect-wallet-button',
           },
@@ -247,7 +247,7 @@ export function buildCreateFlowRequirements(input: {
     },
     {
       id: 'schedule',
-      label: 'Lịch hợp lệ: start < end < reveal và start ở tương lai',
+      label: 'Lịch commit/reveal hợp lệ',
       ok: input.scheduleIsValid,
       targetId: 'commit-start',
     },
