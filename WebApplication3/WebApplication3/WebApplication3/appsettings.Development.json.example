@@ -31,9 +31,10 @@
     "AccessTokenMinutes": 15
   },
   "ElectionV1Settings": {
-    "_note": "ContractsRootPath: thu muc blockchain_sm (auto-resolve neu de trong). RpcUrl: Sepolia RPC cho read.",
+    "_note": "ContractsRootPath: thu muc blockchain_sm (auto-resolve neu de trong). RpcUrl: Sepolia RPC cho read. FactoryAddress: optional fallback neu chua co deployments/sepolia/factory-latest.json.",
     "ContractsRootPath": "",
-    "RpcUrl": "https://ethereum-sepolia-rpc.publicnode.com"
+    "RpcUrl": "https://ethereum-sepolia-rpc.publicnode.com",
+    "FactoryAddress": ""
   },
   "AppSettings": {
     "DisableHttpsRedirection": true

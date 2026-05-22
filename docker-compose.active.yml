@@ -38,7 +38,11 @@ services:
       ConnectionStrings__ElectionV1StoreConnection: Host=postgres;Port=5432;Database=holihu_electionv1;Username=holihu;Password=holihu
       ElectionV1StoreSettings__Provider: postgres
       ElectionV1Settings__ContractsRootPath: /workspace/blockchain_sm
-      ElectionV1Settings__RpcUrl: "https://ethereum-sepolia-rpc.publicnode.com"
+      ElectionV1Settings__RpcUrl: ${SEPOLIA_RPC_URL:-https://ethereum-sepolia-rpc.publicnode.com}
+      ElectionV1Settings__FactoryAddress: ${FACTORY_ADDRESS:-}
+      FACTORY_ADDRESS: ${FACTORY_ADDRESS:-}
+      SEPOLIA_RPC_URL: ${SEPOLIA_RPC_URL:-https://ethereum-sepolia-rpc.publicnode.com}
+      SEPOLIA_PRIVATE_KEYS: ${SEPOLIA_PRIVATE_KEYS:-}
       DevelopmentAuthSettings__Enabled: "true"
       RecaptchaSettings__Enabled: ${RECAPTCHA_ENABLED:-false}
       RecaptchaSettings__SecretKey: ${RECAPTCHA_SECRET_KEY:-}
@@ -74,7 +78,7 @@ services:
       VITE_API_BASE_URL: http://localhost:5293
       VITE_RECAPTCHA_ENABLED: ${VITE_RECAPTCHA_ENABLED:-false}
       VITE_RECAPTCHA_SITE_KEY: ${RECAPTCHA_SITE_KEY:-}
-      VITE_RPC_URL: https://ethereum-sepolia-rpc.publicnode.com
+      VITE_RPC_URL: ${SEPOLIA_RPC_URL:-https://ethereum-sepolia-rpc.publicnode.com}
     ports:
       - "3000:3000"
 
