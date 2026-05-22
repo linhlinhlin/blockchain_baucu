@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
+import { useSelector } from 'react-redux';
 import {
   ArrowLeft,
   ArrowRight,
@@ -27,14 +28,18 @@ import {
   StatusBadge,
   type StatusTone,
 } from '../components/ui/clay';
-import { formatUnix, getErrorMessage, getPhaseLabel, shortenAddress } from '../utils/electionHelpers';
+import { formatUnix, getErrorMessage, getPhaseLabel, normalizeAddress, shortenAddress } from '../utils/electionHelpers';
 import {
   buildElectionConsolePath,
   describeGroupPositions,
   describePositionCount,
   describeVoterCount,
   getElectionGroupMilestone,
+  getViewerRoleLabel,
+  getViewerRoleTone,
 } from '../utils/electionListPresentation';
+import { useWeb3 } from '../context/Web3Context';
+import type { RootState } from '../store/store';
 import {
   DEFAULT_SEPOLIA_EXPLORER_BASE_URL,
   buildExplorerTransactionUrl,
@@ -133,7 +138,7 @@ function PositionCard({ position, index }: { position: ElectionV1ListItem; index
             rel="noopener noreferrer"
             className="inline-flex min-h-[36px] items-center justify-center gap-1.5 rounded-[10px] border border-[var(--clay-border)] px-3 text-[13px] text-[var(--clay-text)] hover:bg-[var(--clay-surface-soft)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--clay-primary-focus)]"
           >
-            Contract
+            Hợp đồng
             <ExternalLink className="h-3.5 w-3.5" aria-hidden="true" />
           </a>
           {txUrl && (
@@ -173,7 +178,13 @@ function PositionCard({ position, index }: { position: ElectionV1ListItem; index
 export default function ElectionV1GroupDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { currentAccount } = useWeb3();
+  const currentUser = useSelector((state: RootState) => state.dangNhapTaiKhoan.taiKhoan);
   const groupIdentifier = decodeRouteParam(id);
+  const viewerAddress = useMemo(
+    () => normalizeAddress(currentAccount ?? currentUser?.diaChiVi),
+    [currentAccount, currentUser?.diaChiVi],
+  );
   const [detail, setDetail] = useState<ElectionV1GroupDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -191,7 +202,7 @@ export default function ElectionV1GroupDetailPage() {
       setLoading(true);
       setError(null);
       try {
-        const response = await getElectionV1GroupDetail(groupIdentifier);
+        const response = await getElectionV1GroupDetail(groupIdentifier, viewerAddress || null);
         if (active) {
           setDetail(response);
         }
@@ -211,7 +222,7 @@ export default function ElectionV1GroupDetailPage() {
     return () => {
       active = false;
     };
-  }, [groupIdentifier]);
+  }, [groupIdentifier, viewerAddress]);
 
   const phase = detail ? getPhaseLabel(detail) : 'Chờ bắt đầu';
   const milestone = detail ? getElectionGroupMilestone(detail) : null;
@@ -219,6 +230,12 @@ export default function ElectionV1GroupDetailPage() {
     if (!detail) return '/app/dashboard';
     return buildElectionConsolePath(detail.groupKey, detail.positions[0]?.address);
   }, [detail]);
+  const consoleActionLabel =
+    detail?.viewerRole === 'owner'
+      ? 'Mở bảng điều khiển vận hành'
+      : detail?.viewerRole === 'voter'
+        ? 'Vào bỏ phiếu'
+        : 'Xem kết quả và nhật ký';
 
   if (loading) {
     return (
@@ -261,6 +278,7 @@ export default function ElectionV1GroupDetailPage() {
           <div className="mt-3 flex flex-wrap items-center gap-2">
             <StatusBadge tone={phaseTone(phase)}>{phase}</StatusBadge>
             <StatusBadge tone="info">ElectionV1 · Sepolia</StatusBadge>
+            <StatusBadge tone={getViewerRoleTone(detail)}>{getViewerRoleLabel(detail)}</StatusBadge>
           </div>
           <h1 className="mt-3 text-[1.75rem] font-semibold leading-tight text-[var(--clay-text)]">
             {detail.title}
@@ -278,7 +296,7 @@ export default function ElectionV1GroupDetailPage() {
             iconLeft={<BarChart3 className="h-4 w-4" aria-hidden="true" />}
             iconRight={<ArrowRight className="h-4 w-4" aria-hidden="true" />}
           >
-            Mở bảng điều khiển
+            {consoleActionLabel}
           </Button>
           <Link
             to="/app/elections/new"
@@ -333,7 +351,7 @@ export default function ElectionV1GroupDetailPage() {
               <div>
                 <h2 className="text-[18px] font-semibold text-[var(--clay-text)]">Chức vụ và ứng viên</h2>
                 <p className="mt-1 text-sm text-[var(--clay-muted)]">
-                  Mỗi chức vụ là một contract ElectionV1 riêng để kiểm chứng kết quả độc lập.
+                  Mỗi chức vụ là một hợp đồng ElectionV1 riêng để kiểm chứng kết quả độc lập.
                 </p>
               </div>
               <StatusBadge tone="neutral">{describePositionCount(detail.positionCount)}</StatusBadge>
@@ -348,7 +366,7 @@ export default function ElectionV1GroupDetailPage() {
               <EmptyState
                 icon={<ListChecks className="h-6 w-6" aria-hidden="true" />}
                 title="Chưa có chức vụ"
-                description="Bầu cử này chưa có contract chức vụ để quản lý."
+                description="Bầu cử này chưa có hợp đồng chức vụ để quản lý."
               />
             )}
           </Panel>
@@ -383,7 +401,7 @@ export default function ElectionV1GroupDetailPage() {
             </div>
             <div className="mt-4 space-y-3 text-sm text-[var(--clay-muted)]">
               <p>
-                Xem contract từng chức vụ hoặc mã giao dịch tạo bầu cử trên Sepolia để đối chiếu dữ liệu on-chain.
+                Xem hợp đồng từng chức vụ hoặc mã giao dịch tạo bầu cử trên Sepolia để đối chiếu dữ liệu blockchain.
               </p>
               <Button
                 type="button"
@@ -393,8 +411,12 @@ export default function ElectionV1GroupDetailPage() {
                 onClick={() => navigate(consolePath)}
                 iconRight={<ArrowRight className="h-4 w-4" aria-hidden="true" />}
               >
-                Mở bảng điều khiển
+                {consoleActionLabel}
               </Button>
+              <p className="text-[13px] leading-6 text-[var(--clay-muted)]">
+                Kết quả từng chức vụ và nhật ký giao dịch ghi nhận phiếu, mở phiếu, chốt kết quả nằm trong màn
+                này để người quản trị và cử tri đối chiếu cùng một nguồn dữ liệu.
+              </p>
             </div>
           </Panel>
         </aside>

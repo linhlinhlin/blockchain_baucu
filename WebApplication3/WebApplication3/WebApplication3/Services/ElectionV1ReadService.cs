@@ -93,11 +93,12 @@ public sealed class ElectionV1ReadService
             .ToList();
     }
 
-    public IReadOnlyList<ElectionV1GroupListItemDto> ListElectionGroups()
+    public IReadOnlyList<ElectionV1GroupListItemDto> ListElectionGroups(string? viewerAddress = null)
     {
+        var normalizedViewer = NormalizeOptionalAddress(viewerAddress);
         return LoadRecords()
             .GroupBy(ResolveGroupKey, StringComparer.OrdinalIgnoreCase)
-            .Select(group => ToGroupListItem(group.Key, group.ToList()))
+            .Select(group => ToGroupListItem(group.Key, group.ToList(), normalizedViewer))
             .OrderBy(item => GetPhasePriority(item.CommitStart, item.CommitEnd, item.RevealEnd))
             .ThenByDescending(item => item.BlockNumber)
             .ToList();
@@ -165,9 +166,10 @@ public sealed class ElectionV1ReadService
         };
     }
 
-    public ElectionV1GroupDetailDto? GetElectionGroup(string identifier)
+    public ElectionV1GroupDetailDto? GetElectionGroup(string identifier, string? viewerAddress = null)
     {
         var normalizedIdentifier = identifier.Trim();
+        var normalizedViewer = NormalizeOptionalAddress(viewerAddress);
         var records = LoadRecords()
             .GroupBy(ResolveGroupKey, StringComparer.OrdinalIgnoreCase)
             .FirstOrDefault(group =>
@@ -195,6 +197,8 @@ public sealed class ElectionV1ReadService
             PositionCount = items.Count,
             BlockNumber = items.Max(item => item.BlockNumber),
             CreatedAt = items.OrderBy(item => item.CreatedAt).Select(item => item.CreatedAt).FirstOrDefault(),
+            ViewerRole = ResolveViewerRole(first.Admin, items, normalizedViewer),
+            ViewerEligiblePositionCount = CountEligiblePositions(items, normalizedViewer),
             Positions = items
                 .OrderBy(item => item.BallotOrder)
                 .ThenBy(item => item.Title)
@@ -515,6 +519,52 @@ public sealed class ElectionV1ReadService
             : address;
     }
 
+    private static string? NormalizeOptionalAddress(string? address)
+    {
+        if (string.IsNullOrWhiteSpace(address))
+        {
+            return null;
+        }
+
+        return NormalizeAddress(address);
+    }
+
+    private static bool HasEligibilityProof(ElectionV1NormalizedRecord record, string normalizedViewer)
+    {
+        return record.Eligibility?.Proofs?.Keys.Any(address =>
+            string.Equals(NormalizeAddress(address), normalizedViewer, StringComparison.OrdinalIgnoreCase)) ?? false;
+    }
+
+    private static int CountEligiblePositions(
+        IReadOnlyList<ElectionV1NormalizedRecord> records,
+        string? normalizedViewer)
+    {
+        if (string.IsNullOrWhiteSpace(normalizedViewer))
+        {
+            return 0;
+        }
+
+        return records.Count(record => HasEligibilityProof(record, normalizedViewer));
+    }
+
+    private static string ResolveViewerRole(
+        string adminAddress,
+        IReadOnlyList<ElectionV1NormalizedRecord> records,
+        string? normalizedViewer)
+    {
+        if (string.IsNullOrWhiteSpace(normalizedViewer))
+        {
+            return "unknown";
+        }
+
+        if (string.Equals(NormalizeAddress(adminAddress), normalizedViewer, StringComparison.OrdinalIgnoreCase))
+        {
+            return "owner";
+        }
+
+        return CountEligiblePositions(records, normalizedViewer) > 0 ? "voter" : "observer";
+    }
+
     private static string ToBytes32Hex(byte[]? value)
     {
         if (value is null || value.Length == 0)
@@ -566,7 +616,10 @@ public sealed class ElectionV1ReadService
         return record.Address;
     }
 
-    private ElectionV1GroupListItemDto ToGroupListItem(string groupKey, IReadOnlyList<ElectionV1NormalizedRecord> records)
+    private ElectionV1GroupListItemDto ToGroupListItem(
+        string groupKey,
+        IReadOnlyList<ElectionV1NormalizedRecord> records,
+        string? normalizedViewer)
     {
         var first = records[0];
         return new ElectionV1GroupListItemDto
@@ -582,6 +635,8 @@ public sealed class ElectionV1ReadService
             PositionCount = records.Count,
             BlockNumber = records.Max(item => item.BlockNumber),
             CreatedAt = records.OrderBy(item => item.CreatedAt).Select(item => item.CreatedAt).FirstOrDefault(),
+            ViewerRole = ResolveViewerRole(first.Admin, records, normalizedViewer),
+            ViewerEligiblePositionCount = CountEligiblePositions(records, normalizedViewer),
             Positions = records
                 .OrderBy(item => item.BallotOrder)
                 .ThenBy(item => item.Title)
@@ -653,6 +708,8 @@ public class ElectionV1GroupListItemDto
     public int PositionCount { get; set; }
     public long BlockNumber { get; set; }
     public string? CreatedAt { get; set; }
+    public string ViewerRole { get; set; } = "unknown";
+    public int ViewerEligiblePositionCount { get; set; }
     public IReadOnlyList<ElectionV1ListItemDto> Positions { get; set; } = Array.Empty<ElectionV1ListItemDto>();
 }
 

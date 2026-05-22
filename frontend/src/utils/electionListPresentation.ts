@@ -14,6 +14,8 @@ export interface ElectionGroupMilestone {
   timestamp: number;
 }
 
+export type ElectionListScope = 'all' | 'managed' | 'eligible';
+
 export function buildElectionDetailPath(groupKey: string): string {
   return `/app/elections/${encodeURIComponent(groupKey)}`;
 }
@@ -30,7 +32,7 @@ export function buildElectionConsolePath(groupKey: string, electionAddress?: str
 export function filterElectionGroups(
   items: ElectionV1GroupListItem[],
   searchTerm: string,
-  mineOnly: boolean,
+  scope: ElectionListScope,
   knownWallets: ReadonlySet<string>,
 ): ElectionV1GroupListItem[] {
   const normalizedQuery = searchTerm.trim().toLowerCase();
@@ -50,12 +52,33 @@ export function filterElectionGroups(
       .toLowerCase();
 
     const matchesSearch = !normalizedQuery || haystack.includes(normalizedQuery);
-    const matchesOwner =
-      !mineOnly ||
+    const isManaged =
+      item.viewerRole === 'owner' ||
       (normalizedWallets.size > 0 && normalizedWallets.has(normalizeAddress(item.admin)));
+    const isEligible = (item.viewerEligiblePositionCount ?? 0) > 0 || item.viewerRole === 'voter';
+    const matchesScope =
+      scope === 'all' ||
+      (scope === 'managed' && isManaged) ||
+      (scope === 'eligible' && isEligible);
 
-    return matchesSearch && matchesOwner;
+    return matchesSearch && matchesScope;
   });
+}
+
+export function getViewerRoleLabel(item: ElectionV1GroupListItem): string {
+  if (item.viewerRole === 'owner') return 'Bạn quản trị';
+  if (item.viewerRole === 'voter') {
+    const count = item.viewerEligiblePositionCount ?? 0;
+    return count > 1 ? `Có quyền bỏ phiếu ${count} chức vụ` : 'Có quyền bỏ phiếu';
+  }
+  if (item.viewerRole === 'observer') return 'Chỉ xem';
+  return 'Chưa xác định vai trò';
+}
+
+export function getViewerRoleTone(item: ElectionV1GroupListItem): 'success' | 'info' | 'neutral' {
+  if (item.viewerRole === 'owner') return 'success';
+  if (item.viewerRole === 'voter') return 'info';
+  return 'neutral';
 }
 
 export function getElectionListStats(items: ElectionV1GroupListItem[]): ElectionListStats {

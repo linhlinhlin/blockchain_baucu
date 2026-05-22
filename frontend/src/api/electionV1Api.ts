@@ -86,6 +86,8 @@ export interface ElectionV1GroupListItem {
   positionCount: number;
   blockNumber: number;
   createdAt?: string | null;
+  viewerRole?: 'owner' | 'voter' | 'observer' | 'unknown' | string;
+  viewerEligiblePositionCount?: number;
   positions: ElectionV1ListItem[];
 }
 
@@ -395,6 +397,8 @@ export function synthesizeElectionGroups(items: ElectionV1ListItem[]): ElectionV
         positionCount: ordered.length,
         blockNumber: Math.max(...ordered.map((item) => item.blockNumber)),
         createdAt: [...ordered].sort((a, b) => (a.createdAt ?? '').localeCompare(b.createdAt ?? ''))[0]?.createdAt ?? null,
+        viewerRole: 'unknown',
+        viewerEligiblePositionCount: 0,
         positions: ordered,
       } satisfies ElectionV1GroupListItem;
     })
@@ -411,9 +415,14 @@ export async function listElectionV1() {
   return response.data.items ?? [];
 }
 
-export async function listElectionV1Groups() {
+export async function listElectionV1Groups(viewerAddress?: string | null) {
   try {
-    const response = await apiClient.get<{ items: ElectionV1GroupListItem[] }>('/api/election-v1/election-groups');
+    const response = await apiClient.get<{ items: ElectionV1GroupListItem[] }>(
+      '/api/election-v1/election-groups',
+      {
+        params: viewerAddress ? { viewerAddress } : undefined,
+      },
+    );
     return response.data.items ?? [];
   } catch (error) {
     if (!isNotFoundError(error)) {
@@ -432,10 +441,13 @@ export async function getElectionV1Detail(identifier: string, viewerAddress?: st
   return response.data;
 }
 
-export async function getElectionV1GroupDetail(identifier: string) {
+export async function getElectionV1GroupDetail(identifier: string, viewerAddress?: string | null) {
   try {
     const response = await apiClient.get<ElectionV1GroupDetail>(
       `/api/election-v1/election-groups/${encodeURIComponent(identifier)}`,
+      {
+        params: viewerAddress ? { viewerAddress } : undefined,
+      },
     );
     return response.data;
   } catch (error) {
