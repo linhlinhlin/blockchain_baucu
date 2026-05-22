@@ -282,7 +282,7 @@ code {
 .clay-input {
   width: 100%;
   border: 1px solid rgba(0, 0, 0, 0.08);
-  border-radius: 999px;
+  border-radius: 12px;
   background: var(--clay-surface);
   color: var(--clay-text);
   box-shadow: none;
@@ -298,7 +298,7 @@ code {
 }
 
 .clay-button {
-  border-radius: 999px;
+  border-radius: 12px;
   border: 1px solid transparent;
   background: var(--clay-surface);
   color: var(--clay-primary);
@@ -819,6 +819,64 @@ code {
 [class~='font-extrabold'],
 [class~='font-black'] {
   font-weight: 600 !important;
+}
+
+/* ============================================================
+   Đợt 7 (spec 007) — enforce design.md app-wide, no per-page edits.
+   Apple language: no decorative chrome, single blue accent,
+   one calm radius, flat solid surfaces, quiet hierarchy.
+   ============================================================ */
+
+/* 1. Kill inline decorative blobs/gradients the earlier guardrail
+      missed (it only caught Tailwind `bg-gradient-to-*`). */
+[class*='bg-[radial-gradient'],
+[class*='bg-[conic-gradient'],
+[class*='bg-[linear-gradient'] {
+  background-image: none !important;
+}
+
+/* 2. One calm radius. design.md: cards = 18px, utility = small,
+      pill only for tags/CTA. Snap the scattered 16–32px arbitrary
+      radii to a single tighter 14px; rounded-full/999px stay pills. */
+[class*='rounded-[16px]'],
+[class*='rounded-[18px]'],
+[class*='rounded-[20px]'],
+[class*='rounded-[22px]'],
+[class*='rounded-[24px]'],
+[class*='rounded-[26px]'],
+[class*='rounded-[28px]'],
+[class*='rounded-[30px]'],
+[class*='rounded-[32px]'] {
+  border-radius: 14px !important;
+}
+
+/* 3. Flat solid surfaces — translucent white panels only looked
+      right floating over the (now removed) blob layer. */
+[class*='bg-[rgba(255,255,255,0'],
+[class*='bg-[rgba(255,_255,_255,_0'] {
+  background-color: var(--clay-surface) !important;
+}
+
+/* 4. Single accent only. Neutralize the candy multi-color tint
+      fills (pink/green/cyan/lemon/ube) into a quiet surface. */
+[class*='bg-[rgba(252,121,129'],
+[class*='bg-[rgba(132,231,165'],
+[class*='bg-[rgba(59,211,253'],
+[class*='bg-[rgba(248,204,101'],
+[class*='bg-[rgba(193,176,255'],
+[class*='bg-[rgba(255,159,'],
+[class*='bg-[rgba(1,65,141,0.1'],
+[class*='bg-[rgba(1,_65,_141'] {
+  background-color: var(--clay-surface-soft) !important;
+  color: var(--clay-text) !important;
+}
+
+/* 5. Tame oversized blur (frosted overkill reads as slop). */
+[class*='backdrop-blur'],
+[class*='blur-2xl'],
+[class*='blur-3xl'] {
+  backdrop-filter: none !important;
+  filter: none !important;
 }
 
 @media (max-width: 640px) {
