@@ -437,7 +437,7 @@ export default function QuanLySmartContractPage() {
       const nextAccount = accounts[0] ?? null;
       setConnectedAccount(nextAccount);
       setVotePackageRevision((current) => current + 1);
-      setMessage(nextAccount ? `Đã chuyển ví sang ${nextAccount}` : 'MetaMask đã ngắt kết nối.');
+      setMessage(nextAccount ? `Đã chuyển ví sang ${shortenAddress(nextAccount)}.` : 'MetaMask đã ngắt kết nối.');
     };
 
     const handleChainChanged = () => {
@@ -549,7 +549,7 @@ export default function QuanLySmartContractPage() {
       if (nextAccount) {
         await loadWalletBalance(nextAccount, rpcUrl);
       }
-      setMessage(nextAccount ? `Đã kết nối ví ${nextAccount}` : 'Không tìm thấy tài khoản MetaMask.');
+      setMessage(nextAccount ? `Đã kết nối ví ${shortenAddress(nextAccount)}.` : 'Không tìm thấy tài khoản MetaMask.');
     } catch (error) {
       setMessage(getErrorMessage(error));
     }
@@ -722,15 +722,16 @@ export default function QuanLySmartContractPage() {
   const selectedGroup = groupItems.find((item) => item.groupKey === selectedGroupKey) ?? null;
   const selectedPositions = groupDetail?.positions ?? selectedGroup?.positions ?? [];
   const totalPositions = groupItems.reduce((sum, item) => sum + item.positionCount, 0);
-  const selectedGroupTitle = groupDetail?.title ?? selectedGroup?.title ?? null;
-  const selectedGroupVoterCount = groupDetail?.voterCount ?? selectedGroup?.voterCount ?? 0;
   const hasGroups = groupItems.length > 0;
+  const factoryAddress = publicConfig?.factoryAddress?.trim() || null;
+  const factoryLabel = factoryAddress ? shortenAddress(factoryAddress) : 'Chưa cấu hình';
+  const walletLabel = connectedAccount ? shortenAddress(connectedAccount) : 'Chưa nối';
   const walletBalanceLabel = walletBalance ? `${Number.parseFloat(walletBalance).toFixed(4)} SEP` : 'Chưa có số dư';
   const dashboardStats = [
     ['Ballot', String(groupItems.length)],
     ['Chức vụ', String(totalPositions)],
     ['Giai đoạn', detail ? phaseLabel : '-'],
-    ['Ví', connectedAccount ? shortenAddress(connectedAccount) : 'Chưa nối'],
+    ['Ví', walletLabel],
   ];
 
   const ballotList = (
@@ -918,18 +919,30 @@ export default function QuanLySmartContractPage() {
                 </div>
                 <div className="flex items-center justify-between gap-4">
                   <span className="text-[var(--clay-muted)]">Factory</span>
-                  <span className="font-mono text-[12px]">{shortenAddress(publicConfig?.factoryAddress)}</span>
+                  {factoryAddress ? (
+                    <span className="max-w-[150px] truncate font-mono text-[12px]" title={factoryAddress}>
+                      {factoryLabel}
+                    </span>
+                  ) : (
+                    <StatusBadge tone="warning">Chưa cấu hình</StatusBadge>
+                  )}
                 </div>
                 <div className="flex items-center justify-between gap-4">
                   <span className="text-[var(--clay-muted)]">Ví</span>
-                  <span className="font-mono text-[12px]">{shortenAddress(connectedAccount)}</span>
+                  {connectedAccount ? (
+                    <span className="max-w-[150px] truncate font-mono text-[12px]" title={connectedAccount}>
+                      {walletLabel}
+                    </span>
+                  ) : (
+                    <span className="text-[var(--clay-muted)]">Chưa nối</span>
+                  )}
                 </div>
                 <div className="flex items-center justify-between gap-4">
                   <span className="text-[var(--clay-muted)]">Số dư</span>
                   <span className="font-semibold">{walletBalanceLabel}</span>
                 </div>
               </div>
-              <p className="mt-4 border-t border-[var(--clay-border)] pt-3 text-[13px] leading-relaxed text-[var(--clay-muted)]" aria-live="polite">
+              <p className="mt-4 break-words border-t border-[var(--clay-border)] pt-3 text-[13px] leading-relaxed text-[var(--clay-muted)]" aria-live="polite">
                 {message}
               </p>
             </Panel>
@@ -940,7 +953,7 @@ export default function QuanLySmartContractPage() {
               {ballotList}
               <Panel className="p-4">
                 <p className="text-[13px] font-semibold text-[var(--clay-text)]">Trạng thái</p>
-                <p className="mt-1 text-[13px] leading-relaxed text-[var(--clay-muted)]" aria-live="polite">
+                <p className="mt-1 break-words text-[13px] leading-relaxed text-[var(--clay-muted)]" aria-live="polite">
                   {message}
                 </p>
               </Panel>
