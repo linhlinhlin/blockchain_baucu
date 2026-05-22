@@ -1,0 +1,35 @@
+{
+  "_README": [
+    "Copy file nay thanh 'appsettings.Development.json' (da gitignored) va dien gia tri.",
+    "KHONG commit appsettings.Development.json. Bi mat that di qua file nay hoac 'dotnet user-secrets'.",
+    "JwtSettings:Secret la BAT BUOC (>=32 ky tu ngau nhien) — app fail-fast neu thieu (xem spec 001 / S3)."
+  ],
+  "ConnectionStrings": {
+    "_note": "De trong => DefaultConnection fallback in-memory; ElectionV1StoreConnection trong => store in-memory.",
+    "DefaultConnection": "",
+    "ElectionV1StoreConnection": ""
+  },
+  "ElectionV1StoreSettings": {
+    "_note": "inmemory | postgres | sqlserver. Postgres: dat ElectionV1StoreConnection 'Host=...;Database=...;Username=...;Password=...'.",
+    "Provider": "inmemory"
+  },
+  "DevelopmentAuthSettings": {
+    "_note": "true => seed devadmin/Admin@123, devuser/User@123 va cho phep DevOtpCode tra ve client. KHONG bat tren moi truong that.",
+    "Enabled": true
+  },
+  "JwtSettings": {
+    "_note": "BAT BUOC. Sinh chuoi ngau nhien >=32 ky tu, vi du: openssl rand -base64 48",
+    "Secret": "<DAN_CHUOI_NGAU_NHIEN_>=32_KY_TU>",
+    "Issuer": "holihu-voting-backend",
+    "Audience": "holihu-voting-client",
+    "AccessTokenMinutes": 15
+  },
+  "ElectionV1Settings": {
+    "_note": "ContractsRootPath: thu muc blockchain_sm (auto-resolve neu de trong). RpcUrl: Sepolia RPC cho read.",
+    "ContractsRootPath": "",
+    "RpcUrl": "https://ethereum-sepolia-rpc.publicnode.com"
+  },
+  "AppSettings": {
+    "DisableHttpsRedirection": true
+  }
+}

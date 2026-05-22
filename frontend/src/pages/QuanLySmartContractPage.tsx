@@ -158,24 +158,78 @@ function normalizeAddress(value?: string | null) {
   }
 }
 
+// S4 (spec 001): localStorage chi luu envelope da MA HOA, khong luu salt plaintext.
+type VoteSecret = Pick<VotePackage, 'candidateId' | 'salt' | 'commitment'>;
+
+type StoredVoteEnvelope = {
+  electionAddress: string;
+  voter: string;
+  candidateName: string;
+  committedAt: string;
+  revealedAt?: string;
+  iv: string;
+  ciphertext: string;
+};
+
 function buildVotePackageKey(electionAddress: string, walletAddress: string) {
   return `${VOTE_PACKAGE_PREFIX}:${electionAddress.toLowerCase()}:${walletAddress.toLowerCase()}`;
 }
 
-function loadStoredVotePackage(electionAddress: string, walletAddress: string) {
+// Khoa AES duoc dan xuat tu CHU KY VI -> XSS / may chung khong giai ma duoc neu khong co vi.
+function voteEncMessage(electionAddress: string, voter: string) {
+  return `HoLiHu ElectionV1 vote secret\nelection: ${electionAddress.toLowerCase()}\nvoter: ${voter.toLowerCase()}`;
+}
+
+function bufToB64(buf: ArrayBuffer | Uint8Array) {
+  const bytes = buf instanceof Uint8Array ? buf : new Uint8Array(buf);
+  return btoa(String.fromCharCode(...bytes));
+}
+
+function b64ToBytes(b64: string) {
+  return Uint8Array.from(atob(b64), (c) => c.charCodeAt(0));
+}
+
+async function deriveVoteAesKey(signer: ethers.Signer, electionAddress: string, voter: string) {
+  const signature = await signer.signMessage(voteEncMessage(electionAddress, voter));
+  const digest = await window.crypto.subtle.digest('SHA-256', new TextEncoder().encode(signature));
+  return window.crypto.subtle.importKey('raw', digest, { name: 'AES-GCM' }, false, ['encrypt', 'decrypt']);
+}
+
+async function encryptVoteSecret(key: CryptoKey, secret: VoteSecret) {
+  const iv = window.crypto.getRandomValues(new Uint8Array(12));
+  const data = new TextEncoder().encode(JSON.stringify(secret));
+  const ciphertext = await window.crypto.subtle.encrypt({ name: 'AES-GCM', iv }, key, data);
+  return { iv: bufToB64(iv), ciphertext: bufToB64(ciphertext) };
+}
+
+async function decryptVoteSecret(key: CryptoKey, ivB64: string, ciphertextB64: string): Promise<VoteSecret> {
+  const plain = await window.crypto.subtle.decrypt(
+    { name: 'AES-GCM', iv: b64ToBytes(ivB64) },
+    key,
+    b64ToBytes(ciphertextB64),
+  );
+  return JSON.parse(new TextDecoder().decode(plain)) as VoteSecret;
+}
+
+function loadStoredVoteEnvelope(electionAddress: string, walletAddress: string): StoredVoteEnvelope | null {
   const raw = window.localStorage.getItem(buildVotePackageKey(electionAddress, walletAddress));
   if (!raw) {
     return null;
   }
   try {
-    return JSON.parse(raw) as VotePackage;
+    const env = JSON.parse(raw) as StoredVoteEnvelope;
+    // S5: chi chap nhan envelope dung chu so huu (vi) va dung election.
+    if (!env || typeof env.ciphertext !== 'string' || typeof env.iv !== 'string') return null;
+    if (env.electionAddress?.toLowerCase() !== electionAddress.toLowerCase()) return null;
+    if (env.voter?.toLowerCase() !== walletAddress.toLowerCase()) return null;
+    return env;
   } catch {
     return null;
   }
 }
 
-function saveStoredVotePackage(votePackage: VotePackage) {
-  window.localStorage.setItem(buildVotePackageKey(votePackage.electionAddress, votePackage.voter), JSON.stringify(votePackage));
+function saveStoredVoteEnvelope(env: StoredVoteEnvelope) {
+  window.localStorage.setItem(buildVotePackageKey(env.electionAddress, env.voter), JSON.stringify(env));
 }
 
 function createRandomBytes32() {
@@ -303,10 +357,10 @@ function getCommitReason(detail: ElectionV1Detail | null, walletAddress: string 
   return null;
 }
 
-function getRevealReason(detail: ElectionV1Detail | null, walletAddress: string | null, votePackage: VotePackage | null, busy: boolean) {
+function getRevealReason(detail: ElectionV1Detail | null, walletAddress: string | null, voteEnvelope: StoredVoteEnvelope | null, busy: boolean) {
   if (busy) return 'Đang xử lý giao dịch hoặc tải dữ liệu.';
   if (!walletAddress) return 'Hãy kết nối MetaMask trước.';
-  if (!votePackage) return 'Không tìm thấy vote package cục bộ cho ví này.';
+  if (!voteEnvelope) return 'Không tìm thấy vote package cục bộ cho ví/thiết bị này. Reveal phải dùng đúng ví và trình duyệt đã commit.';
   if (!detail?.onChain?.viewer?.hasCommitted) return 'Ví này chưa commit.';
   if (detail.onChain.viewer.hasRevealed) return 'Ví này đã reveal rồi.';
   if (detail.onChain.phaseLabel !== 'Reveal') return `Giai đoạn hiện tại là ${detail.onChain.phaseLabel}, chưa thể reveal.`;
@@ -338,11 +392,11 @@ export default function QuanLySmartContractPage() {
   const [message, setMessage] = useState('Sẵn sàng.');
   const [votePackageRevision, setVotePackageRevision] = useState(0);
 
-  const storedVotePackage = useMemo(() => {
+  const storedVoteEnvelope = useMemo(() => {
     if (!detail?.address || !connectedAccount) {
       return null;
     }
-    return loadStoredVotePackage(detail.address, connectedAccount);
+    return loadStoredVoteEnvelope(detail.address, connectedAccount);
   }, [detail?.address, connectedAccount, votePackageRevision]);
 
   useEffect(() => {
@@ -555,14 +609,20 @@ export default function QuanLySmartContractPage() {
       const tx = await contract.commitVote(commitment, proofPayload.proof);
       await tx.wait();
 
-      saveStoredVotePackage({
-        electionAddress: detail.address,
-        voter: address,
+      // S4: ma hoa secret bang khoa dan xuat tu chu ky vi truoc khi luu localStorage.
+      const voteKey = await deriveVoteAesKey(signer, detail.address, address);
+      const sealed = await encryptVoteSecret(voteKey, {
         candidateId: candidate.candidateId,
-        candidateName: candidate.candidateName,
         salt,
         commitment: String(commitment),
+      });
+      saveStoredVoteEnvelope({
+        electionAddress: detail.address,
+        voter: address,
+        candidateName: candidate.candidateName,
         committedAt: new Date().toISOString(),
+        iv: sealed.iv,
+        ciphertext: sealed.ciphertext,
       });
 
       setVotePackageRevision((current) => current + 1);
@@ -577,19 +637,30 @@ export default function QuanLySmartContractPage() {
   }
 
   async function handleRevealVote() {
-    if (!detail?.address || !storedVotePackage) {
+    if (!detail?.address || !storedVoteEnvelope) {
       return;
     }
     setBusy(true);
     try {
       const { signer, address } = await getSignerContext();
+      const envelope = loadStoredVoteEnvelope(detail.address, address);
+      // S5: vote package phai thuoc dung vi dang ket noi.
+      if (!envelope || envelope.voter.toLowerCase() !== address.toLowerCase()) {
+        throw new Error('Vote package không thuộc ví đang kết nối. Hãy dùng đúng ví và trình duyệt đã commit.');
+      }
+      let secret: VoteSecret;
+      try {
+        const voteKey = await deriveVoteAesKey(signer, detail.address, address);
+        secret = await decryptVoteSecret(voteKey, envelope.iv, envelope.ciphertext);
+      } catch {
+        throw new Error('Không giải mã được vote package. Phải dùng đúng ví và trình duyệt đã commit.');
+      }
       const contract = new ethers.Contract(detail.address, electionV1Abi, signer);
-      const tx = await contract.revealVote(storedVotePackage.candidateId, storedVotePackage.salt);
+      const tx = await contract.revealVote(secret.candidateId, secret.salt);
       await tx.wait();
 
-      saveStoredVotePackage({
-        ...storedVotePackage,
-        voter: address,
+      saveStoredVoteEnvelope({
+        ...envelope,
         revealedAt: new Date().toISOString(),
       });
 
@@ -638,7 +709,7 @@ export default function QuanLySmartContractPage() {
   }
 
   const commitReason = getCommitReason(detail, connectedAccount, busy);
-  const revealReason = getRevealReason(detail, connectedAccount, storedVotePackage, busy);
+  const revealReason = getRevealReason(detail, connectedAccount, storedVoteEnvelope, busy);
   const finalizeReason = getFinalizeReason(detail, connectedAccount, busy);
   const phaseLabel = detail?.onChain?.phaseLabel ?? 'Unknown';
   const maxResultCount = Math.max(1, ...(detail?.onChain?.results ?? []).map((item) => item.count));
@@ -862,6 +933,9 @@ export default function QuanLySmartContractPage() {
                             Reveal vote
                           </button>
                           <p className="text-xs text-[var(--clay-muted)]">{revealReason ?? 'Sẵn sàng reveal cho chức vụ này.'}</p>
+                          <p className="text-[11px] text-amber-600">
+                            ⚠️ Bí mật phiếu được mã hoá cục bộ bằng chữ ký ví. Reveal phải dùng <strong>đúng ví và đúng trình duyệt/thiết bị</strong> đã commit; xoá dữ liệu trình duyệt sẽ mất khả năng reveal.
+                          </p>
 
                           <button type="button" onClick={() => void handleFinalizeElection()} disabled={finalizeReason !== null} className={`${commandButtonClasses('dark')} w-full`}>
                             Finalize election

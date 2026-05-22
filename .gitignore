@@ -7,6 +7,8 @@
 WebApplication3/**/appsettings.Development.json
 WebApplication3/**/appsettings.Production.json
 WebApplication3/**/appsettings.Secrets.json
+# Root compose env (JWT_SECRET, ...) — chi .env goc, giu .env.example
+/.env
 # Smart contracts env
 blockchain_sm/.env
 # Frontend env with real values

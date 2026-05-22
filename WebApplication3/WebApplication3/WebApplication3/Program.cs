@@ -41,10 +41,15 @@ var developmentAuthEnabled = builder.Configuration.GetValue<bool>("DevelopmentAu
 var useDevelopmentInMemoryDatabase = string.IsNullOrWhiteSpace(defaultConnection)
     || (builder.Environment.IsDevelopment() && developmentAuthEnabled);
 
+// S3 (spec 001): KHONG dung secret hardcode. Fail-fast neu thieu / qua ngan.
 var configuredJwtSecret = builder.Configuration["JwtSettings:Secret"];
-if (string.IsNullOrWhiteSpace(configuredJwtSecret) && useDevelopmentInMemoryDatabase)
+if (string.IsNullOrWhiteSpace(configuredJwtSecret) || configuredJwtSecret.Trim().Length < 32)
 {
-    builder.Configuration["JwtSettings:Secret"] = "holihu-local-dev-jwt-secret-2026-change-me";
+    throw new InvalidOperationException(
+        "JwtSettings:Secret chua duoc cau hinh hoac qua ngan (yeu cau >=32 ky tu). " +
+        "Cau hinh qua bien moi truong 'JwtSettings__Secret', 'dotnet user-secrets', " +
+        "hoac appsettings.Development.json (xem appsettings.Development.json.example). " +
+        "Khong duoc dung gia tri hardcode. (spec 001 / S3)");
 }
 
 if (useDevelopmentInMemoryDatabase)

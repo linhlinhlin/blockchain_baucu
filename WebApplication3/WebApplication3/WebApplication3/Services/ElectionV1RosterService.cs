@@ -21,6 +21,10 @@ public sealed class ElectionV1RosterService
     private readonly ILogger<ElectionV1RosterService> _logger;
     private readonly string _appUrl;
     private readonly bool _isDevelopmentEnvironment;
+    // S2 (spec 001): chi lo OTP ve client khi co flag dev tuong minh, khong chi dua IsDevelopment.
+    private readonly bool _developmentAuthEnabled;
+    private const int MaxOtpAttempts = 5;
+    private static readonly TimeSpan OtpLockoutWindow = TimeSpan.FromMinutes(15);
 
     public ElectionV1RosterService(
         IConfiguration configuration,
@@ -35,6 +39,7 @@ public sealed class ElectionV1RosterService
         _emailService = emailService;
         _logger = logger;
         _isDevelopmentEnvironment = environment.IsDevelopment();
+        _developmentAuthEnabled = configuration.GetValue<bool>("DevelopmentAuthSettings:Enabled");
         _appUrl = configuration["AppUrl"]?.TrimEnd('/') ?? "https://127.0.0.1:3000";
     }
 
@@ -205,10 +210,13 @@ public sealed class ElectionV1RosterService
         CancellationToken cancellationToken)
     {
         var otp = GenerateOtp();
-        invite.LastOtpCode = otp;
+        // S2: chi luu HASH cua OTP, khong luu plaintext.
+        invite.LastOtpCode = BCrypt.Net.BCrypt.HashPassword(otp);
         invite.LastOtpSentAt = DateTimeOffset.UtcNow;
         invite.OtpExpiresAt = DateTimeOffset.UtcNow.AddMinutes(15);
         invite.OtpVerifiedAt = null;
+        invite.OtpAttemptCount = 0;
+        invite.OtpLockedUntil = null;
         draft.UpdatedAt = DateTimeOffset.UtcNow;
         SaveDraft(draft);
 
@@ -231,7 +239,8 @@ public sealed class ElectionV1RosterService
 
             _logger.LogWarning(ex, "Gui OTP qua email that bai trong moi truong development. Su dung dev preview cho {Email}", invite.Email);
             deliveryMode = "development-preview";
-            devOtpCode = otp;
+            // S2 (FR-004): chi tra OTP ve client khi DevelopmentAuthSettings:Enabled tuong minh.
+            devOtpCode = _developmentAuthEnabled ? otp : null;
         }
 
         return new ElectionV1OtpDispatchDto
@@ -256,25 +265,64 @@ public sealed class ElectionV1RosterService
             throw new InvalidOperationException("Khong tim thay loi moi cu tri.");
         }
 
+        var now = DateTimeOffset.UtcNow;
+
+        // S2 (FR-005): lockout chong brute-force OTP.
+        if (invite.OtpLockedUntil.HasValue && invite.OtpLockedUntil.Value > now)
+        {
+            throw new InvalidOperationException(
+                $"Da nhap sai OTP qua nhieu lan. Vui long thu lai sau {Math.Ceiling((invite.OtpLockedUntil.Value - now).TotalMinutes)} phut.");
+        }
+
         if (string.IsNullOrWhiteSpace(invite.LastOtpCode) || !invite.OtpExpiresAt.HasValue)
         {
             throw new InvalidOperationException("OTP chua duoc gui hoac da het hieu luc.");
         }
 
-        if (invite.OtpExpiresAt.Value < DateTimeOffset.UtcNow)
+        if (invite.OtpExpiresAt.Value < now)
         {
             throw new InvalidOperationException("OTP da het han.");
         }
 
-        if (!string.Equals(invite.LastOtpCode, otp?.Trim(), StringComparison.Ordinal))
+        // S2 (FR-003): so khop bang hash, khong so plaintext.
+        bool otpMatches;
+        try
         {
-            throw new InvalidOperationException("OTP khong hop le.");
+            otpMatches = BCrypt.Net.BCrypt.Verify(otp?.Trim() ?? string.Empty, invite.LastOtpCode);
+        }
+        catch (BCrypt.Net.SaltParseException)
+        {
+            // Hash khong hop le (vd du lieu OTP cu plaintext) -> coi nhu sai.
+            otpMatches = false;
+        }
+
+        if (!otpMatches)
+        {
+            invite.OtpAttemptCount += 1;
+            if (invite.OtpAttemptCount >= MaxOtpAttempts)
+            {
+                invite.OtpLockedUntil = now.Add(OtpLockoutWindow);
+                invite.LastOtpCode = null;
+                invite.OtpExpiresAt = null;
+                invite.OtpAttemptCount = 0;
+                draft.UpdatedAt = now;
+                SaveDraft(draft);
+                throw new InvalidOperationException(
+                    $"Da nhap sai OTP qua nhieu lan. Loi moi bi tam khoa {OtpLockoutWindow.TotalMinutes:0} phut.");
+            }
+
+            draft.UpdatedAt = now;
+            SaveDraft(draft);
+            throw new InvalidOperationException(
+                $"OTP khong hop le. Con {MaxOtpAttempts - invite.OtpAttemptCount} lan thu.");
         }
 
         invite.LastOtpCode = null;
-        invite.OtpVerifiedAt = DateTimeOffset.UtcNow;
+        invite.OtpVerifiedAt = now;
         invite.OtpExpiresAt = null;
-        draft.UpdatedAt = DateTimeOffset.UtcNow;
+        invite.OtpAttemptCount = 0;
+        invite.OtpLockedUntil = null;
+        draft.UpdatedAt = now;
         SaveDraft(draft);
 
         return new ElectionV1OtpVerifyDto
@@ -625,6 +673,8 @@ public sealed class ElectionV1RosterService
             inviteRecord.LastOtpCode = invite.LastOtpCode;
             inviteRecord.OtpExpiresAt = invite.OtpExpiresAt;
             inviteRecord.OtpVerifiedAt = invite.OtpVerifiedAt;
+            inviteRecord.OtpAttemptCount = invite.OtpAttemptCount;
+            inviteRecord.OtpLockedUntil = invite.OtpLockedUntil;
             inviteRecord.ClaimedByUserId = invite.ClaimedByUserId;
             inviteRecord.WalletAddress = invite.WalletAddress;
             inviteRecord.WalletBoundAt = invite.WalletBoundAt;
@@ -685,6 +735,8 @@ public sealed class ElectionV1RosterService
                     LastOtpCode = item.LastOtpCode,
                     OtpExpiresAt = item.OtpExpiresAt,
                     OtpVerifiedAt = item.OtpVerifiedAt,
+                    OtpAttemptCount = item.OtpAttemptCount,
+                    OtpLockedUntil = item.OtpLockedUntil,
                     ClaimedByUserId = item.ClaimedByUserId,
                     WalletAddress = item.WalletAddress,
                     WalletBoundAt = item.WalletBoundAt
@@ -1160,9 +1212,12 @@ internal sealed class ElectionV1RosterInvite
     public string QrPayload { get; set; } = string.Empty;
     public DateTimeOffset CreatedAt { get; set; }
     public DateTimeOffset? LastOtpSentAt { get; set; }
+    // S2 (spec 001): HASH cua OTP (BCrypt), khong phai plaintext.
     public string? LastOtpCode { get; set; }
     public DateTimeOffset? OtpExpiresAt { get; set; }
     public DateTimeOffset? OtpVerifiedAt { get; set; }
+    public int OtpAttemptCount { get; set; }
+    public DateTimeOffset? OtpLockedUntil { get; set; }
     public int? ClaimedByUserId { get; set; }
     public string? WalletAddress { get; set; }
     public DateTimeOffset? WalletBoundAt { get; set; }
