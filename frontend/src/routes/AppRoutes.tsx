@@ -22,12 +22,6 @@ const RulesRedirect = () => {
   const location = useLocation();
   return <Navigate to={appendSearchAndHash(`/app/elections/${id}/rules`, location.search, location.hash)} replace />;
 };
-const ElectionDetailRedirect = () => {
-  const { id } = useParams<{ id: string }>();
-  const location = useLocation();
-  const target = id ? `/app/elections/${id}/elections-tienhanh` : '/app/elections';
-  return <Navigate to={appendSearchAndHash(target, location.search, location.hash)} replace />;
-};
 const VoterVerificationPublicEntry = () => {
   const location = useLocation();
   const hasSession = useSelector((state: RootState) =>
@@ -76,6 +70,7 @@ const UserElectionsPage = lazy(() => import('../pages/CuocBauCuCuaNguoiDungPage'
 const TaoPhienBauCuPage = lazy(() => import('../pages/TaoCuocBauCuPage'));
 const UpcomingElectionsPage = lazy(() => import('../pages/ThongBaoCuocBauCuPage'));
 const ElectionTienHanh = lazy(() => import('../pages/ThongTinChiTietCuocBauCu'));
+const ElectionV1GroupDetailPage = lazy(() => import('../pages/ElectionV1GroupDetailPage'));
 const ChinhSachBaoMat = lazy(() => import('../pages/ChinhSachBaoMatPage'));
 const DieuKhoanSuDung = lazy(() => import('../pages/DieuKhoanSuDungPage'));
 const LienHePage = lazy(() => import('../pages/LienHe'));
@@ -380,7 +375,7 @@ const router = createBrowserRouter([
       // 'elections/new' canonical = TaoCuocBauCuPage. Sub-path redirect cũ:
       {
         path: 'elections/:id',
-        element: <ElectionDetailRedirect />,
+        element: <ElectionV1GroupDetailPage />,
       },
       {
         path: 'elections/:id/session/:idPhien',

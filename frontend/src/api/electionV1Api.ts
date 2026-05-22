@@ -434,7 +434,9 @@ export async function getElectionV1Detail(identifier: string, viewerAddress?: st
 
 export async function getElectionV1GroupDetail(identifier: string) {
   try {
-    const response = await apiClient.get<ElectionV1GroupDetail>(`/api/election-v1/election-groups/${identifier}`);
+    const response = await apiClient.get<ElectionV1GroupDetail>(
+      `/api/election-v1/election-groups/${encodeURIComponent(identifier)}`,
+    );
     return response.data;
   } catch (error) {
     if (!isNotFoundError(error)) {

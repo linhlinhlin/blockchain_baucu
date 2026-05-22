@@ -60,6 +60,7 @@ describe('route flow policy', () => {
   });
 
   test('uses professional metadata for dynamic election detail routes', () => {
+    expect(resolveRouteMeta('/app/elections/holihu-sepolia-smoke-1779466077').title).toBe('Chi tiết bầu cử');
     expect(resolveRouteMeta('/app/elections/42/elections-tienhanh').title).toBe('Chi tiết bầu cử');
     expect(resolveRouteMeta('/app/elections/42/rules').title).toBe('Điều lệ bầu cử');
   });

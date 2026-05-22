@@ -37,6 +37,7 @@ import {
   type StatusTone,
 } from '../components/ui/clay';
 import { buildVerifyTransactionUrl } from '../utils/transactionVerification';
+import { buildElectionDetailPath } from '../utils/electionListPresentation';
 
 const TARGET_CHAIN_ID = 11155111;
 const TARGET_CHAIN_ID_HEX = '0xaa36a7';
@@ -1220,6 +1221,7 @@ export default function QuanLySmartContractPage() {
       : 'warning';
   const dashboardMessage =
     configLoaded && !factoryAddress ? 'Thiếu cấu hình deploy ElectionV1.' : message;
+  const selectedGroupDetailPath = selectedGroupKey ? buildElectionDetailPath(selectedGroupKey) : '/app/elections';
   const walletLabel = connectedAccount ? shortenAddress(connectedAccount) : 'Chưa nối';
   const walletBalanceLabel = walletBalance ? `${Number.parseFloat(walletBalance).toFixed(4)} SEP` : 'Chưa có số dư';
   const dashboardStats = [
@@ -1330,6 +1332,13 @@ export default function QuanLySmartContractPage() {
             </p>
           </div>
           <div className="flex flex-col gap-2 sm:flex-row">
+            <Link
+              to={selectedGroupDetailPath}
+              className="inline-flex min-h-[44px] items-center justify-center gap-2 whitespace-nowrap rounded-[12px] border border-[var(--clay-primary)] px-5 text-[15px] text-[var(--clay-primary)] hover:bg-[var(--clay-primary-light)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--clay-primary-focus)]"
+            >
+              <ListChecks className="h-4 w-4" aria-hidden="true" />
+              {selectedGroupKey ? 'Chi tiết bầu cử' : 'Danh sách bầu cử'}
+            </Link>
             <Button
               type="button"
               variant="secondary"

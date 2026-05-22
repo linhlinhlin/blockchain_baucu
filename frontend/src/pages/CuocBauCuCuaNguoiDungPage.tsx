@@ -23,7 +23,7 @@ import {
   normalizeAddress,
 } from '../utils/electionHelpers';
 import {
-  buildElectionConsolePath,
+  buildElectionDetailPath,
   describeGroupPositions,
   describePositionCount,
   describeVoterCount,
@@ -174,19 +174,16 @@ export default function CuocBauCuCuaNguoiDungPage() {
       header: '',
       align: 'right',
       render: (r) => {
-        const firstPosition = r.positions[0];
-        const consolePath = buildElectionConsolePath(r.groupKey, firstPosition?.address);
         return (
           <Button
             type="button"
             variant="secondary"
             size="sm"
-            disabled={!firstPosition}
-            onClick={() => navigate(consolePath)}
-            aria-label={`Mở bảng điều khiển cho ${r.title}`}
+            onClick={() => navigate(buildElectionDetailPath(r.groupKey))}
+            aria-label={`Xem chi tiết bầu cử ${r.title}`}
             iconRight={<ArrowRight className="h-4 w-4" aria-hidden="true" />}
           >
-            Mở điều khiển
+            Xem chi tiết
           </Button>
         );
       },
