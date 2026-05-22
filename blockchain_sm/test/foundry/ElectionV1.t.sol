@@ -50,7 +50,9 @@ contract ElectionV1FoundryTest {
             commitStart: commitStart,
             commitEnd: commitEnd,
             revealEnd: revealEnd,
-            candidateIds: candidateIds
+            candidateIds: candidateIds,
+            minReveals: 0,
+            enforceQuorum: false
         });
 
         vm.prank(creator);

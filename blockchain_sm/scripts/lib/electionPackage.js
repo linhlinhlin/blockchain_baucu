@@ -165,6 +165,16 @@ function buildElectionPackage(input) {
     throw new Error("schedule must satisfy commitStart < commitEnd < revealEnd.");
   }
 
+  // S9 (spec 002): turnout tối thiểu. Mặc định 0 / false ⇒ tương thích ngược.
+  const minReveals =
+    source.minReveals === undefined || source.minReveals === null
+      ? 0
+      : Number(source.minReveals);
+  if (!Number.isInteger(minReveals) || minReveals < 0) {
+    throw new Error("minReveals must be a non-negative integer.");
+  }
+  const enforceQuorum = source.enforceQuorum === true;
+
   const eligibility = buildEligibilityArtifacts(voters);
   const manifest = sortValue({
     ...manifestMetadata,
@@ -198,6 +208,8 @@ function buildElectionPackage(input) {
       commitEnd,
       revealEnd,
       candidateIds: candidates.map((candidate) => candidate.candidateId),
+      minReveals,
+      enforceQuorum,
     },
     summary: {
       admin,
