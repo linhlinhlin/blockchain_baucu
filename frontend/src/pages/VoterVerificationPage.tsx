@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { useSelector } from 'react-redux';
-import { CheckCircle, Loader2, Mail, Wallet, AlertTriangle } from 'lucide-react';
+import { AlertTriangle, CheckCircle, Loader2, Mail, QrCode, Wallet } from 'lucide-react';
 import ModalOTP from '../components/ModalOTP';
 import {
   bindElectionV1InviteWallet,
@@ -18,6 +18,7 @@ import { useWeb3 } from '../context/Web3Context';
 import type { RootState } from '../store/store';
 import {
   Button,
+  EmptyState,
   Field,
   fieldControlClass,
   Panel,
@@ -35,6 +36,16 @@ type PageStatus =
   | 'wallet-bound'
   | 'deployed'
   | 'error';
+
+const statusLabel: Record<PageStatus, string> = {
+  loading: 'Đang tải',
+  ready: 'Chờ OTP',
+  'otp-required': 'Chờ nhập OTP',
+  'otp-verified': 'Đã xác thực OTP',
+  'wallet-bound': 'Đã liên kết ví',
+  deployed: 'Ballot đã deploy',
+  error: 'Cần xử lý',
+};
 
 function getErrorMessage(error: unknown) {
   const maybeError = error as any;
@@ -167,6 +178,7 @@ export default function VoterVerificationPage() {
   const statusToneBadge: StatusTone = useMemo(() => {
     if (status === 'error') return 'danger';
     if (status === 'wallet-bound' || status === 'deployed') return 'success';
+    if (status === 'otp-required') return 'warning';
     if (status === 'otp-verified') return 'info';
     return 'neutral';
   }, [status]);
@@ -308,24 +320,69 @@ export default function VoterVerificationPage() {
               : 'todo',
     },
   ];
+  const hasInviteContext = Boolean(invite || publicInvite);
+  const isAuthenticated = Boolean(accessToken);
+  const canOpenElectionList = Boolean(invite?.walletBound || status === 'wallet-bound' || status === 'deployed');
+  const displayIdentity = currentUser?.tenDangNhap ?? currentUser?.email ?? '';
+  const isLoadingInvite = status === 'loading';
 
   return (
-    <div className="min-h-screen bg-[var(--clay-bg)] px-4 py-8 text-[var(--clay-text)]">
-      <div className="mx-auto max-w-5xl">
-        <div className="mb-6">
-          <h1 className="text-[1.75rem] font-semibold tracking-[-0.015em] text-[var(--clay-text)]">
+    <div className="min-h-screen bg-[var(--clay-bg)] px-4 py-6 text-[var(--clay-text)] sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-4xl">
+        <header className="mb-5">
+          <p className="text-xs font-semibold uppercase text-[var(--clay-muted)]">
+            Luồng xác minh ElectionV1
+          </p>
+          <h1 className="mt-1 text-[1.75rem] font-semibold text-[var(--clay-text)]">
             Xác minh cử tri
           </h1>
-          <p className="mt-1 text-[15px] text-[var(--clay-muted)]">
-            Cử tri dùng trang này sau khi nhận QR/email mời: xác thực OTP, rồi liên kết ví MetaMask với suất bầu ElectionV1.
+          <p className="mt-1 max-w-2xl text-[15px] leading-6 text-[var(--clay-muted)]">
+            Xác nhận OTP từ email mời, liên kết MetaMask, rồi chờ ballot sẵn sàng để bỏ phiếu.
           </p>
-          <div className="mt-4 overflow-x-auto">
-            <Stepper steps={steps} />
-          </div>
-        </div>
+        </header>
 
-        <div className="grid gap-6 lg:grid-cols-[minmax(0,1.15fr)_360px]">
-          <div className="space-y-6">
+        {!hasInviteContext ? (
+          <EmptyState
+            icon={
+              isLoadingInvite ? (
+                <Loader2 className="h-6 w-6 animate-spin" />
+              ) : status === 'error' ? (
+                <AlertTriangle className="h-6 w-6" />
+              ) : (
+                <QrCode className="h-6 w-6" />
+              )
+            }
+            title={
+              isLoadingInvite
+                ? 'Đang tải lời mời'
+                : status === 'error'
+                  ? 'Không thể mở lời mời'
+                  : 'Mở link mời hoặc quét QR để bắt đầu'
+            }
+            description={message}
+            action={!isLoadingInvite && (
+              <div className="flex flex-col gap-2 sm:flex-row">
+                <Link
+                  to="/app/scan"
+                  className="inline-flex min-h-[44px] items-center justify-center rounded-[12px] border border-[var(--clay-primary)] bg-[var(--clay-primary)] px-4 text-sm font-semibold text-white hover:bg-[var(--clay-primary-focus)]"
+                >
+                  Quét mã QR
+                </Link>
+                <Link
+                  to={loginRedirect}
+                  className="inline-flex min-h-[44px] items-center justify-center rounded-[12px] border border-[var(--clay-border)] px-4 text-sm font-semibold text-[var(--clay-text)] hover:bg-[var(--clay-surface-soft)]"
+                >
+                  Đăng nhập trước
+                </Link>
+              </div>
+            )}
+          />
+        ) : (
+          <div className="space-y-5">
+            <div className="overflow-x-auto">
+              <Stepper steps={steps} />
+            </div>
+
             <Panel>
               <div
                 role={status === 'error' ? 'alert' : 'status'}
@@ -342,133 +399,37 @@ export default function VoterVerificationPage() {
                 ) : (
                   <Mail className="mt-0.5 h-5 w-5 text-[var(--clay-primary)]" aria-hidden="true" />
                 )}
-                <div className="min-w-0">
-                  <div className="flex items-center gap-2">
-                    <p className="font-semibold text-[var(--clay-text)]">Trạng thái hiện tại</p>
-                    <StatusBadge tone={statusToneBadge}>{status}</StatusBadge>
+                <div className="min-w-0 flex-1">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <h2 className="text-lg font-semibold text-[var(--clay-text)]">
+                      {publicInvite && !activeToken
+                        ? 'Nhận OTP bằng email trong roster'
+                        : invite?.walletBound
+                          ? 'Xác minh hoàn tất'
+                          : invite?.otpVerified
+                            ? 'Liên kết MetaMask'
+                            : 'Xác thực OTP'}
+                    </h2>
+                    <StatusBadge tone={statusToneBadge}>{statusLabel[status]}</StatusBadge>
                   </div>
                   <p className="mt-1 text-sm leading-6 text-[var(--clay-muted)]">{message}</p>
                 </div>
               </div>
-            </Panel>
 
-            {invite && (
-              <div className="grid gap-4 md:grid-cols-2">
-                <Panel>
-                  <p className="text-xs font-semibold uppercase tracking-[-0.01em] text-[var(--clay-muted)]">
-                    Cử tri
-                  </p>
-                  <p className="mt-2 text-xl font-semibold text-[var(--clay-text)]">
-                    {invite.fullName}
-                  </p>
-                  <p className="mt-2 text-sm text-[var(--clay-muted)]">{invite.emailMasked}</p>
-                  {invite.studentCode && (
-                    <p className="text-sm text-[var(--clay-muted)]">MSSV: {invite.studentCode}</p>
-                  )}
-                </Panel>
-                <Panel>
-                  <p className="text-xs font-semibold uppercase tracking-[-0.01em] text-[var(--clay-muted)]">
-                    Ballot
-                  </p>
-                  <p className="mt-2 text-xl font-semibold text-[var(--clay-text)]">
-                    {invite.ballotTitle}
-                  </p>
-                  <p className="mt-2 text-sm text-[var(--clay-muted)]">
-                    Commit: {new Date(invite.commitStart).toLocaleString('vi-VN')}
-                  </p>
-                  <p className="text-sm text-[var(--clay-muted)]">
-                    Reveal: {new Date(invite.revealEnd).toLocaleString('vi-VN')}
-                  </p>
-                </Panel>
-              </div>
-            )}
-
-            {!invite && publicInvite && (
-              <div className="grid gap-4 md:grid-cols-2">
-                <Panel>
-                  <p className="text-xs font-semibold uppercase tracking-[-0.01em] text-[var(--clay-muted)]">
-                    Roster chung
-                  </p>
-                  <p className="mt-2 text-xl font-semibold text-[var(--clay-text)]">
-                    {publicInvite.ballotTitle}
-                  </p>
-                  <p className="mt-2 text-sm text-[var(--clay-muted)]">
-                    {publicInvite.totalInviteCount} cử tri trong roster
-                  </p>
-                </Panel>
-                <Panel>
-                  <p className="text-xs font-semibold uppercase tracking-[-0.01em] text-[var(--clay-muted)]">
-                    Tiến độ
-                  </p>
-                  <p className="mt-2 text-sm text-[var(--clay-muted)]">
-                    OTP verified: {publicInvite.otpVerifiedCount}
-                  </p>
-                  <p className="text-sm text-[var(--clay-muted)]">
-                    Wallet bound: {publicInvite.walletBoundCount}
-                  </p>
-                  <p className="mt-2 text-sm text-[var(--clay-muted)]">
-                    Reveal: {new Date(publicInvite.revealEnd).toLocaleString('vi-VN')}
-                  </p>
-                </Panel>
-              </div>
-            )}
-
-            {(invite || publicInvite) && (
-              <Panel>
-                <p className="text-xs font-semibold uppercase tracking-[-0.01em] text-[var(--clay-muted)]">
-                  Danh sách chức vụ
-                </p>
-                <div className="mt-4 space-y-3">
-                  {(invite?.positions ?? publicInvite?.positions ?? []).map((position) => (
-                    <div
-                      key={position.positionId}
-                      className="rounded-[14px] border border-[var(--clay-border)] bg-[var(--clay-surface-soft)] p-4"
-                    >
-                      <p className="font-semibold text-[var(--clay-text)]">{position.title}</p>
-                      {position.description && (
-                        <p className="mt-1 text-sm text-[var(--clay-muted)]">
-                          {position.description}
-                        </p>
-                      )}
-                      <p className="mt-2 text-sm text-[var(--clay-muted)]">
-                        Ứng viên: {position.candidateNames.join(', ')}
-                      </p>
-                    </div>
-                  ))}
+              {!isAuthenticated && (
+                <div className="mt-4 rounded-[12px] border border-[var(--state-warning)] bg-[var(--state-warning-soft)] px-4 py-3 text-sm leading-6 text-[var(--state-warning)]">
+                  Bạn có thể gửi OTP trước; bước bind MetaMask sẽ yêu cầu đăng nhập tài khoản thường.
                 </div>
-              </Panel>
-            )}
-          </div>
-
-          <div className="space-y-4 lg:sticky lg:top-6 lg:self-start">
-            <Panel>
-              <p className="text-lg font-semibold tracking-[-0.01em] text-[var(--clay-text)]">
-                Hành động
-              </p>
-
-              {!invite && !publicInvite && (
-                <p className="mt-3 rounded-[12px] border border-[var(--clay-border)] bg-[var(--clay-surface-soft)] p-3 text-sm leading-6 text-[var(--clay-muted)]">
-                  Bạn đang mở trang xác minh trực tiếp nên chưa có lời mời nào được nạp. Hãy vào Quét mã QR hoặc mở link mời từ email để hệ thống biết ballot và cử tri cần xác minh.
-                </p>
               )}
-
-              {!accessToken && (
-                <div
-                  role="alert"
-                  className="mt-3 rounded-[12px] border border-[var(--state-danger)] bg-[var(--state-danger-soft)] p-3 text-sm leading-6 text-[var(--state-danger)]"
-                >
-                  Bạn cần đăng nhập tài khoản thường trước. Sau đó quay lại link QR này để tiếp tục
-                  xác thực.
-                </div>
+              {isAuthenticated && displayIdentity && (
+                <p className="mt-3 text-sm text-[var(--clay-muted)]">
+                  Đang đăng nhập: <span className="font-semibold text-[var(--clay-text)]">{displayIdentity}</span>
+                </p>
               )}
 
               {!activeToken && publicInvite && (
-                <div className="mt-4 space-y-3">
-                  <p className="text-sm leading-6 text-[var(--clay-muted)]">
-                    QR chung chỉ mở roster. Hệ thống gửi OTP đến đúng email trong danh sách để chống
-                    nhận nhầm suất bầu.
-                  </p>
-                  <Field label="Email trong roster">
+                <div className="mt-5 grid gap-3 sm:grid-cols-2">
+                  <Field label="Email trong roster" className="sm:col-span-2">
                     <input
                       id="roster-email"
                       type="email"
@@ -479,7 +440,7 @@ export default function VoterVerificationPage() {
                       autoComplete="email"
                     />
                   </Field>
-                  <Field label="Mã sinh viên / mã nội bộ" hint="Tùy chọn">
+                  <Field label="Mã sinh viên / mã nội bộ" hint="Tùy chọn" className="sm:col-span-2">
                     <input
                       id="roster-student-code"
                       value={identityStudentCode}
@@ -492,30 +453,55 @@ export default function VoterVerificationPage() {
                 </div>
               )}
 
-              <div className="mt-4 space-y-2.5">
-                <Button
-                  type="button"
-                  variant="primary"
-                  size="lg"
-                  className="w-full"
-                  onClick={() => void handleSendOtp()}
-                  disabled={!canSendOtp || working}
-                  loading={working && status === 'otp-required'}
+              <div className="mt-5 flex flex-col gap-2 sm:flex-row">
+                {canOpenElectionList ? (
+                  <Link
+                    to="/app/elections"
+                    className="inline-flex min-h-[44px] flex-1 items-center justify-center rounded-[12px] border border-[var(--clay-primary)] bg-[var(--clay-primary)] px-5 text-[15px] font-semibold text-white hover:bg-[var(--clay-primary-focus)]"
+                  >
+                    Mở danh sách bầu cử
+                  </Link>
+                ) : invite?.otpVerified ? (
+                  isAuthenticated ? (
+                    <Button
+                      type="button"
+                      variant="primary"
+                      size="lg"
+                      className="flex-1"
+                      onClick={() => void handleBindWallet()}
+                      disabled={!canBindWallet || working}
+                      loading={working && otpDone}
+                      iconLeft={<Wallet className="h-4 w-4" aria-hidden="true" />}
+                    >
+                      Liên kết MetaMask
+                    </Button>
+                  ) : (
+                    <Link
+                      to={loginRedirect}
+                      className="inline-flex min-h-[44px] flex-1 items-center justify-center rounded-[12px] border border-[var(--clay-primary)] bg-[var(--clay-primary)] px-5 text-[15px] font-semibold text-white hover:bg-[var(--clay-primary-focus)]"
+                    >
+                      Đăng nhập để bind MetaMask
+                    </Link>
+                  )
+                ) : (
+                  <Button
+                    type="button"
+                    variant="primary"
+                    size="lg"
+                    className="flex-1"
+                    onClick={() => void handleSendOtp()}
+                    disabled={!canSendOtp || working}
+                    loading={working && !invite?.otpVerified}
+                  >
+                    Gửi OTP đến email cử tri
+                  </Button>
+                )}
+                <Link
+                  to="/app/scan"
+                  className="inline-flex min-h-[44px] items-center justify-center rounded-[12px] border border-[var(--clay-border)] px-4 text-sm font-semibold text-[var(--clay-text)] hover:bg-[var(--clay-surface-soft)]"
                 >
-                  Gửi OTP đến email cử tri
-                </Button>
-                <Button
-                  type="button"
-                  variant="secondary"
-                  size="lg"
-                  className="w-full"
-                  onClick={() => void handleBindWallet()}
-                  disabled={!canBindWallet || working}
-                  loading={working && otpDone}
-                  iconLeft={<Wallet className="h-4 w-4" aria-hidden="true" />}
-                >
-                  Bind MetaMask
-                </Button>
+                  Quét QR khác
+                </Link>
               </div>
 
               {otpDevCode && (
@@ -525,37 +511,96 @@ export default function VoterVerificationPage() {
               )}
               {invite?.walletAddress && (
                 <div className="mt-3 break-all rounded-[12px] border border-[var(--state-success)] bg-[var(--state-success-soft)] px-4 py-3 text-sm text-[var(--state-success)]">
-                  Ví đã bind: {invite.walletAddress}
+                  Ví đã liên kết: {invite.walletAddress}
                 </div>
               )}
             </Panel>
 
-            <Panel>
-              <p className="text-sm font-semibold text-[var(--clay-text)]">Checklist</p>
-              <ul className="mt-3 space-y-2 text-sm text-[var(--clay-muted)]">
-                <li>1. Đăng nhập bằng tài khoản thường.</li>
-                <li>2. Gửi OTP và nhập OTP từ email được mời.</li>
-                <li>3. Kết nối MetaMask ở mạng Sepolia.</li>
-                <li>4. Ký message để bind ví vào roster.</li>
-                <li>5. Chờ admin deploy ballot từ danh sách đã xác thực.</li>
-              </ul>
-              <div className="mt-4 flex flex-col gap-2">
-                <Link
-                  to={loginRedirect}
-                  className="inline-flex min-h-[44px] items-center justify-center rounded-[12px] border border-[var(--clay-primary)] px-4 text-sm text-[var(--clay-primary)] hover:bg-[var(--clay-primary-light)]"
-                >
-                  Đăng nhập tài khoản thường
-                </Link>
-                <Link
-                  to="/app/elections"
-                  className="inline-flex min-h-[44px] items-center justify-center rounded-[12px] border border-[var(--clay-border)] px-4 text-sm text-[var(--clay-text)] hover:bg-[var(--clay-surface-soft)]"
-                >
-                  Mở danh sách bầu cử
-                </Link>
-              </div>
-            </Panel>
+            {(invite || publicInvite) && (
+              <Panel>
+                <div className="flex flex-wrap items-start justify-between gap-3">
+                  <div>
+                    <h2 className="text-lg font-semibold text-[var(--clay-text)]">
+                      Thông tin lời mời
+                    </h2>
+                    <p className="mt-1 text-sm text-[var(--clay-muted)]">
+                      Dùng để kiểm tra bạn đang xác minh đúng ballot và đúng suất bầu.
+                    </p>
+                  </div>
+                </div>
+
+                {invite ? (
+                  <dl className="mt-4 grid gap-x-6 gap-y-4 border-t border-[var(--clay-border)] pt-4 sm:grid-cols-2">
+                    <div>
+                      <dt className="text-xs font-semibold uppercase text-[var(--clay-muted)]">Cử tri</dt>
+                      <dd className="mt-1 text-base font-semibold text-[var(--clay-text)]">{invite.fullName}</dd>
+                      <dd className="mt-1 text-sm text-[var(--clay-muted)]">{invite.emailMasked}</dd>
+                      {invite.studentCode && (
+                        <dd className="text-sm text-[var(--clay-muted)]">MSSV: {invite.studentCode}</dd>
+                      )}
+                    </div>
+                    <div>
+                      <dt className="text-xs font-semibold uppercase text-[var(--clay-muted)]">Ballot</dt>
+                      <dd className="mt-1 text-base font-semibold text-[var(--clay-text)]">{invite.ballotTitle}</dd>
+                      <dd className="mt-1 text-sm text-[var(--clay-muted)]">
+                        Commit: {new Date(invite.commitStart).toLocaleString('vi-VN')}
+                      </dd>
+                      <dd className="text-sm text-[var(--clay-muted)]">
+                        Reveal: {new Date(invite.revealEnd).toLocaleString('vi-VN')}
+                      </dd>
+                    </div>
+                  </dl>
+                ) : publicInvite ? (
+                  <dl className="mt-4 grid gap-x-6 gap-y-4 border-t border-[var(--clay-border)] pt-4 sm:grid-cols-2">
+                    <div>
+                      <dt className="text-xs font-semibold uppercase text-[var(--clay-muted)]">Roster chung</dt>
+                      <dd className="mt-1 text-base font-semibold text-[var(--clay-text)]">{publicInvite.ballotTitle}</dd>
+                      <dd className="mt-1 text-sm text-[var(--clay-muted)]">
+                        {publicInvite.totalInviteCount} cử tri trong roster
+                      </dd>
+                    </div>
+                    <div>
+                      <dt className="text-xs font-semibold uppercase text-[var(--clay-muted)]">Tiến độ</dt>
+                      <dd className="mt-1 text-sm text-[var(--clay-muted)]">
+                        Đã xác thực OTP: {publicInvite.otpVerifiedCount}
+                      </dd>
+                      <dd className="text-sm text-[var(--clay-muted)]">
+                        Đã liên kết ví: {publicInvite.walletBoundCount}
+                      </dd>
+                      <dd className="mt-1 text-sm text-[var(--clay-muted)]">
+                        Reveal: {new Date(publicInvite.revealEnd).toLocaleString('vi-VN')}
+                      </dd>
+                    </div>
+                  </dl>
+                ) : null}
+
+                <div className="mt-5 border-t border-[var(--clay-border)] pt-4">
+                  <p className="text-xs font-semibold uppercase text-[var(--clay-muted)]">
+                    Chức vụ trong ballot
+                  </p>
+                  <div className="mt-3 grid gap-3">
+                    {(invite?.positions ?? publicInvite?.positions ?? []).map((position) => (
+                      <div
+                        key={position.positionId}
+                        className="rounded-[14px] border border-[var(--clay-border)] bg-[var(--clay-surface-soft)] p-4"
+                      >
+                        <p className="font-semibold text-[var(--clay-text)]">{position.title}</p>
+                        {position.description && (
+                          <p className="mt-1 text-sm text-[var(--clay-muted)]">
+                            {position.description}
+                          </p>
+                        )}
+                        <p className="mt-2 text-sm text-[var(--clay-muted)]">
+                          Ứng viên: {position.candidateNames.join(', ')}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </Panel>
+            )}
           </div>
-        </div>
+        )}
       </div>
 
       <ModalOTP
