@@ -152,7 +152,7 @@ const ModalOTP: React.FC<ModalProps> = ({
             )}
           </div>
           <h3 id="modal-otp-title" className="mb-2 text-2xl font-bold text-gray-950 dark:text-white">
-            {isDevelopmentPreview ? 'OTP dev preview' : 'Xác thực OTP'}
+            {isDevelopmentPreview ? 'OTP kiểm thử' : 'Xác thực OTP'}
           </h3>
           {isDevelopmentPreview ? (
             <p className="mx-auto max-w-sm text-sm leading-6 text-gray-600 dark:text-gray-300">

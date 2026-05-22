@@ -43,7 +43,7 @@ const statusLabel: Record<PageStatus, string> = {
   'otp-required': 'Chờ nhập OTP',
   'otp-verified': 'Đã xác thực OTP',
   'wallet-bound': 'Đã liên kết ví',
-  deployed: 'Ballot đã deploy',
+  deployed: 'Đã triển khai',
   error: 'Cần xử lý',
 };
 
@@ -99,13 +99,17 @@ export default function VoterVerificationPage() {
   );
 
   useEffect(() => {
+    document.title = 'Xác minh cử tri | HoLiHu BlockVote';
+  }, []);
+
+  useEffect(() => {
     let active = true;
 
     async function loadInvite() {
       if (!tokenParam && !groupKey) {
         setStatus('ready');
         setMessage(
-          'Trang này dùng để xác minh lời mời bầu cử. Hãy quét mã QR hoặc mở link mời có token/groupKey để gửi OTP và bind MetaMask.',
+          'Trang này dùng để xác minh lời mời bầu cử. Hãy quét mã QR hoặc mở đường dẫn mời hợp lệ để gửi OTP và liên kết MetaMask.',
         );
         return;
       }
@@ -123,7 +127,7 @@ export default function VoterVerificationPage() {
           setInvite(null);
           setActiveToken('');
           setStatus('ready');
-          setMessage('Quét QR chung thành công. Nhập email trong roster để nhận OTP.');
+          setMessage('Quét QR chung thành công. Nhập email trong danh sách cử tri để nhận OTP.');
           return;
         }
 
@@ -140,7 +144,7 @@ export default function VoterVerificationPage() {
             response.walletBound ? 'wallet-bound' : response.otpVerified ? 'otp-verified' : 'ready',
           );
           setMessage(
-            'Ballot đã được deploy. Nếu ví của bạn đã được bind, bạn có thể vào app để bỏ phiếu.',
+            'Đợt bầu cử đã được triển khai. Nếu ví của bạn đã được liên kết, bạn có thể vào ứng dụng để bỏ phiếu.',
           );
           return;
         }
@@ -148,15 +152,15 @@ export default function VoterVerificationPage() {
         if (response.walletBound) {
           setStatus('wallet-bound');
           setMessage(
-            'Ví của bạn đã được bind thành công. Chờ admin chốt danh sách và deploy ballot.',
+            'Ví của bạn đã được liên kết thành công. Chờ người quản trị chốt danh sách và triển khai đợt bầu cử.',
           );
         } else if (response.otpVerified) {
           setStatus('otp-verified');
-          setMessage('OTP đã xác thực. Bước tiếp theo là bind MetaMask.');
+          setMessage('OTP đã xác thực. Bước tiếp theo là liên kết MetaMask.');
         } else {
           setStatus('ready');
           setMessage(
-            'Scan QR / mở lời mời thành công. Bạn cần xác thực OTP trước khi bind MetaMask.',
+            'Đã mở lời mời thành công. Bạn cần xác thực OTP trước khi liên kết MetaMask.',
           );
         }
       } catch (error) {
@@ -309,7 +313,7 @@ export default function VoterVerificationPage() {
     },
     {
       key: 'bind',
-      title: 'Bind MetaMask',
+      title: 'Liên kết MetaMask',
       status:
         status === 'error' && otpDone
           ? 'error'
@@ -337,7 +341,7 @@ export default function VoterVerificationPage() {
             Xác minh cử tri
           </h1>
           <p className="mt-1 max-w-2xl text-[15px] leading-6 text-[var(--clay-muted)]">
-            Xác nhận OTP từ email mời, liên kết MetaMask, rồi chờ ballot sẵn sàng để bỏ phiếu.
+            Xác nhận OTP từ email mời, liên kết MetaMask, rồi chờ đợt bầu cử sẵn sàng để bỏ phiếu.
           </p>
         </header>
 
@@ -403,7 +407,7 @@ export default function VoterVerificationPage() {
                   <div className="flex flex-wrap items-center gap-2">
                     <h2 className="text-lg font-semibold text-[var(--clay-text)]">
                       {publicInvite && !activeToken
-                        ? 'Nhận OTP bằng email trong roster'
+                        ? 'Nhận OTP bằng email trong danh sách cử tri'
                         : invite?.walletBound
                           ? 'Xác minh hoàn tất'
                           : invite?.otpVerified
@@ -418,7 +422,7 @@ export default function VoterVerificationPage() {
 
               {!isAuthenticated && (
                 <div className="mt-4 rounded-[12px] border border-[var(--state-warning)] bg-[var(--state-warning-soft)] px-4 py-3 text-sm leading-6 text-[var(--state-warning)]">
-                  Bạn có thể gửi OTP trước; bước bind MetaMask sẽ yêu cầu đăng nhập tài khoản thường.
+                  Bạn có thể gửi OTP trước; bước liên kết MetaMask sẽ yêu cầu đăng nhập tài khoản thường.
                 </div>
               )}
               {isAuthenticated && displayIdentity && (
@@ -429,7 +433,7 @@ export default function VoterVerificationPage() {
 
               {!activeToken && publicInvite && (
                 <div className="mt-5 grid gap-3 sm:grid-cols-2">
-                  <Field label="Email trong roster" className="sm:col-span-2">
+                  <Field label="Email trong danh sách cử tri" className="sm:col-span-2">
                     <input
                       id="roster-email"
                       type="email"
@@ -480,7 +484,7 @@ export default function VoterVerificationPage() {
                       to={loginRedirect}
                       className="inline-flex min-h-[44px] flex-1 items-center justify-center rounded-[12px] border border-[var(--clay-primary)] bg-[var(--clay-primary)] px-5 text-[15px] font-semibold text-white hover:bg-[var(--clay-primary-focus)]"
                     >
-                      Đăng nhập để bind MetaMask
+                      Đăng nhập để liên kết MetaMask
                     </Link>
                   )
                 ) : (
@@ -506,7 +510,7 @@ export default function VoterVerificationPage() {
 
               {otpDevCode && (
                 <div className="mt-3 rounded-[12px] border border-[var(--state-warning)] bg-[var(--state-warning-soft)] px-4 py-3 text-sm text-[var(--state-warning)]">
-                  Dev OTP preview: <strong>{otpDevCode}</strong>
+                  OTP kiểm thử: <strong>{otpDevCode}</strong>
                 </div>
               )}
               {invite?.walletAddress && (
@@ -524,7 +528,7 @@ export default function VoterVerificationPage() {
                       Thông tin lời mời
                     </h2>
                     <p className="mt-1 text-sm text-[var(--clay-muted)]">
-                      Dùng để kiểm tra bạn đang xác minh đúng ballot và đúng suất bầu.
+                      Dùng để kiểm tra bạn đang xác minh đúng đợt bầu cử và đúng suất bầu.
                     </p>
                   </div>
                 </div>
@@ -540,23 +544,23 @@ export default function VoterVerificationPage() {
                       )}
                     </div>
                     <div>
-                      <dt className="text-xs font-semibold uppercase text-[var(--clay-muted)]">Ballot</dt>
+                      <dt className="text-xs font-semibold uppercase text-[var(--clay-muted)]">Đợt bầu cử</dt>
                       <dd className="mt-1 text-base font-semibold text-[var(--clay-text)]">{invite.ballotTitle}</dd>
                       <dd className="mt-1 text-sm text-[var(--clay-muted)]">
-                        Commit: {new Date(invite.commitStart).toLocaleString('vi-VN')}
+                        Mở bỏ phiếu: {new Date(invite.commitStart).toLocaleString('vi-VN')}
                       </dd>
                       <dd className="text-sm text-[var(--clay-muted)]">
-                        Reveal: {new Date(invite.revealEnd).toLocaleString('vi-VN')}
+                        Kết thúc kiểm phiếu: {new Date(invite.revealEnd).toLocaleString('vi-VN')}
                       </dd>
                     </div>
                   </dl>
                 ) : publicInvite ? (
                   <dl className="mt-4 grid gap-x-6 gap-y-4 border-t border-[var(--clay-border)] pt-4 sm:grid-cols-2">
                     <div>
-                      <dt className="text-xs font-semibold uppercase text-[var(--clay-muted)]">Roster chung</dt>
+                      <dt className="text-xs font-semibold uppercase text-[var(--clay-muted)]">Danh sách cử tri chung</dt>
                       <dd className="mt-1 text-base font-semibold text-[var(--clay-text)]">{publicInvite.ballotTitle}</dd>
                       <dd className="mt-1 text-sm text-[var(--clay-muted)]">
-                        {publicInvite.totalInviteCount} cử tri trong roster
+                        {publicInvite.totalInviteCount} cử tri trong danh sách
                       </dd>
                     </div>
                     <div>
@@ -568,7 +572,7 @@ export default function VoterVerificationPage() {
                         Đã liên kết ví: {publicInvite.walletBoundCount}
                       </dd>
                       <dd className="mt-1 text-sm text-[var(--clay-muted)]">
-                        Reveal: {new Date(publicInvite.revealEnd).toLocaleString('vi-VN')}
+                        Kết thúc kiểm phiếu: {new Date(publicInvite.revealEnd).toLocaleString('vi-VN')}
                       </dd>
                     </div>
                   </dl>
@@ -576,7 +580,7 @@ export default function VoterVerificationPage() {
 
                 <div className="mt-5 border-t border-[var(--clay-border)] pt-4">
                   <p className="text-xs font-semibold uppercase text-[var(--clay-muted)]">
-                    Chức vụ trong ballot
+                    Chức vụ trong đợt bầu cử
                   </p>
                   <div className="mt-3 grid gap-3">
                     {(invite?.positions ?? publicInvite?.positions ?? []).map((position) => (

@@ -247,7 +247,7 @@ export function buildCreateFlowRequirements(input: {
     },
     {
       id: 'schedule',
-      label: 'Lịch commit/reveal hợp lệ',
+      label: 'Lịch bầu cử hợp lệ',
       ok: input.scheduleIsValid,
       targetId: 'commit-start',
     },
@@ -287,13 +287,13 @@ export function buildCreateFlowRequirements(input: {
       : [
           {
             id: 'roster',
-            label: `Roster (${input.rosterVoterCount} dòng)`,
+            label: `Danh sách cử tri xác thực (${input.rosterVoterCount} dòng)`,
             ok: input.rosterVoterCount > 0,
             targetId: 'roster-input',
           },
           {
             id: 'roster-format',
-            label: 'Mỗi dòng roster có họ tên và email hợp lệ',
+            label: 'Mỗi dòng cử tri có họ tên và email hợp lệ',
             ok: input.invalidRosterRowCount === 0,
             targetId: 'roster-input',
           },

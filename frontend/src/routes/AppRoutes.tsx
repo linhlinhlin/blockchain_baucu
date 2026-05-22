@@ -2,6 +2,7 @@ import type React from 'react';
 import { createBrowserRouter, Navigate, RouterProvider, useLocation, useParams } from 'react-router-dom';
 import { lazy, Suspense } from 'react';
 import { useSelector } from 'react-redux';
+import { appendSearchAndHash } from '../utils/routeRedirects';
 
 // Đợt 14: redirect giữ params cho luồng forgot-password (legacy VN → EN canonical).
 const ForgotOptionsRedirect = () => {
@@ -18,7 +19,14 @@ const ForgotResetRedirect = () => {
 };
 const RulesRedirect = () => {
   const { id } = useParams<{ id: string }>();
-  return <Navigate to={`/app/elections/${id}/rules`} replace />;
+  const location = useLocation();
+  return <Navigate to={appendSearchAndHash(`/app/elections/${id}/rules`, location.search, location.hash)} replace />;
+};
+const ElectionDetailRedirect = () => {
+  const { id } = useParams<{ id: string }>();
+  const location = useLocation();
+  const target = id ? `/app/elections/${id}/elections-tienhanh` : '/app/elections';
+  return <Navigate to={appendSearchAndHash(target, location.search, location.hash)} replace />;
 };
 const VoterVerificationPublicEntry = () => {
   const location = useLocation();
@@ -27,10 +35,14 @@ const VoterVerificationPublicEntry = () => {
   );
 
   if (hasSession) {
-    return <Navigate to={`/app/verify-voter${location.search}`} replace />;
+    return <Navigate to={appendSearchAndHash('/app/verify-voter', location.search, location.hash)} replace />;
   }
 
   return <VoterVerificationPage />;
+};
+const PreserveLocationRedirect = ({ to }: { to: string }) => {
+  const location = useLocation();
+  return <Navigate to={appendSearchAndHash(to, location.search, location.hash)} replace />;
 };
 import { GoogleReCaptchaProvider } from 'react-google-recaptcha-v3';
 
@@ -46,7 +58,7 @@ import { Web3Provider } from '../context/Web3Context';
 import { ThemeProvider } from '../context/ThemeContext';
 import { ToastProvider } from '../components/ui/Use-toast';
 import { ReCaptchaProvider } from '../components/ui/Use-recaptcha';
-import { isRecaptchaEnabled } from '../config/runtimeFlags';
+import { isRecaptchaEnabled, recaptchaSiteKey } from '../config/runtimeFlags';
 import type { RootState } from '../store/store';
 
 const CacPhienBauCuPage = lazy(() => import('../pages/CacCuocBauCuPage'));
@@ -77,6 +89,7 @@ const FAQ = lazy(() => import('../pages/FaqPage'));
 const BlockchainSetupPage = lazy(() => import('../pages/BlockchainSetupPage'));
 const DieuLePage = lazy(() => import('../pages/DieuLePage'));
 const VoterVerificationPage = lazy(() => import('../pages/VoterVerificationPage'));
+const VerifyTransactionPage = lazy(() => import('../pages/VerifyTransactionPage'));
 
 const AdminPage = lazy(() => import('../pages/AdminPage'));
 
@@ -102,7 +115,7 @@ const AppWithProviders = ({
       <ToastProvider>
         {useRecaptcha && isRecaptchaEnabled ? (
         <GoogleReCaptchaProvider
-          reCaptchaKey={import.meta.env.VITE_RECAPTCHA_SITE_KEY ?? ''}
+          reCaptchaKey={recaptchaSiteKey}
           scriptProps={{
             async: false,
             defer: true,
@@ -161,6 +174,10 @@ const router = createBrowserRouter([
       {
         path: 'verify-voter',
         element: <VoterVerificationPublicEntry />,
+      },
+      {
+        path: 'verify-tx',
+        element: <VerifyTransactionPage />,
       },
       // === Forgot password flow (canonical EN, Đợt 14) ===
       {
@@ -320,7 +337,7 @@ const router = createBrowserRouter([
     path: '/invite',
     element: (
       <AppWithProviders>
-        <Navigate to="/app/scan" replace />
+        <PreserveLocationRedirect to="/app/scan" />
       </AppWithProviders>
     ),
   },
@@ -336,7 +353,7 @@ const router = createBrowserRouter([
     path: 'cap-phieu-bau',
     element: (
       <AppWithProviders>
-        <Navigate to="/app/scan" replace />
+        <PreserveLocationRedirect to="/app/scan" />
       </AppWithProviders>
     ),
   },
@@ -363,7 +380,7 @@ const router = createBrowserRouter([
       // 'elections/new' canonical = TaoCuocBauCuPage. Sub-path redirect cũ:
       {
         path: 'elections/:id',
-        element: <Navigate to="/app/elections" replace />,
+        element: <ElectionDetailRedirect />,
       },
       {
         path: 'elections/:id/session/:idPhien',
@@ -436,10 +453,14 @@ const router = createBrowserRouter([
         path: 'scan',
         element: <QuetMaQRPage />,
       },
-      { path: 'quet-ma-qr', element: <Navigate to="/app/scan" replace /> },
+      { path: 'quet-ma-qr', element: <PreserveLocationRedirect to="/app/scan" /> },
       {
         path: 'verify-voter',
         element: <VoterVerificationPage />,
+      },
+      {
+        path: 'verify-tx',
+        element: <VerifyTransactionPage />,
       },
       {
         path: 'elections',
@@ -483,7 +504,7 @@ const router = createBrowserRouter([
       },
       {
         path: 'invite',
-        element: <Navigate to="/app/scan" replace />,
+        element: <PreserveLocationRedirect to="/app/scan" />,
       },
       {
         path: 'quan-ly-thanh-tuu',

@@ -150,6 +150,109 @@ describe("ElectionFactoryV1", function () {
     expect(await election.finalized()).to.equal(true);
   });
 
+  it("supports a full multi-position ballot flow with voter wallets", async function () {
+    const { creator, voter1, voter2, outsider, candidateA, candidateB, merkleTree, factory, config } =
+      await deployFixture();
+    const candidateC = ethers.id("candidate-c");
+    const candidateD = ethers.id("candidate-d");
+
+    async function createElection(positionConfig) {
+      const tx = await factory.connect(creator).createElection(positionConfig);
+      const receipt = await tx.wait();
+      const event = receipt.logs
+        .map((log) => {
+          try {
+            return factory.interface.parseLog(log);
+          } catch {
+            return null;
+          }
+        })
+        .find((parsed) => parsed && parsed.name === "ElectionCreated");
+
+      return ethers.getContractAt("ElectionV1", event.args.electionAddress);
+    }
+
+    const presidentElection = await createElection({
+      ...config,
+      electionURI: "ipfs://holihu/elections/group-2026/president",
+      electionMetadataHash: ethers.id("group-2026-president-manifest"),
+      candidateIds: [candidateA, candidateB],
+    });
+    const secretaryElection = await createElection({
+      ...config,
+      electionURI: "ipfs://holihu/elections/group-2026/secretary",
+      electionMetadataHash: ethers.id("group-2026-secretary-manifest"),
+      candidateIds: [candidateC, candidateD],
+    });
+
+    await ethers.provider.send("evm_setNextBlockTimestamp", [config.commitStart]);
+    await ethers.provider.send("evm_mine");
+
+    const presidentSalt1 = ethers.id("president-voter-1-secret");
+    const presidentSalt2 = ethers.id("president-voter-2-secret");
+    const secretarySalt1 = ethers.id("secretary-voter-1-secret");
+    const secretarySalt2 = ethers.id("secretary-voter-2-secret");
+    const presidentCommitment1 = await presidentElection.computeCommitment(
+      voter1.address,
+      candidateA,
+      presidentSalt1
+    );
+    const presidentCommitment2 = await presidentElection.computeCommitment(
+      voter2.address,
+      candidateB,
+      presidentSalt2
+    );
+    const secretaryCommitment1 = await secretaryElection.computeCommitment(
+      voter1.address,
+      candidateC,
+      secretarySalt1
+    );
+    const secretaryCommitment2 = await secretaryElection.computeCommitment(
+      voter2.address,
+      candidateD,
+      secretarySalt2
+    );
+
+    await presidentElection.connect(voter1).commitVote(presidentCommitment1, merkleTree.getProof(0));
+    await secretaryElection.connect(voter1).commitVote(secretaryCommitment1, merkleTree.getProof(0));
+    await presidentElection.connect(voter2).commitVote(presidentCommitment2, merkleTree.getProof(1));
+    await secretaryElection.connect(voter2).commitVote(secretaryCommitment2, merkleTree.getProof(1));
+
+    await expect(
+      presidentElection.connect(outsider).commitVote(presidentCommitment1, [])
+    ).to.be.revertedWithCustomError(presidentElection, "NotEligible");
+    await expect(
+      presidentElection.connect(voter1).commitVote(presidentCommitment1, merkleTree.getProof(0))
+    ).to.be.revertedWithCustomError(presidentElection, "AlreadyCommitted");
+
+    await ethers.provider.send("evm_setNextBlockTimestamp", [config.commitEnd]);
+    await ethers.provider.send("evm_mine");
+
+    await expect(
+      secretaryElection.connect(voter1).revealVote(candidateD, secretarySalt1)
+    ).to.be.revertedWithCustomError(secretaryElection, "CommitmentMismatch");
+
+    await presidentElection.connect(voter1).revealVote(candidateA, presidentSalt1);
+    await secretaryElection.connect(voter1).revealVote(candidateC, secretarySalt1);
+    await presidentElection.connect(voter2).revealVote(candidateB, presidentSalt2);
+    await secretaryElection.connect(voter2).revealVote(candidateD, secretarySalt2);
+
+    const [presidentCandidateIds, presidentCounts] = await presidentElection.getResults();
+    const [secretaryCandidateIds, secretaryCounts] = await secretaryElection.getResults();
+    expect(presidentCandidateIds).to.deep.equal([candidateA, candidateB]);
+    expect(secretaryCandidateIds).to.deep.equal([candidateC, candidateD]);
+    expect(presidentCounts).to.deep.equal([1n, 1n]);
+    expect(secretaryCounts).to.deep.equal([1n, 1n]);
+
+    await ethers.provider.send("evm_setNextBlockTimestamp", [config.revealEnd + 1]);
+    await ethers.provider.send("evm_mine");
+
+    await presidentElection.finalizeElection();
+    await secretaryElection.finalizeElection();
+    expect(await presidentElection.finalized()).to.equal(true);
+    expect(await secretaryElection.finalized()).to.equal(true);
+  });
+
   it("rejects invalid candidate reveal data", async function () {
     const { creator, voter1, candidateA, factory, config, merkleTree } = await deployFixture();
 

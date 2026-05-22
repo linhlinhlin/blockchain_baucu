@@ -33,6 +33,7 @@ import {
   getInvalidRosterRows,
   getInvalidWalletEntries,
   getScheduleState,
+  isValidEthereumAddress,
   normalizePositions,
   parseRosterEntries,
   shortenAddress,
@@ -54,6 +55,7 @@ import {
   SummaryRow,
   Wizard,
   type Step,
+  type StatusTone,
 } from '../components/ui/clay';
 
 // Đợt 10 (spec 010) US3: helper trình bày tự chế đã thay bằng bộ component clay.
@@ -91,38 +93,179 @@ function buildSharedRosterInviteUrl(draft: ElectionV1RosterDraft) {
   return `${origin}/verify-voter?groupKey=${encodeURIComponent(draft.groupKey)}`;
 }
 
-const DEFAULT_CREATE_MESSAGE = 'Sẵn sàng tạo một ballot gồm nhiều chức vụ trên Sepolia.';
+function formatReviewDateTime(value: string) {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    return 'Chưa chọn';
+  }
+
+  return new Intl.DateTimeFormat('vi-VN', {
+    dateStyle: 'short',
+    timeStyle: 'short',
+  }).format(date);
+}
+
+function ReviewLine({
+  label,
+  value,
+  detail,
+  tone = 'neutral',
+}: {
+  label: string;
+  value: string | number;
+  detail?: string;
+  tone?: StatusTone;
+}) {
+  return (
+    <div className="grid gap-1 py-3 sm:grid-cols-[160px_minmax(0,1fr)] sm:gap-4">
+      <div>
+        <StatusBadge tone={tone}>{label}</StatusBadge>
+      </div>
+      <div className="min-w-0">
+        <p className="break-words text-[15px] font-semibold text-[var(--clay-text)]">{value}</p>
+        {detail && <p className="mt-0.5 text-[13px] leading-snug text-[var(--clay-muted)]">{detail}</p>}
+      </div>
+    </div>
+  );
+}
+
+function getRosterDeployState(draft: ElectionV1RosterDraft): {
+  tone: StatusTone;
+  title: string;
+  description: string;
+  buttonLabel: string;
+  disabled: boolean;
+} {
+  if (draft.status === 'deployed') {
+    return {
+      tone: 'success',
+      title: 'Đã triển khai',
+      description: `Đã đưa ${draft.includedVoterCount} cử tri đã liên kết ví vào đợt bầu cử trên blockchain.`,
+      buttonLabel: 'Đã triển khai',
+      disabled: true,
+    };
+  }
+
+  if (draft.walletBoundCount === 0) {
+    return {
+      tone: 'warning',
+      title: 'Chưa thể triển khai',
+      description: 'Cần ít nhất 1 cử tri xác thực OTP và liên kết ví trước khi tạo đợt bầu cử trên blockchain.',
+      buttonLabel: 'Chờ cử tri liên kết ví',
+      disabled: true,
+    };
+  }
+
+  if (draft.walletBoundCount < draft.totalInviteCount) {
+    return {
+      tone: 'warning',
+      title: 'Có thể triển khai từng phần',
+      description: `${draft.walletBoundCount}/${draft.totalInviteCount} cử tri đã liên kết ví. Những cử tri chưa liên kết sẽ không được đưa vào đợt bầu cử này.`,
+      buttonLabel: 'Triển khai cử tri đã xác thực',
+      disabled: false,
+    };
+  }
+
+  return {
+    tone: 'success',
+    title: 'Sẵn sàng triển khai',
+    description: 'Toàn bộ cử tri trong danh sách đã xác thực OTP và liên kết ví.',
+    buttonLabel: 'Triển khai lên blockchain',
+    disabled: false,
+  };
+}
+
+const DEFAULT_CREATE_MESSAGE = 'Sẵn sàng tạo đợt bầu cử trên Sepolia.';
 const compactControlClass =
   'w-full rounded-[10px] border border-[rgba(0,0,0,0.08)] bg-[var(--clay-surface)] px-3 py-2 text-sm text-[var(--clay-text)] placeholder:text-[var(--clay-muted-soft)] focus:outline focus:outline-2 focus:outline-offset-2 focus:outline-[var(--clay-primary-focus)] disabled:opacity-55';
+const compactInlineControlClass =
+  'min-w-[120px] flex-1 rounded-[10px] border border-[rgba(0,0,0,0.08)] bg-[var(--clay-surface)] px-2.5 py-1.5 text-[13px] text-[var(--clay-text)] placeholder:text-[var(--clay-muted-soft)] focus:outline focus:outline-2 focus:outline-offset-2 focus:outline-[var(--clay-primary-focus)] disabled:opacity-55';
+
+function getPositionProgress(position: PositionDraft) {
+  const namedCandidateCount = position.candidates.filter(
+    (candidate) => candidate.displayName.trim().length > 0,
+  ).length;
+  const invalidWalletCount = position.candidates.filter((candidate) => {
+    const wallet = candidate.walletAddress.trim();
+    return wallet.length > 0 && !isValidEthereumAddress(wallet);
+  }).length;
+  const hasTitle = position.title.trim().length > 0;
+  const ready = hasTitle && namedCandidateCount >= 2 && invalidWalletCount === 0;
+
+  return { hasTitle, invalidWalletCount, namedCandidateCount, ready };
+}
+
+function getPositionStatusText(progress: ReturnType<typeof getPositionProgress>) {
+  if (progress.ready) {
+    return 'Hoàn tất';
+  }
+
+  const missing: string[] = [];
+  if (!progress.hasTitle) {
+    missing.push('Đặt tên chức vụ');
+  }
+
+  const missingCandidates = Math.max(0, 2 - progress.namedCandidateCount);
+  if (missingCandidates > 0) {
+    missing.push(`Thêm ${missingCandidates} ứng viên có tên`);
+  }
+
+  if (progress.invalidWalletCount > 0) {
+    missing.push(`Sửa ${progress.invalidWalletCount} ví`);
+  }
+
+  return missing.join(' · ');
+}
+
+function getPositionCompletionPercent(progress: ReturnType<typeof getPositionProgress>) {
+  const completedCoreItems = (progress.hasTitle ? 1 : 0) + Math.min(progress.namedCandidateCount, 2);
+  return Math.round((completedCoreItems / 3) * 100);
+}
+
+function getScheduleStatusText(scheduleState: ReturnType<typeof getScheduleState>) {
+  if (!scheduleState.hasAllDates) {
+    return 'Chọn đủ 3 mốc thời gian.';
+  }
+
+  if (!scheduleState.startsInFuture) {
+    return 'Mốc mở bỏ phiếu phải ở tương lai.';
+  }
+
+  if (!scheduleState.isOrdered) {
+    return 'Thứ tự cần là mở bỏ phiếu < đóng bỏ phiếu < kết thúc kiểm phiếu.';
+  }
+
+  return 'Lịch hợp lệ.';
+}
 
 function getRequirementAction(requirement: Requirement | null) {
   if (!requirement) {
     return {
-      label: 'Đã đủ điều kiện tạo ballot',
-      detail: 'Kiểm tra lần cuối ở bước xác nhận rồi tạo ballot hoặc roster xác thực.',
+      label: 'Đã đủ điều kiện tạo bầu cử',
+      detail: 'Kiểm tra lần cuối ở bước xác nhận rồi tạo bầu cử hoặc danh sách xác thực.',
     };
   }
 
   const copy: Record<string, { label: string; detail: string }> = {
     jwt: {
       label: 'Đăng nhập lại tài khoản quản trị',
-      detail: 'Phiên đăng nhập cần hợp lệ trước khi backend nhận yêu cầu tạo ballot.',
+      detail: 'Phiên đăng nhập cần hợp lệ trước khi hệ thống nhận yêu cầu tạo bầu cử.',
     },
     wallet: {
       label: 'Kết nối ví MetaMask',
-      detail: 'Ví này sẽ là admin wallet của các ballot được tạo trên Sepolia.',
+      detail: 'Ví này sẽ là ví quản trị của các đợt bầu cử được tạo trên Sepolia.',
     },
     network: {
       label: 'Chuyển MetaMask sang Sepolia',
-      detail: 'Mạng ví phải là Sepolia trước khi tạo ballot bằng danh sách ví trực tiếp.',
+      detail: 'Mạng ví phải là Sepolia trước khi tạo bầu cử bằng danh sách ví trực tiếp.',
     },
     title: {
       label: 'Nhập tên đợt bầu cử',
-      detail: 'Tên giúp admin và cử tri nhận diện đúng ballot trong dashboard.',
+      detail: 'Tên giúp người quản trị và cử tri nhận diện đúng đợt bầu cử trong bảng điều khiển.',
     },
     schedule: {
-      label: 'Kiểm tra lại lịch commit/reveal',
-      detail: 'Commit start phải ở tương lai và thứ tự phải là start < end < reveal.',
+      label: 'Kiểm tra lại lịch bầu cử',
+      detail: 'Thời điểm bắt đầu phải ở tương lai và theo đúng thứ tự mở bỏ phiếu, đóng bỏ phiếu, công bố kiểm phiếu.',
     },
     positions: {
       label: 'Hoàn thiện chức vụ và ứng viên',
@@ -138,25 +281,25 @@ function getRequirementAction(requirement: Requirement | null) {
     },
     'voter-wallet-format': {
       label: 'Sửa địa chỉ ví cử tri',
-      detail: 'Mỗi địa chỉ phải đúng dạng 0x…40 ký tự để tạo Merkle eligibility.',
+      detail: 'Mỗi địa chỉ phải đúng dạng 0x…40 ký tự để đưa vào danh sách cử tri hợp lệ.',
     },
     'voter-wallet-duplicates': {
       label: 'Xóa ví cử tri bị trùng',
-      detail: 'Một ví chỉ được xuất hiện một lần trong cùng ballot.',
+      detail: 'Một ví chỉ được xuất hiện một lần trong cùng đợt bầu cử.',
     },
     roster: {
-      label: 'Nhập roster cử tri',
-      detail: 'Mỗi dòng roster gồm họ tên, email và mã sinh viên nếu có.',
+      label: 'Nhập danh sách xác thực cử tri',
+      detail: 'Mỗi dòng gồm họ tên, email và mã sinh viên nếu có.',
     },
     'roster-format': {
-      label: 'Sửa dòng roster thiếu tên/email',
-      detail: 'Roster cần họ tên và email hợp lệ để gửi OTP xác thực.',
+      label: 'Sửa dòng cử tri thiếu tên/email',
+      detail: 'Danh sách xác thực cần họ tên và email hợp lệ để gửi OTP.',
     },
   };
 
   return copy[requirement.id] ?? {
     label: requirement.label,
-    detail: 'Hoàn tất mục này trước khi chuyển sang bước tạo ballot.',
+    detail: 'Hoàn tất mục này trước khi chuyển sang bước tạo bầu cử.',
   };
 }
 
@@ -189,9 +332,8 @@ export default function TaoCuocBauCuPage() {
   const [voterMode, setVoterMode] = useState<RosterMode>('wallets');
   const [voterWalletsInput, setVoterWalletsInput] = useState('');
   const [rosterInput, setRosterInput] = useState('');
-  const [positions, setPositions] = useState<PositionDraft[]>([
-    createPositionDraft(1),
-  ]);
+  const [positions, setPositions] = useState<PositionDraft[]>(() => [createPositionDraft(1)]);
+  const [activePositionId, setActivePositionId] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [submitAttempted, setSubmitAttempted] = useState(false);
   const [activeDraft, setActiveDraft] = useState<ElectionV1RosterDraft | null>(null);
@@ -270,10 +412,40 @@ export default function TaoCuocBauCuPage() {
     (total, position) => total + position.candidates.length,
     0,
   );
+  const readyPositionCount = positions.filter((position) => getPositionProgress(position).ready).length;
   const voterCount =
     voterMode === 'wallets' ? parsedVoterWallets.length : parsedRosterVoters.length;
+  const walletInputHasErrors = invalidVoterWallets.length > 0 || duplicateVoterWallets.length > 0;
+  const rosterInputHasErrors = invalidRosterRows.length > 0;
+  const walletInputStatusText =
+    parsedVoterWallets.length === 0
+      ? 'Chưa có ví'
+      : walletInputHasErrors
+        ? 'Cần sửa danh sách ví'
+        : `${parsedVoterWallets.length} ví hợp lệ`;
+  const rosterInputStatusText =
+    parsedRosterVoters.length === 0
+      ? 'Chưa có cử tri'
+      : rosterInputHasErrors
+        ? 'Cần sửa danh sách cử tri'
+        : `${parsedRosterVoters.length} cử tri hợp lệ`;
+  const voterInputStatusText =
+    voterMode === 'wallets' ? walletInputStatusText : rosterInputStatusText;
+  const voterInputTone =
+    voterMode === 'wallets'
+      ? parsedVoterWallets.length === 0
+        ? 'neutral'
+        : walletInputHasErrors
+          ? 'danger'
+          : 'success'
+      : parsedRosterVoters.length === 0
+        ? 'neutral'
+        : rosterInputHasErrors
+          ? 'danger'
+          : 'success';
   const outstandingRequirements = requirements.filter((requirement) => !requirement.ok);
   const nextAction = getRequirementAction(firstInvalidRequirement);
+  const scheduleStatusText = getScheduleStatusText(scheduleState);
   const showRailMessage =
     Boolean(message) &&
     (submitAttempted || submitting || Boolean(activeDraft) || message !== DEFAULT_CREATE_MESSAGE);
@@ -290,6 +462,59 @@ export default function TaoCuocBauCuPage() {
       : 'Kết nối MetaMask';
   const nextActionIsWallet =
     firstInvalidRequirement?.id === 'wallet' || firstInvalidRequirement?.id === 'network';
+  const railActionDisabled = !nextActionIsWallet && !firstInvalidRequirement && step === 'b4';
+  const activePosition = positions.find((position) => position.id === activePositionId) ?? positions[0];
+  const activePositionIndex = Math.max(
+    0,
+    positions.findIndex((position) => position.id === activePosition?.id),
+  );
+  const activePositionProgress = activePosition
+    ? getPositionProgress(activePosition)
+    : { hasTitle: false, invalidWalletCount: 0, namedCandidateCount: 0, ready: false };
+  const activePositionStatusText = getPositionStatusText(activePositionProgress);
+  const createModeTitle =
+    voterMode === 'wallets' ? 'Tạo trực tiếp trên Sepolia' : 'Tạo danh sách xác thực QR/OTP';
+  const createModeDetail =
+    voterMode === 'wallets'
+      ? 'Dùng khi người quản trị đã có sẵn ví của từng cử tri. Hệ thống sẽ tạo đợt bầu cử ngay sau khi xác nhận.'
+      : 'Dùng khi chỉ có danh sách email. Hệ thống tạo QR xác thực trước, sau đó mới triển khai bằng các ví đã liên kết.';
+  const submitButtonLabel =
+    voterMode === 'wallets' ? 'Tạo bầu cử trên Sepolia' : 'Tạo QR xác thực cử tri';
+  const submittingLabel =
+    voterMode === 'wallets'
+      ? 'Đang tạo bầu cử trên Sepolia…'
+      : 'Đang tạo danh sách xác thực…';
+  const reviewScheduleValue = `${formatReviewDateTime(commitStart)} → ${formatReviewDateTime(
+    commitEnd,
+  )} → ${formatReviewDateTime(revealEnd)}`;
+  const reviewScheduleDetail =
+    'Thứ tự: mở bỏ phiếu, đóng bỏ phiếu, kết thúc kiểm phiếu.';
+  const reviewPositionDetail = `${filledCandidateCount} ứng viên trong ${filledPositionCount} chức vụ đã nhập.`;
+  const reviewVoterDetail =
+    voterMode === 'wallets'
+      ? 'Các ví này sẽ được đưa trực tiếp vào danh sách cử tri khi tạo trên Sepolia.'
+      : 'QR chỉ dùng để cử tri tự xác thực email, nhập OTP và liên kết ví trước khi triển khai.';
+  const readinessTitle = isReadyToSubmit ? 'Đã sẵn sàng' : 'Cần hoàn tất trước khi tạo';
+  const readinessDetail = isReadyToSubmit
+    ? voterMode === 'wallets'
+      ? 'Kiểm tra lại lần cuối rồi tạo đợt bầu cử trên Sepolia.'
+      : 'Bước này chỉ tạo QR xác thực, chưa tạo đợt bầu cử trên blockchain.'
+    : nextAction.detail;
+  const reviewAdminWalletTone: StatusTone = currentAccount
+    ? voterMode === 'wallets'
+      ? isNetworkConnected
+        ? 'success'
+        : 'warning'
+      : 'success'
+    : 'warning';
+  const reviewAdminWalletDetail = currentAccount
+    ? voterMode === 'wallets'
+      ? isNetworkConnected
+        ? 'MetaMask đang ở Sepolia.'
+        : 'Cần chuyển ví sang Sepolia trước khi tạo trực tiếp trên blockchain.'
+      : 'Ví này ghi nhận người tạo bản nháp xác thực. Việc triển khai sẽ diễn ra sau khi cử tri liên kết ví.'
+    : 'Cần kết nối MetaMask để xác nhận quyền tạo.';
+  const rosterDeployState = activeDraft ? getRosterDeployState(activeDraft) : null;
 
   useEffect(() => {
     if (!draftKeyFromUrl || !accessToken) {
@@ -317,19 +542,31 @@ export default function TaoCuocBauCuPage() {
         setCommitStart(toDateTimeLocalValue(new Date(draft.commitStart)));
         setCommitEnd(toDateTimeLocalValue(new Date(draft.commitEnd)));
         setRevealEnd(toDateTimeLocalValue(new Date(draft.revealEnd)));
-        setPositions(
-          draft.positions.map((position, positionIndex) => ({
-            id: `${position.positionId}-${positionIndex + 1}`,
-            title: position.title,
-            description: position.description || '',
-            candidates: position.candidates.map((candidate, candidateIndex) => ({
-              id: `${position.positionId}-candidate-${candidateIndex + 1}`,
-              displayName: candidate.displayName,
-              walletAddress: candidate.walletAddress || '',
-            })),
-          })),
+        setRosterInput(
+          draft.invites
+            .map((invite) =>
+              [invite.fullName, invite.email, invite.studentCode ?? '']
+                .map((value) => value.trim())
+                .join(','),
+            )
+            .join('\n'),
         );
-        setMessage(`Đã nạp lại bản nháp roster xác thực ${draft.groupKey}.`);
+        setPositions(
+          draft.positions.length > 0
+            ? draft.positions.map((position, positionIndex) => ({
+                id: `${position.positionId}-${positionIndex + 1}`,
+                title: position.title,
+                description: position.description || '',
+                candidates: position.candidates.map((candidate, candidateIndex) => ({
+                  id: `${position.positionId}-candidate-${candidateIndex + 1}`,
+                  displayName: candidate.displayName,
+                  walletAddress: candidate.walletAddress || '',
+                })),
+              }))
+            : [createPositionDraft(1)],
+        );
+        setStep('b4');
+        setMessage(`Đã nạp lại bản nháp xác thực ${draft.groupKey}.`);
       } catch (error) {
         if (active) {
           setMessage(getErrorMessage(error));
@@ -343,6 +580,16 @@ export default function TaoCuocBauCuPage() {
       active = false;
     };
   }, [accessToken, activeDraft?.groupKey, draftKeyFromUrl]);
+
+  useEffect(() => {
+    if (positions.length === 0) {
+      return;
+    }
+
+    if (!activePositionId || !positions.some((position) => position.id === activePositionId)) {
+      setActivePositionId(positions[0].id);
+    }
+  }, [activePositionId, positions]);
 
   function focusRequirement(requirement: Requirement) {
     const targetId = requirement.targetId;
@@ -372,13 +619,26 @@ export default function TaoCuocBauCuPage() {
   }
 
   function addPosition() {
-    setPositions((current) => [...current, createPositionDraft(current.length + 1)]);
+    const nextPosition = createPositionDraft(positions.length + 1);
+    setPositions((current) => [...current, nextPosition]);
+    setActivePositionId(nextPosition.id);
   }
 
   function removePosition(id: string) {
-    setPositions((current) =>
-      current.length <= 1 ? current : current.filter((item) => item.id !== id),
-    );
+    if (positions.length <= 1) {
+      return;
+    }
+
+    const removedIndex = positions.findIndex((position) => position.id === id);
+    const nextPositions = positions.filter((position) => position.id !== id);
+    setPositions(nextPositions);
+
+    if (activePositionId === id) {
+      const nextActive =
+        nextPositions[Math.min(Math.max(removedIndex, 0), nextPositions.length - 1)] ??
+        nextPositions[0];
+      setActivePositionId(nextActive?.id ?? '');
+    }
   }
 
   function updateCandidate(
@@ -511,7 +771,7 @@ export default function TaoCuocBauCuPage() {
         const response = await createElectionV1RosterDraft(payload);
         setActiveDraft(response.draft);
         setMessage(
-          `Đã tạo bản nháp roster xác thực ${response.draft.groupKey}. Gửi QR chung cho cử tri, sau đó deploy ballot khi đã bind ví.`,
+          `Đã tạo bản nháp xác thực ${response.draft.groupKey}. Gửi QR chung cho cử tri, sau đó triển khai bầu cử khi cử tri đã liên kết ví.`,
         );
         navigate(`/app/elections/new?draft=${encodeURIComponent(response.draft.groupKey)}`, {
           replace: true,
@@ -526,6 +786,12 @@ export default function TaoCuocBauCuPage() {
 
   async function handleDeployVerifiedRoster() {
     if (!activeDraft) {
+      return;
+    }
+
+    const deployState = getRosterDeployState(activeDraft);
+    if (deployState.disabled) {
+      setMessage(deployState.description);
       return;
     }
 
@@ -544,7 +810,7 @@ export default function TaoCuocBauCuPage() {
         },
       };
       setActiveDraft(refreshedDraft);
-      setMessage(`Đã deploy ballot từ roster đã xác thực ${response.created.groupKey}.`);
+      setMessage(`Đã triển khai bầu cử từ danh sách cử tri đã xác thực ${response.created.groupKey}.`);
       const firstElectionAddress = response.created.created[0]?.address;
       if (firstElectionAddress) {
         navigate(
@@ -577,7 +843,11 @@ export default function TaoCuocBauCuPage() {
     b1: showInlineErrors && title.trim().length === 0,
     b2:
       showInlineErrors &&
-      (normalizedPositions.length === 0 || invalidCandidateWallets.length > 0),
+      requirements.some(
+        (requirement) =>
+          (requirement.id === 'positions' || requirement.id === 'candidate-wallets') &&
+          !requirement.ok,
+      ),
     b3:
       showInlineErrors &&
       (!scheduleState.isValid ||
@@ -609,7 +879,7 @@ export default function TaoCuocBauCuPage() {
   const goto = (k: 'b1' | 'b2' | 'b3' | 'b4') => setStep(k);
 
   const rail = (
-    <SummaryRail title="Tạo ballot">
+    <SummaryRail title="Tạo bầu cử">
       <div className="flex flex-wrap gap-1.5">
         <StatusBadge tone={accessToken ? 'success' : 'warning'}>
           {accessToken ? 'Đã đăng nhập' : 'Cần đăng nhập'}
@@ -620,17 +890,25 @@ export default function TaoCuocBauCuPage() {
       <div className="grid gap-2">
         <SummaryRow
           label="Tài khoản"
-          value={currentUser?.tenHienThi ?? currentUser?.tenDangNhap ?? 'n/a'}
+          value={currentUser?.tenHienThi ?? currentUser?.tenDangNhap ?? 'Chưa có'}
         />
         <SummaryRow label="Ví tạo" value={currentAccount ? shortenAddress(currentAccount) : 'Chưa nối'} />
+        <SummaryRow label="Chức vụ" value={`${readyPositionCount}/${positions.length} hoàn tất`} />
+        <SummaryRow label="Lịch" value={scheduleState.isValid ? 'Hợp lệ' : 'Cần chỉnh'} />
         <SummaryRow
-          label={voterMode === 'wallets' ? 'Cấu hình ví' : 'Cấu hình roster'}
-          value={`${filledPositionCount}/${positions.length} chức vụ · ${voterCount} cử tri`}
+          label="Cử tri"
+          value={
+            voterMode === 'wallets'
+              ? `${voterCount} ví trực tiếp`
+              : `${voterCount} dòng QR/OTP`
+          }
         />
       </div>
 
       <div className="rounded-[14px] border border-[var(--clay-border)] bg-[var(--clay-surface-soft)] p-3">
-        <p className="text-[11px] font-semibold uppercase text-[var(--clay-muted)]">Cần làm tiếp</p>
+        <p className="text-[11px] font-semibold uppercase text-[var(--clay-muted)]">
+          {firstInvalidRequirement ? 'Cần làm tiếp' : 'Trạng thái'}
+        </p>
         <p className="mt-1 text-[15px] font-semibold text-[var(--clay-text)]">{nextAction.label}</p>
         <p className="mt-1 text-[13px] leading-relaxed text-[var(--clay-muted)]">{nextAction.detail}</p>
         <Button
@@ -639,6 +917,7 @@ export default function TaoCuocBauCuPage() {
           variant={firstInvalidRequirement ? 'secondary' : 'primary'}
           size="sm"
           className="mt-3 w-full"
+          disabled={railActionDisabled}
           onClick={() => {
             if (nextActionIsWallet) {
               void handleWalletSetup();
@@ -656,7 +935,9 @@ export default function TaoCuocBauCuPage() {
             ? walletActionLabel
             : firstInvalidRequirement
               ? 'Đi tới mục cần sửa'
-              : 'Tới bước xác nhận'}
+              : step === 'b4'
+                ? 'Đang ở bước xác nhận'
+                : 'Tới bước xác nhận'}
         </Button>
       </div>
 
@@ -685,11 +966,12 @@ export default function TaoCuocBauCuPage() {
   );
 
   const stepNavButtons = (prev?: 'b1' | 'b2' | 'b3', next?: 'b2' | 'b3' | 'b4') => (
-    <div className="mt-3 flex items-center justify-between gap-3">
+    <div className="mt-1 flex items-center justify-between gap-3">
       {prev ? (
         <Button
           type="button"
           variant="ghost"
+          size="sm"
           onClick={() => goto(prev)}
           iconLeft={<ArrowLeft className="h-4 w-4" aria-hidden="true" />}
         >
@@ -702,6 +984,7 @@ export default function TaoCuocBauCuPage() {
         <Button
           type="button"
           variant="primary"
+          size="sm"
           onClick={() => goto(next)}
           iconRight={<ArrowRight className="h-4 w-4" aria-hidden="true" />}
         >
@@ -714,11 +997,11 @@ export default function TaoCuocBauCuPage() {
   return (
     <div className="text-[var(--clay-text)]">
       <div className="mx-auto max-w-[1440px]">
-        <div className="mb-3">
-          <h1 className="text-[1.75rem] font-semibold tracking-[-0.015em] text-[var(--clay-text)]">
+        <div className="mb-1">
+          <h1 className="text-[1.65rem] font-semibold tracking-[-0.015em] text-[var(--clay-text)]">
             Tạo bầu cử
           </h1>
-          <p className="mt-1 text-[15px] text-[var(--clay-muted)]">
+          <p className="mt-0.5 text-sm text-[var(--clay-muted)]">
             Thiết lập thông tin, chức vụ, lịch và danh sách cử tri cho đợt bầu cử trên Sepolia.
           </p>
         </div>
@@ -730,7 +1013,7 @@ export default function TaoCuocBauCuPage() {
               <div data-wizard-step="b1">
                 <SectionCard
                   title="Thông tin đợt bầu cử"
-                  description="Tên và mô tả để người dùng nhận diện ballot."
+                  description="Tên và mô tả giúp người quản trị, cử tri nhận diện đúng đợt bầu cử."
                 >
                   <div className="grid gap-3 md:grid-cols-2">
                     <Field label="Tên cuộc bầu cử" className="md:col-span-2">
@@ -747,7 +1030,7 @@ export default function TaoCuocBauCuPage() {
                     </Field>
                     {showInlineErrors && title.trim().length === 0 && (
                       <div className="md:col-span-2 -mt-2">
-                        <FieldError message="Nhập tên cuộc bầu cử để người dùng nhận diện ballot." />
+                        <FieldError message="Nhập tên cuộc bầu cử để người dùng nhận diện đúng đợt bầu cử." />
                       </div>
                     )}
                     <Field label="Mô tả" className="md:col-span-2">
@@ -762,7 +1045,7 @@ export default function TaoCuocBauCuPage() {
                         placeholder="Mô tả ngắn về phạm vi và quy tắc của đợt bầu cử…"
                       />
                     </Field>
-                    <Field label="Group key (tùy chọn)" className="md:col-span-2">
+                    <Field label="Mã nhóm (tùy chọn)" className="md:col-span-2">
                       <input
                         id="group-key"
                         name="group-key"
@@ -771,7 +1054,7 @@ export default function TaoCuocBauCuPage() {
                         value={groupKey}
                         onChange={(event) => setGroupKey(event.target.value)}
                         className={fieldControlClass}
-                        placeholder="Để trống để backend tự sinh…"
+                        placeholder="Để trống để hệ thống tự sinh…"
                       />
                     </Field>
                   </div>
@@ -782,10 +1065,9 @@ export default function TaoCuocBauCuPage() {
 
             {/* ───────── Bước 2: Chức vụ & ứng viên ───────── */}
             <Wizard.Panel value="b2">
-              <div data-wizard-step="b2" id="positions-section">
+              <div data-wizard-step="b2" id="positions-section" tabIndex={-1}>
                 <SectionCard
                   title="Chức vụ & ứng viên"
-                  description="Mỗi chức vụ cần ≥ 2 ứng viên có tên."
                   actions={
                     <Button
                       type="button"
@@ -802,72 +1084,175 @@ export default function TaoCuocBauCuPage() {
                   )}
                   {showInlineErrors && invalidCandidateWallets.length > 0 && (
                     <FieldError
-                      message={`Có ${invalidCandidateWallets.length} ví ứng viên sai định dạng.`}
+                      message={`Có ${invalidCandidateWallets.length} ví ứng viên chưa đúng định dạng.`}
                     />
                   )}
 
-                  <div className="mt-3 space-y-4">
-                    {positions.map((position, positionIndex) => (
-                      <Panel key={position.id} padded={false} className="bg-[var(--clay-surface-soft)]">
-                        <div className="p-4">
-                          <div className="mb-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                            <div className="min-w-0">
-                              <p className="text-xs font-semibold uppercase tracking-[-0.01em] text-[var(--clay-muted)]">
-                                Chức vụ {positionIndex + 1}
-                              </p>
-                              {position.title && (
-                                <p className="mt-0.5 truncate text-[15px] font-semibold text-[var(--clay-text)]">
-                                  {position.title}
+                  <div className="mt-2 grid gap-3 2xl:grid-cols-[260px_minmax(0,1fr)]">
+                    <div className="2xl:hidden">
+                      <select
+                        id="position-selector"
+                        aria-label="Chọn chức vụ đang sửa"
+                        value={activePosition?.id ?? ''}
+                        onChange={(event) => setActivePositionId(event.target.value)}
+                        className={fieldControlClass}
+                      >
+                        {positions.map((position, positionIndex) => {
+                          const progress = getPositionProgress(position);
+                          return (
+                            <option key={position.id} value={position.id}>
+                              {position.title.trim() || `Chức vụ ${positionIndex + 1}`} ·{' '}
+                              {getPositionStatusText(progress)}
+                            </option>
+                          );
+                        })}
+                      </select>
+                    </div>
+
+                    <div className="hidden 2xl:block">
+                      <div className="rounded-[16px] border border-[var(--clay-border)] bg-[var(--clay-surface-soft)] p-2">
+                        <div className="flex items-center justify-between px-2 py-1">
+                          <div>
+                            <p className="text-[11px] font-semibold uppercase text-[var(--clay-muted)]">
+                              Danh sách chức vụ
+                            </p>
+                            <p className="text-[12px] text-[var(--clay-muted-soft)]">
+                              Chọn một chức vụ để chỉnh
+                            </p>
+                          </div>
+                          <StatusBadge tone="info">{readyPositionCount}/{positions.length}</StatusBadge>
+                        </div>
+
+                        <div className="mt-2 space-y-2">
+                          {positions.map((position, positionIndex) => {
+                            const progress = getPositionProgress(position);
+                            const isActive = activePosition?.id === position.id;
+                            const statusLabel = progress.ready
+                              ? 'Hoàn tất'
+                              : progress.invalidWalletCount > 0
+                                ? 'Sửa ví'
+                                : progress.hasTitle
+                                  ? `${progress.namedCandidateCount}/2 ứng viên`
+                                  : 'Thiếu tên';
+
+                            return (
+                              <button
+                                key={position.id}
+                                type="button"
+                                aria-pressed={isActive}
+                                onClick={() => setActivePositionId(position.id)}
+                                className={`w-full rounded-[14px] border p-3 text-left transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--clay-primary-focus)] ${
+                                  isActive
+                                    ? 'border-[var(--clay-primary)] bg-[var(--clay-primary-light)]'
+                                    : 'border-[var(--clay-border)] bg-[var(--clay-surface)] hover:border-[var(--clay-primary)]'
+                                }`}
+                              >
+                                <div className="flex items-start justify-between gap-2">
+                                  <div className="min-w-0">
+                                    <p className="text-[11px] font-semibold uppercase text-[var(--clay-muted)]">
+                                      Chức vụ {positionIndex + 1}
+                                    </p>
+                                    <p className="mt-0.5 truncate text-[14px] font-semibold text-[var(--clay-text)]">
+                                      {position.title.trim() || 'Chưa đặt tên'}
+                                    </p>
+                                  </div>
+                                  <StatusBadge tone={progress.ready ? 'success' : 'warning'}>
+                                    {statusLabel}
+                                  </StatusBadge>
+                                </div>
+                                <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-[var(--clay-border)]">
+                                  <div
+                                    className="h-full rounded-full bg-[var(--clay-primary)]"
+                                    style={{
+                                      width: `${Math.min(
+                                        100,
+                                        getPositionCompletionPercent(progress),
+                                      )}%`,
+                                    }}
+                                  />
+                                </div>
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    </div>
+
+                    {activePosition && (
+                      <Panel padded={false} className="min-w-0 bg-[var(--clay-surface-soft)]">
+                        <div className="border-b border-[var(--clay-border)] px-3 py-2">
+                          <div className="flex items-center justify-between gap-2">
+                            <div className="flex min-w-0 items-center gap-2">
+                              <StatusBadge tone={activePositionProgress.ready ? 'success' : 'warning'}>
+                                Chức vụ {activePositionIndex + 1}
+                              </StatusBadge>
+                              <div className="min-w-0">
+                                <p className="truncate text-sm font-semibold text-[var(--clay-text)]">
+                                  {activePosition.title.trim() || 'Chưa đặt tên'}
                                 </p>
-                              )}
+                                <p className="truncate text-[12px] text-[var(--clay-muted)]">
+                                  {activePositionStatusText}
+                                </p>
+                              </div>
                             </div>
                             <Button
                               type="button"
                               variant="ghost"
-                              onClick={() => removePosition(position.id)}
+                              size="sm"
+                              disabled={positions.length <= 1}
+                              aria-label={`Xóa chức vụ ${activePositionIndex + 1}`}
+                              title={
+                                positions.length <= 1
+                                  ? 'Đợt bầu cử cần ít nhất 1 chức vụ'
+                                  : 'Xóa chức vụ đang chọn'
+                              }
+                              onClick={() => removePosition(activePosition.id)}
                               iconLeft={<Trash2 className="h-4 w-4" aria-hidden="true" />}
-                            >
-                              Xóa chức vụ
-                            </Button>
+                              className="h-8 w-8 px-0"
+                            />
                           </div>
+                        </div>
 
+                        <div className="p-3">
                           <div className="grid gap-3 md:grid-cols-2">
                             <Field label="Tên chức vụ">
                               <input
-                                id={`${position.id}-title`}
-                                name={`${position.id}-title`}
+                                id={`${activePosition.id}-title`}
+                                name={`${activePosition.id}-title`}
                                 autoComplete="off"
-                                value={position.title}
+                                value={activePosition.title}
                                 onChange={(event) =>
-                                  updatePosition(position.id, { title: event.target.value })
+                                  updatePosition(activePosition.id, { title: event.target.value })
                                 }
                                 className={fieldControlClass}
-                                placeholder="Ví dụ: Lớp trưởng…"
+                                placeholder="Ví dụ: Lớp trưởng..."
                               />
                             </Field>
-                            <Field label="Mô tả chức vụ">
+                            <Field label="Ghi chú cho chức vụ">
                               <input
-                                id={`${position.id}-description`}
-                                name={`${position.id}-description`}
+                                id={`${activePosition.id}-description`}
+                                name={`${activePosition.id}-description`}
                                 autoComplete="off"
-                                value={position.description}
+                                value={activePosition.description}
                                 onChange={(event) =>
-                                  updatePosition(position.id, { description: event.target.value })
+                                  updatePosition(activePosition.id, { description: event.target.value })
                                 }
                                 className={fieldControlClass}
-                                placeholder="Ví dụ: Bầu 1 người cho vai trò này…"
+                                placeholder="Ví dụ: mỗi cử tri chọn 1 ứng viên cho chức vụ này..."
                               />
                             </Field>
                           </div>
 
-                          <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                          <div className="mt-2 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                             <p className="text-sm font-semibold text-[var(--clay-text)]">
-                              Ứng viên cho {position.title || `chức vụ ${positionIndex + 1}`}
+                              Ứng viên · {activePositionProgress.namedCandidateCount}/
+                              {activePosition.candidates.length} có tên
                             </p>
                             <Button
                               type="button"
                               variant="secondary"
-                              onClick={() => addCandidate(position.id)}
+                              size="sm"
+                              onClick={() => addCandidate(activePosition.id)}
                               iconLeft={<Plus className="h-4 w-4" aria-hidden="true" />}
                             >
                               Thêm ứng viên
@@ -875,66 +1260,102 @@ export default function TaoCuocBauCuPage() {
                           </div>
 
                           {showInlineErrors &&
-                            position.title.trim().length > 0 &&
-                            position.candidates.filter(
-                              (candidate) => candidate.displayName.trim().length > 0,
-                            ).length < 2 && (
+                            activePosition.title.trim().length > 0 &&
+                            activePositionProgress.namedCandidateCount < 2 && (
                               <FieldError message="Mỗi chức vụ cần ít nhất 2 ứng viên có tên." />
                             )}
 
-                          <div className="mt-3 space-y-2">
-                            {position.candidates.map((candidate, candidateIndex) => (
-                              <div
-                                key={candidate.id}
-                                className="grid gap-2 rounded-[12px] border border-[var(--clay-border)] bg-[var(--clay-surface)] p-2 md:grid-cols-[2rem_minmax(0,1fr)_minmax(0,1fr)_auto] md:items-center"
-                              >
-                                <span className="hidden h-9 w-8 items-center justify-center rounded-[10px] bg-[var(--clay-surface-soft)] text-xs font-semibold text-[var(--clay-muted)] md:inline-flex">
-                                  {candidateIndex + 1}
-                                </span>
-                                <input
-                                  id={`${candidate.id}-name`}
-                                  name={`${candidate.id}-name`}
-                                  aria-label={`Tên ứng viên ${candidateIndex + 1}`}
-                                  autoComplete="off"
-                                  value={candidate.displayName}
-                                  onChange={(event) =>
-                                    updateCandidate(position.id, candidate.id, {
-                                      displayName: event.target.value,
-                                    })
-                                  }
-                                  className={compactControlClass}
-                                  placeholder={`Tên ứng viên ${candidateIndex + 1}`}
-                                />
-                                <input
-                                  id={`${candidate.id}-wallet`}
-                                  name={`${candidate.id}-wallet`}
-                                  aria-label={`Ví ứng viên ${candidateIndex + 1} tùy chọn`}
-                                  autoComplete="off"
-                                  spellCheck={false}
-                                  value={candidate.walletAddress}
-                                  onChange={(event) =>
-                                    updateCandidate(position.id, candidate.id, {
-                                      walletAddress: event.target.value,
-                                    })
-                                  }
-                                  className={`${compactControlClass} font-mono`}
-                                  placeholder="Ví ứng viên (tùy chọn)"
-                                />
-                                <Button
-                                  type="button"
-                                  variant="ghost"
-                                  size="sm"
-                                  aria-label={`Xóa ứng viên ${candidateIndex + 1}`}
-                                  onClick={() => removeCandidate(position.id, candidate.id)}
-                                  iconLeft={<Trash2 className="h-4 w-4" aria-hidden="true" />}
-                                  className="h-9 w-9 px-0"
-                                />
-                              </div>
-                            ))}
+                          <div className="mt-2 space-y-2">
+                            {activePosition.candidates.map((candidate, candidateIndex) => {
+                              const candidateWallet = candidate.walletAddress.trim();
+                              const candidateHasName = candidate.displayName.trim().length > 0;
+                              const candidateWalletInvalid =
+                                candidateWallet.length > 0 && !isValidEthereumAddress(candidateWallet);
+                              const candidateReady = candidateHasName && !candidateWalletInvalid;
+
+                              return (
+                                <article
+                                  key={candidate.id}
+                                  className={`rounded-[14px] border bg-[var(--clay-surface)] p-2 ${
+                                    candidateWalletInvalid
+                                      ? 'border-[var(--state-danger)]'
+                                      : candidateReady
+                                        ? 'border-[var(--state-success)]'
+                                        : 'border-[var(--clay-border)]'
+                                  }`}
+                                >
+                                  <div className="flex flex-wrap items-center gap-2">
+                                    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[12px] bg-[var(--clay-surface-soft)] font-mono text-[13px] font-semibold text-[var(--clay-text)]">
+                                      {candidateIndex + 1}
+                                    </span>
+                                    <input
+                                      id={`${candidate.id}-name`}
+                                      name={`${candidate.id}-name`}
+                                      aria-label={`Tên ứng viên ${candidateIndex + 1}`}
+                                      autoComplete="off"
+                                      value={candidate.displayName}
+                                      onChange={(event) =>
+                                        updateCandidate(activePosition.id, candidate.id, {
+                                          displayName: event.target.value,
+                                        })
+                                      }
+                                      className={compactInlineControlClass}
+                                      placeholder={`Họ tên ứng viên ${candidateIndex + 1}`}
+                                    />
+                                    <input
+                                      id={`${candidate.id}-wallet`}
+                                      name={`${candidate.id}-wallet`}
+                                      aria-label={`Ví ứng viên ${candidateIndex + 1} tùy chọn`}
+                                      autoComplete="off"
+                                      spellCheck={false}
+                                      value={candidate.walletAddress}
+                                      onChange={(event) =>
+                                        updateCandidate(activePosition.id, candidate.id, {
+                                          walletAddress: event.target.value,
+                                        })
+                                      }
+                                      className={`${compactInlineControlClass} min-w-[150px] font-mono`}
+                                      placeholder="Ví đại diện, có thể để trống"
+                                    />
+                                    <StatusBadge
+                                      tone={
+                                        candidateWalletInvalid
+                                          ? 'danger'
+                                          : candidateReady
+                                            ? 'success'
+                                            : 'warning'
+                                      }
+                                      className="shrink-0"
+                                    >
+                                      {candidateWalletInvalid
+                                        ? 'Ví chưa đúng'
+                                        : candidateReady
+                                          ? 'Hợp lệ'
+                                          : 'Thiếu họ tên'}
+                                    </StatusBadge>
+                                    <Button
+                                      type="button"
+                                      variant="ghost"
+                                      size="sm"
+                                      disabled={activePosition.candidates.length <= 2}
+                                      aria-label={`Xóa ứng viên ${candidateIndex + 1}`}
+                                      title={
+                                        activePosition.candidates.length <= 2
+                                          ? 'Mỗi chức vụ cần tối thiểu 2 ứng viên'
+                                          : 'Xóa ứng viên'
+                                      }
+                                      onClick={() => removeCandidate(activePosition.id, candidate.id)}
+                                      iconLeft={<Trash2 className="h-4 w-4" aria-hidden="true" />}
+                                      className="h-8 w-8 px-0"
+                                    />
+                                  </div>
+                                </article>
+                              );
+                            })}
                           </div>
                         </div>
                       </Panel>
-                    ))}
+                    )}
                   </div>
                   {stepNavButtons('b1', 'b3')}
                 </SectionCard>
@@ -945,11 +1366,23 @@ export default function TaoCuocBauCuPage() {
             <Wizard.Panel value="b3">
               <div data-wizard-step="b3">
                 <SectionCard
-                  title="Lịch & danh sách cử tri"
-                  description="Commit start ở tương lai và Commit start < Commit end < Reveal end."
+                  title="Lịch bỏ phiếu & cử tri"
+                  className="!p-4"
                 >
-                  <div className="grid gap-3 md:grid-cols-3">
-                    <Field label="Commit start">
+                  <div className="flex flex-wrap items-start justify-between gap-2">
+                    <div>
+                      <p className="text-sm font-semibold text-[var(--clay-text)]">Lịch hoạt động</p>
+                      <p className="mt-0.5 text-[13px] leading-snug text-[var(--clay-muted)]">
+                        {scheduleStatusText}
+                      </p>
+                    </div>
+                    <StatusBadge tone={scheduleState.isValid ? 'success' : 'warning'}>
+                      {scheduleState.isValid ? 'Hợp lệ' : 'Cần chỉnh'}
+                    </StatusBadge>
+                  </div>
+
+                  <div className="mt-3 grid gap-3 md:grid-cols-3">
+                    <Field label="Mở bỏ phiếu">
                       <input
                         id="commit-start"
                         name="commit-start"
@@ -960,7 +1393,7 @@ export default function TaoCuocBauCuPage() {
                         className={fieldControlClass}
                       />
                     </Field>
-                    <Field label="Commit end">
+                    <Field label="Đóng bỏ phiếu">
                       <input
                         id="commit-end"
                         name="commit-end"
@@ -971,7 +1404,7 @@ export default function TaoCuocBauCuPage() {
                         className={fieldControlClass}
                       />
                     </Field>
-                    <Field label="Reveal end">
+                    <Field label="Kết thúc kiểm phiếu">
                       <input
                         id="reveal-end"
                         name="reveal-end"
@@ -984,40 +1417,74 @@ export default function TaoCuocBauCuPage() {
                     </Field>
                   </div>
                   {showInlineErrors && !scheduleState.isValid && (
-                    <FieldError message="Lịch phải thỏa mãn Commit start ở tương lai và Commit start < Commit end < Reveal end." />
+                    <FieldError message="Lịch phải bắt đầu ở tương lai và theo đúng thứ tự: mở bỏ phiếu, đóng bỏ phiếu, kết thúc kiểm phiếu." />
                   )}
 
-                  <fieldset className="mt-5">
-                    <legend className="mb-2 text-sm font-semibold text-[var(--clay-text)]">
-                      Chế độ cử tri
-                    </legend>
-                    <div className="grid gap-3 md:grid-cols-2" role="group" aria-label="Chọn chế độ nhập cử tri">
-                      <Button
+                  <div className="mt-4 border-t border-[var(--clay-border)] pt-4">
+                    <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+                      <p className="text-sm font-semibold text-[var(--clay-text)]">
+                        Cử tri
+                      </p>
+                      <StatusBadge tone={voterInputTone}>{voterInputStatusText}</StatusBadge>
+                    </div>
+                    <div className="grid gap-2 md:grid-cols-2" role="group" aria-label="Chọn cách nhập cử tri">
+                      <button
                         type="button"
-                        variant={voterMode === 'wallets' ? 'primary' : 'secondary'}
-                        size="lg"
                         aria-pressed={voterMode === 'wallets'}
                         onClick={() => setVoterMode('wallets')}
-                        iconLeft={<Wallet className="h-4 w-4" aria-hidden="true" />}
+                        className={`rounded-[14px] border p-2.5 text-left transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--clay-primary-focus)] ${
+                          voterMode === 'wallets'
+                            ? 'border-[var(--clay-primary)] bg-[var(--clay-primary-light)]'
+                            : 'border-[var(--clay-border)] bg-[var(--clay-surface)] hover:border-[var(--clay-primary)]'
+                        }`}
                       >
-                        Nhập ví trực tiếp
-                      </Button>
-                      <Button
+                        <div className="flex items-start gap-3">
+                          <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-[10px] bg-[var(--clay-surface-soft)] text-[var(--clay-primary)]">
+                            <Wallet className="h-4 w-4" aria-hidden="true" />
+                          </span>
+                          <span className="min-w-0">
+                            <span className="block text-sm font-semibold text-[var(--clay-text)]">
+                              Nhập ví trực tiếp
+                            </span>
+                            <span className="mt-1 block text-[12px] leading-snug text-[var(--clay-muted)]">
+                              Khi đã có ví của từng cử tri.
+                            </span>
+                          </span>
+                        </div>
+                      </button>
+                      <button
                         type="button"
-                        variant={voterMode === 'roster' ? 'primary' : 'secondary'}
-                        size="lg"
                         aria-pressed={voterMode === 'roster'}
                         onClick={() => setVoterMode('roster')}
-                        iconLeft={<QrCode className="h-4 w-4" aria-hidden="true" />}
+                        className={`rounded-[14px] border p-2.5 text-left transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--clay-primary-focus)] ${
+                          voterMode === 'roster'
+                            ? 'border-[var(--clay-primary)] bg-[var(--clay-primary-light)]'
+                            : 'border-[var(--clay-border)] bg-[var(--clay-surface)] hover:border-[var(--clay-primary)]'
+                        }`}
                       >
-                        Roster QR / OTP
-                      </Button>
+                        <div className="flex items-start gap-3">
+                          <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-[10px] bg-[var(--clay-surface-soft)] text-[var(--clay-primary)]">
+                            <QrCode className="h-4 w-4" aria-hidden="true" />
+                          </span>
+                          <span className="min-w-0">
+                            <span className="block text-sm font-semibold text-[var(--clay-text)]">
+                              Tự xác thực bằng QR/OTP
+                            </span>
+                            <span className="mt-1 block text-[12px] leading-snug text-[var(--clay-muted)]">
+                              Khi cần mời cử tri xác thực email và tự liên kết ví.
+                            </span>
+                          </span>
+                        </div>
+                      </button>
                     </div>
-                  </fieldset>
+                  </div>
 
                   {voterMode === 'wallets' ? (
-                    <div className="mt-5">
-                      <Field label="Danh sách ví cử tri" hint="Mỗi dòng một địa chỉ ví.">
+                    <div className="mt-3">
+                      <Field
+                        label="Ví cử tri"
+                        hint="Mỗi dòng một địa chỉ ví 0x... Hệ thống tự tách theo xuống dòng, dấu phẩy hoặc dấu chấm phẩy."
+                      >
                         <textarea
                           id="voter-wallets-input"
                           name="voter-wallets-input"
@@ -1025,11 +1492,30 @@ export default function TaoCuocBauCuPage() {
                           spellCheck={false}
                           value={voterWalletsInput}
                           onChange={(event) => setVoterWalletsInput(event.target.value)}
-                          rows={3}
+                          rows={2}
                           className={`${fieldControlClass} font-mono`}
-                          placeholder="0x1234…abcd"
+                          placeholder={'0x1111111111111111111111111111111111111111\n0x2222222222222222222222222222222222222222'}
                         />
                       </Field>
+                      <div className="mt-2 flex flex-wrap gap-2">
+                        <StatusBadge
+                          tone={
+                            parsedVoterWallets.length === 0
+                              ? 'neutral'
+                              : walletInputHasErrors
+                                ? 'danger'
+                                : 'success'
+                          }
+                        >
+                          {walletInputStatusText}
+                        </StatusBadge>
+                        {invalidVoterWallets.length > 0 && (
+                          <StatusBadge tone="danger">{invalidVoterWallets.length} ví sai định dạng</StatusBadge>
+                        )}
+                        {duplicateVoterWallets.length > 0 && (
+                          <StatusBadge tone="danger">{duplicateVoterWallets.length} ví bị trùng</StatusBadge>
+                        )}
+                      </div>
                       {showInlineErrors && parsedVoterWallets.length === 0 && (
                         <FieldError message="Thêm ít nhất 1 địa chỉ ví cử tri." />
                       )}
@@ -1045,10 +1531,10 @@ export default function TaoCuocBauCuPage() {
                       )}
                     </div>
                   ) : (
-                    <div className="mt-5">
+                    <div className="mt-3">
                       <Field
-                        label="Danh sách cử tri"
-                        hint="Mỗi dòng: Họ tên,email,mã sinh viên. Hệ thống tạo QR chung để cử tri tự xác thực OTP & bind ví trước khi deploy."
+                        label="Danh sách cử tri xác thực"
+                        hint="Mỗi dòng: Họ tên,email,mã sinh viên. Mã sinh viên có thể để trống."
                       >
                         <textarea
                           id="roster-input"
@@ -1057,17 +1543,34 @@ export default function TaoCuocBauCuPage() {
                           spellCheck={false}
                           value={rosterInput}
                           onChange={(event) => setRosterInput(event.target.value)}
-                          rows={5}
+                          rows={2}
                           className={fieldControlClass}
-                          placeholder="Nguyễn Văn A,a@example.com,SV001"
+                          placeholder={'Nguyễn Văn A,a@example.com,SV001\nTrần Thị B,b@example.com,SV002'}
                         />
                       </Field>
+                      <div className="mt-2 flex flex-wrap gap-2">
+                        <StatusBadge
+                          tone={
+                            parsedRosterVoters.length === 0
+                              ? 'neutral'
+                              : rosterInputHasErrors
+                                ? 'danger'
+                                : 'success'
+                          }
+                        >
+                          {rosterInputStatusText}
+                        </StatusBadge>
+                        {invalidRosterRows.length > 0 && (
+                          <StatusBadge tone="danger">{invalidRosterRows.length} dòng cần sửa</StatusBadge>
+                        )}
+                        <StatusBadge tone="info">OTP gửi về email cử tri</StatusBadge>
+                      </div>
                       {showInlineErrors && parsedRosterVoters.length === 0 && (
-                        <FieldError message="Thêm ít nhất 1 dòng roster." />
+                        <FieldError message="Thêm ít nhất 1 dòng cử tri." />
                       )}
                       {showInlineErrors && invalidRosterRows.length > 0 && (
                         <FieldError
-                          message={`Dòng roster cần có họ tên và email hợp lệ: ${invalidRosterRows
+                          message={`Dòng cử tri cần có họ tên và email hợp lệ: ${invalidRosterRows
                             .slice(0, 4)
                             .map((row) => row.rowNumber)
                             .join(', ')}${invalidRosterRows.length > 4 ? '…' : ''}.`}
@@ -1084,25 +1587,74 @@ export default function TaoCuocBauCuPage() {
             <Wizard.Panel value="b4">
               <div data-wizard-step="b4" className="space-y-6">
                 <SectionCard
-                  title={voterMode === 'wallets' ? 'Xác nhận & tạo ballot' : 'Xác nhận & tạo roster'}
-                  description={
-                    voterMode === 'wallets'
-                      ? 'Sau khi tạo xong, hệ thống chuyển sang bảng điều khiển và mở child election đầu tiên.'
-                      : 'Chế độ roster chỉ tạo bản nháp xác thực và QR mời. Ballot on-chain chỉ deploy sau khi cử tri OTP và bind ví.'
-                  }
+                  title="Xác nhận & triển khai"
+                  description="Kiểm tra lần cuối các dữ liệu sẽ dùng để tạo đợt bầu cử. Nếu còn thiếu, hệ thống sẽ đưa bạn về đúng mục cần sửa."
                 >
-                  <div className="grid gap-3 sm:grid-cols-2">
-                    <SummaryRow label="Ví tạo" value={currentAccount ? shortenAddress(currentAccount) : 'Chưa nối'} />
-                    <SummaryRow label="Mạng ví" value={currentAccount ? (isNetworkConnected ? 'Sepolia' : 'Cần Sepolia') : 'Chưa nối ví'} />
-                    <SummaryRow label="Chức vụ" value={`${filledPositionCount}/${positions.length} đã nhập`} />
-                    <SummaryRow
-                      label={voterMode === 'wallets' ? 'Cử tri hợp lệ' : 'Dòng roster'}
-                      value={
-                        voterMode === 'wallets'
-                          ? parsedVoterWallets.length
-                          : parsedRosterVoters.length
-                      }
-                    />
+                  <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_300px]">
+                    <div className="min-w-0 divide-y divide-[var(--clay-border)] border-y border-[var(--clay-border)]">
+                      <ReviewLine
+                        label="Hình thức"
+                        value={createModeTitle}
+                        detail={createModeDetail}
+                        tone="info"
+                      />
+                      <ReviewLine
+                        label="Tên đợt"
+                        value={title.trim() || 'Chưa nhập'}
+                        detail={description.trim() || 'Không có mô tả bổ sung.'}
+                        tone={title.trim() ? 'success' : 'warning'}
+                      />
+                      <ReviewLine
+                        label="Lịch"
+                        value={reviewScheduleValue}
+                        detail={reviewScheduleDetail}
+                        tone={scheduleState.isValid ? 'success' : 'warning'}
+                      />
+                      <ReviewLine
+                        label="Chức vụ"
+                        value={`${filledPositionCount} chức vụ`}
+                        detail={reviewPositionDetail}
+                        tone={readyPositionCount === positions.length ? 'success' : 'warning'}
+                      />
+                      <ReviewLine
+                        label="Cử tri"
+                        value={
+                          voterMode === 'wallets'
+                            ? `${parsedVoterWallets.length} ví hợp lệ`
+                            : `${parsedRosterVoters.length} cử tri trong danh sách xác thực`
+                        }
+                        detail={reviewVoterDetail}
+                        tone={voterInputTone}
+                      />
+                      <ReviewLine
+                        label="Ví quản trị"
+                        value={currentAccount ? shortenAddress(currentAccount) : 'Chưa kết nối'}
+                        detail={reviewAdminWalletDetail}
+                        tone={reviewAdminWalletTone}
+                      />
+                    </div>
+
+                    <div className="rounded-[14px] bg-[var(--clay-surface-soft)] p-4">
+                      <StatusBadge tone={isReadyToSubmit ? 'success' : 'warning'}>
+                        {readinessTitle}
+                      </StatusBadge>
+                      <p className="mt-3 text-[15px] font-semibold text-[var(--clay-text)]">
+                        {isReadyToSubmit ? submitButtonLabel : nextAction.label}
+                      </p>
+                      <p className="mt-1 text-[13px] leading-relaxed text-[var(--clay-muted)]">
+                        {readinessDetail}
+                      </p>
+                      {outstandingRequirements.length > 0 && (
+                        <div className="mt-3 space-y-1.5 text-[13px] text-[var(--clay-muted)]">
+                          {outstandingRequirements.slice(0, 4).map((requirement) => (
+                            <div key={requirement.id} className="flex items-center gap-2">
+                              <XCircle className="h-3.5 w-3.5 shrink-0 text-[var(--state-danger)]" aria-hidden="true" />
+                              <span>{requirement.label}</span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
                   </div>
                   <div className="mt-5">
                     <Button
@@ -1111,16 +1663,13 @@ export default function TaoCuocBauCuPage() {
                       size="lg"
                       loading={submitting}
                       className="w-full"
+                      iconRight={isReadyToSubmit ? <ArrowRight className="h-4 w-4" aria-hidden="true" /> : undefined}
                     >
                       {submitting
-                        ? voterMode === 'wallets'
-                          ? 'Đang deploy trên Sepolia…'
-                          : 'Đang tạo roster xác thực…'
+                        ? submittingLabel
                         : !isReadyToSubmit
-                          ? 'Kiểm tra điều kiện submit'
-                          : voterMode === 'wallets'
-                            ? 'Tạo election trên Sepolia'
-                            : 'Tạo roster + QR xác thực'}
+                          ? 'Kiểm tra mục còn thiếu'
+                          : submitButtonLabel}
                     </Button>
                   </div>
                   <div className="mt-4">
@@ -1140,13 +1689,13 @@ export default function TaoCuocBauCuPage() {
                     <SectionCard
                       title={
                         activeDraft.status === 'deployed'
-                          ? 'Ballot đã deploy on-chain'
-                          : 'Bước 1/2: xác thực cử tri trước deploy'
+                          ? 'Đợt bầu cử đã triển khai'
+                          : 'QR xác thực trước triển khai'
                       }
                       description={
                         activeDraft.status === 'deployed'
-                          ? 'QR onboarding đã hoàn tất. Quản lý ballot ở bảng điều khiển; không phát tiếp QR trước deploy.'
-                          : 'QR chung chỉ mở luồng onboarding roster. Token riêng vẫn được backend cấp sau bước nhập email để chống nhận nhầm định danh, chống bind ví thay người khác và giữ audit trail.'
+                          ? 'QR xác thực đã hoàn tất. Quản lý đợt bầu cử ở bảng điều khiển; không phát tiếp QR sau khi đã triển khai.'
+                          : 'QR chung chỉ mở luồng xác thực ban đầu. OTP và chữ ký ví giúp xác nhận đúng cử tri trước khi đưa ví vào blockchain.'
                       }
                     >
                       {activeDraft.status !== 'deployed' && (
@@ -1154,15 +1703,15 @@ export default function TaoCuocBauCuPage() {
                           <QRCodeGenerator
                             inviteLink={buildSharedRosterInviteUrl(activeDraft)}
                             title="QR mời xác thực cử tri"
-                            description="QR chỉ dùng cho bước xác thực roster trước deploy; chưa phải QR của ballot on-chain."
+                            description="QR chỉ dùng cho bước xác thực danh sách cử tri trước khi triển khai; chưa phải QR bỏ phiếu."
                             downloadFileName={`${activeDraft.groupKey}-shared-qr`}
                           />
                           <ol className="grid gap-3 text-sm text-[var(--clay-muted)] md:grid-cols-2">
                             {[
-                              ['1. Tạo bản nháp roster', 'Admin nhập danh sách cử tri, lịch commit/reveal và các chức vụ.'],
-                              ['2. Công bố một QR chung', 'In hoặc gửi một QR theo roster này cho toàn bộ cử tri đủ điều kiện.'],
-                              ['3. Cử tri tự định danh', 'Cử tri nhập email trong roster; hệ thống chỉ gửi OTP về email đó.'],
-                              ['4. Bind ví rồi deploy', 'Chỉ ví đã bind sau OTP mới được đưa vào ballot khi admin deploy.'],
+                              ['1. Tạo bản nháp xác thực', 'Người quản trị nhập danh sách cử tri, lịch bầu cử và các chức vụ.'],
+                              ['2. Công bố một QR chung', 'In hoặc gửi một QR theo danh sách này cho toàn bộ cử tri đủ điều kiện.'],
+                              ['3. Cử tri tự định danh', 'Cử tri nhập email trong danh sách; hệ thống chỉ gửi OTP về email đó.'],
+                              ['4. Liên kết ví rồi triển khai', 'Chỉ ví đã liên kết sau OTP mới được đưa vào đợt bầu cử khi người quản trị triển khai.'],
                             ].map(([t, d]) => (
                               <li
                                 key={t}
@@ -1178,42 +1727,52 @@ export default function TaoCuocBauCuPage() {
                     </SectionCard>
 
                     <SectionCard
-                      title={activeDraft.title}
-                      description={`Group key: ${activeDraft.groupKey}`}
+                      title="Tiến độ xác thực cử tri"
+                      description={`${activeDraft.title} · Mã nhóm: ${activeDraft.groupKey}`}
                       actions={
                         <Button
                           type="button"
                           variant="primary"
+                          loading={submitting}
                           onClick={() => void handleDeployVerifiedRoster()}
                           disabled={
                             submitting ||
-                            activeDraft.walletBoundCount === 0 ||
-                            activeDraft.status === 'deployed'
+                            !rosterDeployState ||
+                            rosterDeployState.disabled
                           }
                         >
-                          {activeDraft.status === 'deployed'
-                            ? 'Đã deploy'
-                            : 'Deploy ballot từ cử tri đã xác thực'}
+                          {rosterDeployState?.buttonLabel ?? 'Triển khai'}
                         </Button>
                       }
                     >
-                      <div className="mb-4">
-                        <StatusBadge tone={activeDraft.status === 'deployed' ? 'success' : 'warning'}>
-                          {activeDraft.status === 'deployed'
-                            ? 'Đã deploy ballot on-chain'
-                            : 'Chưa deploy ballot on-chain'}
-                        </StatusBadge>
-                      </div>
-                      <div className="grid gap-3 sm:grid-cols-3">
-                        <SummaryRow label="Tổng invite" value={String(activeDraft.totalInviteCount)} />
-                        <SummaryRow label="OTP verified" value={String(activeDraft.otpVerifiedCount)} />
-                        <SummaryRow label="Wallet bound" value={String(activeDraft.walletBoundCount)} />
+                      {rosterDeployState && (
+                        <div className="mb-4 rounded-[14px] bg-[var(--clay-surface-soft)] p-4">
+                          <StatusBadge tone={rosterDeployState.tone}>
+                            {rosterDeployState.title}
+                          </StatusBadge>
+                          <p className="mt-2 text-[13px] leading-relaxed text-[var(--clay-muted)]">
+                            {rosterDeployState.description}
+                          </p>
+                        </div>
+                      )}
+                      <div className="grid gap-3 sm:grid-cols-4">
+                        <SummaryRow label="Tổng lời mời" value={String(activeDraft.totalInviteCount)} />
+                        <SummaryRow label="Đã xác thực OTP" value={String(activeDraft.otpVerifiedCount)} />
+                        <SummaryRow label="Đã liên kết ví" value={String(activeDraft.walletBoundCount)} />
+                        <SummaryRow
+                          label="Sẽ đưa vào blockchain"
+                          value={String(
+                            activeDraft.status === 'deployed'
+                              ? activeDraft.includedVoterCount
+                              : activeDraft.walletBoundCount,
+                          )}
+                        />
                       </div>
                       <div className="mt-5 space-y-3">
                         {activeDraft.invites.map((invite) => (
                           <div
                             key={invite.inviteId}
-                            className="grid gap-3 rounded-[14px] border border-[var(--clay-border)] bg-[var(--clay-surface)] p-4 lg:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)_auto] lg:items-center"
+                            className="grid gap-3 rounded-[14px] border border-[var(--clay-border)] bg-[var(--clay-surface)] p-4 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center"
                           >
                             <div className="min-w-0">
                               <p className="truncate text-[15px] font-semibold text-[var(--clay-text)]">
@@ -1228,17 +1787,14 @@ export default function TaoCuocBauCuPage() {
                                 </p>
                               )}
                             </div>
-                            <p className="min-w-0 break-all text-xs leading-5 text-[var(--clay-muted)]">
-                              {invite.inviteUrl}
-                            </p>
                             <div className="flex flex-wrap gap-2 lg:justify-end">
                               <StatusBadge tone={invite.otpVerified ? 'success' : 'warning'}>
-                                OTP {invite.otpVerified ? 'verified' : 'pending'}
+                                {invite.otpVerified ? 'Đã xác thực OTP' : 'Chờ OTP'}
                               </StatusBadge>
                               <StatusBadge tone={invite.walletAddress ? 'success' : 'neutral'}>
                                 {invite.walletAddress
-                                  ? shortenAddress(invite.walletAddress)
-                                  : 'Chưa bind wallet'}
+                                  ? `Ví ${shortenAddress(invite.walletAddress)}`
+                                  : 'Chưa liên kết ví'}
                               </StatusBadge>
                             </div>
                           </div>

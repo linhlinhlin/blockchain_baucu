@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Mvc.Routing;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
@@ -158,7 +159,9 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 {
     if (useDevelopmentInMemoryDatabase)
     {
-        options.UseInMemoryDatabase("HoLiHuVotingDev");
+        options
+            .UseInMemoryDatabase("HoLiHuVotingDev")
+            .ConfigureWarnings(warnings => warnings.Ignore(InMemoryEventId.TransactionIgnoredWarning));
         return;
     }
 
@@ -205,7 +208,9 @@ builder.Services.AddDbContext<ElectionV1StoreDbContext>(options =>
     if (string.Equals(electionV1StoreProvider, "inmemory", StringComparison.OrdinalIgnoreCase)
         || string.IsNullOrWhiteSpace(electionV1StoreConnection))
     {
-        options.UseInMemoryDatabase("ElectionV1RosterDev");
+        options
+            .UseInMemoryDatabase("ElectionV1RosterDev")
+            .ConfigureWarnings(warnings => warnings.Ignore(InMemoryEventId.TransactionIgnoredWarning));
         return;
     }
 

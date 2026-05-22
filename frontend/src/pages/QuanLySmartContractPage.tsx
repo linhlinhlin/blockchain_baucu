@@ -1,13 +1,16 @@
 import { useEffect, useMemo, useState } from 'react';
 import { ethers } from 'ethers';
 import {
+  Clipboard,
   ExternalLink,
   ListChecks,
   Plus,
+  QrCode,
   RefreshCw,
   Vote,
   Wallet,
 } from 'lucide-react';
+import QRCode from 'react-qr-code';
 import toast from 'react-hot-toast';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import {
@@ -33,10 +36,12 @@ import {
   Tabs,
   type StatusTone,
 } from '../components/ui/clay';
+import { buildVerifyTransactionUrl } from '../utils/transactionVerification';
 
 const TARGET_CHAIN_ID = 11155111;
 const TARGET_CHAIN_ID_HEX = '0xaa36a7';
 const DEFAULT_RPC_URL = 'https://ethereum-sepolia-rpc.publicnode.com';
+const DEFAULT_EXPLORER_BASE_URL = 'https://sepolia.etherscan.io';
 const VOTE_PACKAGE_PREFIX = 'holihu.current.election-v1.vote';
 const ZERO_BYTES32 = `0x${'0'.repeat(64)}`;
 const PHASE_LABELS: Record<number, string> = {
@@ -92,6 +97,60 @@ const electionV1Abi = [
   { type: 'function', name: 'finalizeElection', stateMutability: 'nonpayable', inputs: [], outputs: [] },
 ] as const;
 
+const electionV1EventAbi = [
+  {
+    type: 'event',
+    name: 'VoteCommitted',
+    anonymous: false,
+    inputs: [
+      { name: 'voter', type: 'address', indexed: true },
+      { name: 'commitment', type: 'bytes32', indexed: false },
+    ],
+  },
+  {
+    type: 'event',
+    name: 'VoteRevealed',
+    anonymous: false,
+    inputs: [
+      { name: 'voter', type: 'address', indexed: true },
+      { name: 'candidateId', type: 'bytes32', indexed: true },
+    ],
+  },
+  {
+    type: 'event',
+    name: 'ElectionFinalized',
+    anonymous: false,
+    inputs: [
+      { name: 'totalCommits', type: 'uint256', indexed: false },
+      { name: 'totalReveals', type: 'uint256', indexed: false },
+    ],
+  },
+  {
+    type: 'event',
+    name: 'ElectionCanceled',
+    anonymous: false,
+    inputs: [{ name: 'reasonHash', type: 'bytes32', indexed: true }],
+  },
+] as const;
+
+type ElectionV1TransactionKind = 'create' | 'commit' | 'reveal' | 'finalize' | 'cancel';
+
+type ElectionV1TransactionEntry = {
+  id: string;
+  kind: ElectionV1TransactionKind;
+  txHash: string;
+  url: string;
+  verifyUrl: string;
+  source: 'deployment' | 'chain';
+  electionAddress: string;
+  actorAddress?: string | null;
+  candidateId?: string | null;
+  candidateName?: string | null;
+  blockNumber?: number | null;
+  timestamp?: number | null;
+  createdAt?: string | null;
+};
+
 type VotePackage = {
   electionAddress: string;
   voter: string;
@@ -126,6 +185,81 @@ function formatUnix(timestamp?: number | null) {
 }
 
 // Đợt 11 cleanup: YesNoBadge dead-code đã gỡ — US4 dùng clay StatusBadge (yesNo()).
+
+function getExplorerBaseUrl(publicConfig?: ElectionV1PublicConfig | null) {
+  return (publicConfig?.explorerBaseUrl || DEFAULT_EXPLORER_BASE_URL).replace(/\/+$/, '');
+}
+
+function buildTransactionUrl(explorerBaseUrl: string, txHash: string) {
+  return `${explorerBaseUrl.replace(/\/+$/, '')}/tx/${txHash}`;
+}
+
+function shortenHash(value?: string | null) {
+  if (!value) {
+    return 'n/a';
+  }
+  return `${value.slice(0, 10)}...${value.slice(-8)}`;
+}
+
+function transactionKindLabel(kind: ElectionV1TransactionKind) {
+  switch (kind) {
+    case 'create':
+      return 'Tạo chức vụ';
+    case 'commit':
+      return 'Ghi nhận phiếu';
+    case 'reveal':
+      return 'Mở phiếu';
+    case 'finalize':
+      return 'Chốt kết quả';
+    case 'cancel':
+      return 'Hủy bầu cử';
+    default:
+      return 'Giao dịch';
+  }
+}
+
+function formatTransactionTime(entry: ElectionV1TransactionEntry) {
+  if (entry.timestamp) {
+    return new Date(entry.timestamp * 1000).toLocaleString('vi-VN');
+  }
+  if (entry.createdAt) {
+    return new Date(entry.createdAt).toLocaleString('vi-VN');
+  }
+  return entry.blockNumber ? `Block ${entry.blockNumber}` : 'Đang cập nhật';
+}
+
+function buildDeploymentTransaction(
+  detail: ElectionV1Detail,
+  explorerBaseUrl: string,
+  chainId = TARGET_CHAIN_ID,
+): ElectionV1TransactionEntry | null {
+  if (!detail.txHash) {
+    return null;
+  }
+
+  return {
+    id: `deployment:${detail.txHash.toLowerCase()}`,
+    kind: 'create',
+    txHash: detail.txHash,
+    url: buildTransactionUrl(explorerBaseUrl, detail.txHash),
+    verifyUrl: buildVerifyTransactionUrl(detail.txHash, chainId),
+    source: 'deployment',
+    electionAddress: detail.address,
+    actorAddress: detail.admin,
+    blockNumber: detail.blockNumber,
+    createdAt: detail.createdAt,
+  };
+}
+
+function candidateNameById(detail: ElectionV1Detail, candidateId?: string | null) {
+  if (!candidateId) {
+    return null;
+  }
+  const normalized = candidateId.toLowerCase();
+  const result = detail.onChain?.results?.find((item) => item.candidateId.toLowerCase() === normalized);
+  const candidate = detail.candidates?.find((item) => item.candidateId.toLowerCase() === normalized);
+  return result?.candidateName ?? candidate?.displayName ?? null;
+}
 
 function normalizeAddress(value?: string | null) {
   if (!value) {
@@ -328,6 +462,95 @@ async function loadOnChainStateDirectly(detail: ElectionV1Detail, viewerAddress:
   } satisfies ElectionV1OnChainState;
 }
 
+async function loadElectionTransactions(
+  detail: ElectionV1Detail,
+  rpcUrl: string,
+  explorerBaseUrl: string,
+  chainId = TARGET_CHAIN_ID,
+): Promise<ElectionV1TransactionEntry[]> {
+  const provider = new ethers.JsonRpcProvider(rpcUrl || DEFAULT_RPC_URL);
+  const eventInterface = new ethers.Interface(electionV1EventAbi);
+  const topics = [
+    ethers.id('VoteCommitted(address,bytes32)'),
+    ethers.id('VoteRevealed(address,bytes32)'),
+    ethers.id('ElectionFinalized(uint256,uint256)'),
+    ethers.id('ElectionCanceled(bytes32)'),
+  ];
+  const fromBlock = Math.max(0, Number(detail.blockNumber || 0));
+  const logs = await provider.getLogs({
+    address: detail.address,
+    fromBlock,
+    toBlock: 'latest',
+    topics: [topics],
+  });
+
+  const blockNumbers = Array.from(new Set(logs.map((log) => log.blockNumber).filter(Boolean)));
+  const blockTimes = new Map<number, number>();
+  await Promise.all(
+    blockNumbers.map(async (blockNumber) => {
+      const block = await provider.getBlock(blockNumber);
+      if (block) {
+        blockTimes.set(blockNumber, Number(block.timestamp));
+      }
+    }),
+  );
+
+  return logs
+    .map((log): ElectionV1TransactionEntry | null => {
+      const parsed = eventInterface.parseLog({ topics: [...log.topics], data: log.data });
+      if (!parsed) {
+        return null;
+      }
+
+      const txHash = log.transactionHash;
+      const base = {
+        id: `chain:${txHash.toLowerCase()}:${log.index}`,
+        txHash,
+        url: buildTransactionUrl(explorerBaseUrl, txHash),
+        verifyUrl: buildVerifyTransactionUrl(txHash, chainId),
+        source: 'chain' as const,
+        electionAddress: detail.address,
+        blockNumber: log.blockNumber,
+        timestamp: blockTimes.get(log.blockNumber) ?? null,
+      };
+
+      if (parsed.name === 'VoteCommitted') {
+        return {
+          ...base,
+          kind: 'commit',
+          actorAddress: String(parsed.args.voter),
+        };
+      }
+      if (parsed.name === 'VoteRevealed') {
+        const candidateId = String(parsed.args.candidateId);
+        return {
+          ...base,
+          kind: 'reveal',
+          actorAddress: String(parsed.args.voter),
+          candidateId,
+          candidateName: candidateNameById(detail, candidateId),
+        };
+      }
+      if (parsed.name === 'ElectionFinalized') {
+        return {
+          ...base,
+          kind: 'finalize',
+          actorAddress: detail.admin,
+        };
+      }
+      if (parsed.name === 'ElectionCanceled') {
+        return {
+          ...base,
+          kind: 'cancel',
+          actorAddress: detail.admin,
+        };
+      }
+
+      return null;
+    })
+    .filter((entry): entry is ElectionV1TransactionEntry => entry !== null);
+}
+
 function getCommitReason(detail: ElectionV1Detail | null, walletAddress: string | null, busy: boolean) {
   if (busy) return 'Đang xử lý giao dịch hoặc tải dữ liệu.';
   if (!walletAddress) return 'Hãy kết nối MetaMask trước.';
@@ -357,6 +580,181 @@ function getFinalizeReason(detail: ElectionV1Detail | null, walletAddress: strin
   return null;
 }
 
+function BlockchainTransactionHistory({
+  entries,
+  loading,
+  error,
+  selectedTxHash,
+  onSelectTx,
+  onCopyTx,
+  onCopyUrl,
+}: {
+  entries: ElectionV1TransactionEntry[];
+  loading: boolean;
+  error: string | null;
+  selectedTxHash: string | null;
+  onSelectTx: (txHash: string) => void;
+  onCopyTx: (txHash: string) => void;
+  onCopyUrl: (url: string) => void;
+}) {
+  const selectedEntry =
+    entries.find((entry) => entry.txHash.toLowerCase() === selectedTxHash?.toLowerCase()) ??
+    entries[entries.length - 1] ??
+    null;
+
+  return (
+    <Panel className="mt-5 bg-[var(--clay-surface)]">
+      <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+        <div>
+          <p className="text-sm font-semibold uppercase tracking-[0.08em] text-[var(--clay-muted)]">
+            Nhật ký blockchain
+          </p>
+          <h3 className="mt-1 text-xl font-semibold text-[var(--clay-text)]">
+            Giao dịch có thể kiểm chứng
+          </h3>
+          <p className="mt-1 max-w-3xl text-sm leading-6 text-[var(--clay-muted)]">
+            Admin và cử tri quét QR để mở trang kiểm chứng của HoLiHu trước, sau đó có thể đối
+            chiếu thêm trên Etherscan.
+          </p>
+        </div>
+        <StatusBadge tone={error ? 'warning' : 'success'}>
+          {loading ? 'Đang đồng bộ' : error ? 'Cần tải lại' : `${entries.length} giao dịch`}
+        </StatusBadge>
+      </div>
+
+      {error && (
+        <div className="mt-4 rounded-[14px] border border-[var(--state-warning)] bg-[var(--state-warning-soft)] p-3 text-sm text-[var(--state-warning)]">
+          {error}
+        </div>
+      )}
+
+      <div className="mt-5 grid gap-4 xl:grid-cols-[minmax(0,1fr)_280px]">
+        <div className="overflow-hidden rounded-[16px] border border-[var(--clay-border)]">
+          {entries.length > 0 ? (
+            <div className="divide-y divide-[var(--clay-border)]">
+              {entries.map((entry) => (
+                <div
+                  key={entry.id}
+                  className="grid gap-3 bg-white p-4 md:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)_auto]"
+                >
+                  <div className="min-w-0">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <StatusBadge tone={entry.kind === 'reveal' || entry.kind === 'finalize' ? 'success' : 'info'}>
+                        {transactionKindLabel(entry.kind)}
+                      </StatusBadge>
+                      <span className="text-xs text-[var(--clay-muted)]">
+                        {formatTransactionTime(entry)}
+                      </span>
+                    </div>
+                    <p className="mt-2 font-mono text-sm font-semibold text-[var(--clay-text)]">
+                      {shortenHash(entry.txHash)}
+                    </p>
+                    {entry.candidateName && (
+                      <p className="mt-1 text-xs text-[var(--clay-muted)]">
+                        Ứng viên: {entry.candidateName}
+                      </p>
+                    )}
+                  </div>
+
+                  <div className="min-w-0 text-sm">
+                    <p className="text-xs font-semibold uppercase text-[var(--clay-muted)]">
+                      Ví ký
+                    </p>
+                    <p className="mt-1 truncate font-mono text-[13px] text-[var(--clay-text)]">
+                      {shortenAddress(entry.actorAddress)}
+                    </p>
+                    {entry.blockNumber && (
+                      <p className="mt-1 text-xs text-[var(--clay-muted)]">
+                        Block {entry.blockNumber}
+                      </p>
+                    )}
+                  </div>
+
+                  <div className="flex flex-wrap items-center gap-2 md:justify-end">
+                    <button
+                      type="button"
+                      onClick={() => onSelectTx(entry.txHash)}
+                      className="inline-flex min-h-10 items-center gap-2 rounded-[12px] border border-[var(--clay-border)] px-3 text-sm font-semibold text-[var(--clay-text)] hover:bg-[var(--clay-surface-soft)]"
+                    >
+                      <QrCode className="h-4 w-4" aria-hidden="true" />
+                      QR
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => onCopyTx(entry.txHash)}
+                      className="inline-flex min-h-10 items-center gap-2 rounded-[12px] border border-[var(--clay-border)] px-3 text-sm font-semibold text-[var(--clay-text)] hover:bg-[var(--clay-surface-soft)]"
+                    >
+                      <Clipboard className="h-4 w-4" aria-hidden="true" />
+                      Mã tx
+                    </button>
+                    <a
+                      href={entry.url}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="inline-flex min-h-10 items-center gap-2 rounded-[12px] border border-[var(--clay-primary)] px-3 text-sm font-semibold text-[var(--clay-primary)] hover:bg-[var(--clay-primary-light)]"
+                    >
+                      <ExternalLink className="h-4 w-4" aria-hidden="true" />
+                      Etherscan
+                    </a>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="bg-white p-6 text-sm text-[var(--clay-muted)]">
+              Chưa có giao dịch để hiển thị.
+            </div>
+          )}
+        </div>
+
+        <div className="rounded-[16px] border border-[var(--clay-border)] bg-white p-4">
+          <p className="text-sm font-semibold text-[var(--clay-text)]">QR kiểm chứng</p>
+          {selectedEntry ? (
+            <>
+              <div className="mt-3 flex justify-center rounded-[14px] border border-[var(--clay-border-light)] bg-white p-3">
+                <QRCode
+                  value={selectedEntry.verifyUrl}
+                  size={184}
+                  bgColor="#ffffff"
+                  fgColor="#111827"
+                  level="M"
+                  className="h-auto max-w-full"
+                />
+              </div>
+              <p className="mt-3 break-all font-mono text-xs text-[var(--clay-muted)]">
+                {selectedEntry.txHash}
+              </p>
+              <div className="mt-3 grid gap-2">
+                <button
+                  type="button"
+                  onClick={() => onCopyUrl(selectedEntry.verifyUrl)}
+                  className="inline-flex min-h-10 items-center justify-center gap-2 rounded-[12px] border border-[var(--clay-border)] px-3 text-sm font-semibold text-[var(--clay-text)] hover:bg-[var(--clay-surface-soft)]"
+                >
+                  <Clipboard className="h-4 w-4" aria-hidden="true" />
+                  Sao chép link kiểm chứng
+                </button>
+                <a
+                  href={selectedEntry.url}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex min-h-10 items-center justify-center gap-2 rounded-[12px] bg-[var(--clay-primary)] px-3 text-sm font-semibold text-white hover:opacity-90"
+                >
+                  <ExternalLink className="h-4 w-4" aria-hidden="true" />
+                  Mở trên Etherscan
+                </a>
+              </div>
+            </>
+          ) : (
+            <p className="mt-3 text-sm leading-6 text-[var(--clay-muted)]">
+              Khi có giao dịch tạo, ghi nhận phiếu, mở phiếu hoặc chốt kết quả, mã QR sẽ hiện ở đây.
+            </p>
+          )}
+        </div>
+      </div>
+    </Panel>
+  );
+}
+
 export default function QuanLySmartContractPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -373,6 +771,10 @@ export default function QuanLySmartContractPage() {
   const [committingCandidateId, setCommittingCandidateId] = useState<string | null>(null);
   const [message, setMessage] = useState('Sẵn sàng.');
   const [votePackageRevision, setVotePackageRevision] = useState(0);
+  const [chainTransactions, setChainTransactions] = useState<ElectionV1TransactionEntry[]>([]);
+  const [transactionsLoading, setTransactionsLoading] = useState(false);
+  const [transactionsError, setTransactionsError] = useState<string | null>(null);
+  const [selectedTxHash, setSelectedTxHash] = useState<string | null>(null);
 
   const storedVoteEnvelope = useMemo(() => {
     if (!detail?.address || !connectedAccount) {
@@ -380,6 +782,39 @@ export default function QuanLySmartContractPage() {
     }
     return loadStoredVoteEnvelope(detail.address, connectedAccount);
   }, [detail?.address, connectedAccount, votePackageRevision]);
+
+  const explorerBaseUrl = useMemo(() => getExplorerBaseUrl(publicConfig), [publicConfig]);
+  const configuredChainId = Number(publicConfig?.chainId ?? TARGET_CHAIN_ID);
+
+  const transactionHistory = useMemo(() => {
+    if (!detail) {
+      return [];
+    }
+
+    const deployment = buildDeploymentTransaction(detail, explorerBaseUrl, configuredChainId);
+    const entries = [
+      ...(deployment ? [deployment] : []),
+      ...chainTransactions.filter((entry) => entry.electionAddress.toLowerCase() === detail.address.toLowerCase()),
+    ];
+    const seen = new Set<string>();
+    return entries
+      .filter((entry) => {
+        const key = entry.txHash.toLowerCase();
+        if (seen.has(key)) {
+          return false;
+        }
+        seen.add(key);
+        return true;
+      })
+      .sort((a, b) => {
+        const aBlock = a.blockNumber ?? 0;
+        const bBlock = b.blockNumber ?? 0;
+        if (aBlock !== bBlock) {
+          return aBlock - bBlock;
+        }
+        return (a.timestamp ?? 0) - (b.timestamp ?? 0);
+      });
+  }, [chainTransactions, configuredChainId, detail, explorerBaseUrl]);
 
   useEffect(() => {
     void bootstrap();
@@ -422,10 +857,20 @@ export default function QuanLySmartContractPage() {
   useEffect(() => {
     if (!selectedElectionAddress) {
       setDetail(null);
+      setChainTransactions([]);
       return;
     }
     void refreshElection(selectedElectionAddress, connectedAccount);
   }, [selectedElectionAddress, connectedAccount]);
+
+  useEffect(() => {
+    if (!detail?.address) {
+      setChainTransactions([]);
+      setTransactionsError(null);
+      return;
+    }
+    void refreshTransactionHistory(detail);
+  }, [detail?.address, detail?.blockNumber, explorerBaseUrl, publicConfig?.rpcUrl]);
 
   useEffect(() => {
     const ethereum = getEthereum();
@@ -486,6 +931,24 @@ export default function QuanLySmartContractPage() {
       setGroupDetail(payload);
     } catch (error) {
       setMessage(getErrorMessage(error));
+    }
+  }
+
+  async function refreshTransactionHistory(targetDetail: ElectionV1Detail) {
+    setTransactionsLoading(true);
+    try {
+      const entries = await loadElectionTransactions(
+        targetDetail,
+        publicConfig?.rpcUrl ?? DEFAULT_RPC_URL,
+        explorerBaseUrl,
+        configuredChainId,
+      );
+      setChainTransactions(entries);
+      setTransactionsError(null);
+    } catch (error) {
+      setTransactionsError(`Không thể đồng bộ lịch sử giao dịch từ Sepolia: ${getErrorMessage(error)}`);
+    } finally {
+      setTransactionsLoading(false);
     }
   }
 
@@ -591,6 +1054,7 @@ export default function QuanLySmartContractPage() {
       const commitment = await contract.computeCommitment(address, candidate.candidateId, salt);
       const tx = await contract.commitVote(commitment, proofPayload.proof);
       await tx.wait();
+      setSelectedTxHash(tx.hash);
 
       // S4: ma hoa secret bang khoa dan xuat tu chu ky vi truoc khi luu localStorage.
       const voteKey = await deriveVoteAesKey(signer, detail.address, address);
@@ -610,6 +1074,7 @@ export default function QuanLySmartContractPage() {
 
       setVotePackageRevision((current) => current + 1);
       await refreshElection(detail.address, address);
+      await refreshTransactionHistory(detail);
       await loadWalletBalance(address, publicConfig?.rpcUrl ?? DEFAULT_RPC_URL);
       setMessage(`Commit thành công: ${tx.hash}`);
       toast.success('Commit phiếu thành công.');
@@ -645,6 +1110,7 @@ export default function QuanLySmartContractPage() {
       const contract = new ethers.Contract(detail.address, electionV1Abi, signer);
       const tx = await contract.revealVote(secret.candidateId, secret.salt);
       await tx.wait();
+      setSelectedTxHash(tx.hash);
 
       saveStoredVoteEnvelope({
         ...envelope,
@@ -653,6 +1119,7 @@ export default function QuanLySmartContractPage() {
 
       setVotePackageRevision((current) => current + 1);
       await refreshElection(detail.address, address);
+      await refreshTransactionHistory(detail);
       await loadWalletBalance(address, publicConfig?.rpcUrl ?? DEFAULT_RPC_URL);
       setMessage(`Reveal thành công: ${tx.hash}`);
       toast.success('Reveal phiếu thành công.');
@@ -675,7 +1142,9 @@ export default function QuanLySmartContractPage() {
       const contract = new ethers.Contract(detail.address, electionV1Abi, signer);
       const tx = await contract.finalizeElection();
       await tx.wait();
+      setSelectedTxHash(tx.hash);
       await refreshElection(detail.address, address);
+      await refreshTransactionHistory(detail);
       await loadWalletBalance(address, publicConfig?.rpcUrl ?? DEFAULT_RPC_URL);
       setMessage(`Finalize thành công: ${tx.hash}`);
       toast.success('Finalize election thành công.');
@@ -702,6 +1171,16 @@ export default function QuanLySmartContractPage() {
   }
 
   // Đợt 10 US4: tab cho khu chi tiết (chỉ trình bày, không đụng logic on-chain).
+  async function copyTransactionHash(txHash: string) {
+    await navigator.clipboard.writeText(txHash);
+    toast.success('Đã sao chép mã giao dịch.');
+  }
+
+  async function copyTransactionUrl(url: string) {
+    await navigator.clipboard.writeText(url);
+    toast.success('Đã sao chép link kiểm chứng.');
+  }
+
   const [detailTab, setDetailTab] = useState<'cand' | 'state'>('cand');
   const phaseTone: StatusTone = (() => {
     const p = (detail?.onChain?.phaseLabel ?? '').toLowerCase();
@@ -1163,6 +1642,15 @@ export default function QuanLySmartContractPage() {
                       ),
                     },
                   ]}
+                />
+                <BlockchainTransactionHistory
+                  entries={transactionHistory}
+                  loading={transactionsLoading}
+                  error={transactionsError}
+                  selectedTxHash={selectedTxHash}
+                  onSelectTx={setSelectedTxHash}
+                  onCopyTx={(txHash) => void copyTransactionHash(txHash)}
+                  onCopyUrl={(url) => void copyTransactionUrl(url)}
                 />
               </Panel>
             ) : (

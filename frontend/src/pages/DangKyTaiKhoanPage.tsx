@@ -9,7 +9,6 @@ import { NewAccountForm, type RegistrationFormValues } from '../features/TaoTaiK
 import { registerAccount, resetTrangThai } from '../store/slice/dangKyTaiKhoanSlice';
 import type { TaoTaiKhoanTamThoi, TrangThaiDangKyTaiKhoan } from '../store/types';
 import SEO from '../components/SEO';
-import { GoogleReCaptchaProvider } from 'react-google-recaptcha-v3';
 import { isRecaptchaEnabled } from '../config/runtimeFlags';
 import {
   AlertCircle,
@@ -118,22 +117,7 @@ const RegisterPage: React.FC = () => {
   ];
 
   return (
-    <GoogleReCaptchaProvider
-      reCaptchaKey={import.meta.env.VITE_RECAPTCHA_SITE_KEY ?? ''}
-      scriptProps={{
-        async: false,
-        defer: true,
-        appendTo: 'body',
-        nonce: undefined,
-      }}
-      container={{
-        parameters: {
-          badge: 'bottomright',
-          theme: 'light',
-        },
-      }}
-    >
-      <div className="min-h-screen bg-[var(--clay-bg)] text-[var(--clay-text)]">
+    <div className="min-h-screen bg-[var(--clay-bg)] text-[var(--clay-text)]">
         <SEO
           title="Đăng Ký Tài Khoản | Nền Tảng Bầu Cử Blockchain"
           description="Trang đăng ký tài khoản cho nền tảng bầu cử blockchain. Tạo tài khoản để tham gia vào quá trình bầu cử an toàn và minh bạch."
@@ -143,8 +127,7 @@ const RegisterPage: React.FC = () => {
           image={`${window.location.origin}/logo.png`}
         />
 
-        {/* Container cho reCAPTCHA */}
-        <div id="recaptcha-container" style={{ display: 'none' }}></div>
+        {isRecaptchaEnabled && <div id="recaptcha-container" style={{ display: 'none' }}></div>}
 
         <div className="mx-auto max-w-[1200px] px-4 py-10">
           <div className="mb-6">
@@ -315,10 +298,8 @@ const RegisterPage: React.FC = () => {
             </Panel>
           </div>
         )}
+      {isRecaptchaEnabled && <div id="recaptcha-container" className="fixed bottom-4 right-4 z-50"></div>}
       </div>
-      {/* Container rõ ràng cho reCAPTCHA */}
-      <div id="recaptcha-container" className="fixed bottom-4 right-4 z-50"></div>
-    </GoogleReCaptchaProvider>
   );
 };
 

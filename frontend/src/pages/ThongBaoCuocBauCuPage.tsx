@@ -47,23 +47,23 @@ export default function ElectionNotifications() {
   return (
     <HelmetProvider>
       <Helmet>
-        <title>Thông Báo Cuộc Bầu Cử | Nền Tảng Bầu Cử Blockchain</title>
+        <title>Thông báo | HoLiHu BlockVote</title>
         <meta
           name="description"
-          content="Trang thông báo các cuộc bầu cử trên nền tảng bầu cử blockchain."
+          content="Theo dõi thông báo bầu cử trong hệ thống HoLiHu BlockVote."
         />
-        <meta name="keywords" content="Thông báo, Cuộc bầu cử, Blockchain, Bầu cử" />
+        <meta name="keywords" content="HoLiHu, BlockVote, thông báo, bầu cử blockchain" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <meta charSet="utf-8" />
-        <link rel="canonical" href="http://example.com/thong-bao-cuoc-bau-cu" />
-        <meta property="og:title" content="Thông Báo Cuộc Bầu Cử - Nền Tảng Bầu Cử Blockchain" />
+        <link rel="canonical" href={`${window.location.origin}/app/notifications`} />
+        <meta property="og:title" content="Thông báo | HoLiHu BlockVote" />
         <meta
           property="og:description"
-          content="Trang thông báo các cuộc bầu cử trên nền tảng bầu cử blockchain."
+          content="Theo dõi thông báo bầu cử trong hệ thống HoLiHu BlockVote."
         />
         <meta property="og:type" content="website" />
-        <meta property="og:url" content="http://example.com/thong-bao-cuoc-bau-cu" />
-        <meta property="og:image" content="http://example.com/logo.png" />
+        <meta property="og:url" content={`${window.location.origin}/app/notifications`} />
+        <meta property="og:image" content={`${window.location.origin}/logo.png`} />
       </Helmet>
       <div className={`min-h-screen ${darkMode ? 'dark' : ''}`}>
         <div className="container mx-auto px-4 py-8">
