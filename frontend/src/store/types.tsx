@@ -469,8 +469,8 @@ export type PhienDangNhap = {
   ip: string;
   thietBi: string;
   trinhDuyet: string;
-  ngayTao: Date;
-  ngayHetHan: Date;
+  ngayTao: string;
+  ngayHetHan: string;
   isActive: boolean;
   accessToken?: string;
   refreshToken?: string;

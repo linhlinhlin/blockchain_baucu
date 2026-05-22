@@ -31,6 +31,7 @@ namespace WebApplication3.Controllers
         private readonly RecaptchaService _recaptchaService; // Thêm RecaptchaService
         private readonly ILogger<TaiKhoanController> _logger;
         private readonly DevelopmentAuthStore _developmentAuthStore;
+        private readonly WalletLoginChallengeService _walletLoginChallengeService;
 
         public TaiKhoanController(
             ApplicationDbContext context,
@@ -38,6 +39,7 @@ namespace WebApplication3.Controllers
             IOptions<JwtSettings> jwtSettings,
             IConfiguration configuration,
             DevelopmentAuthStore developmentAuthStore,
+            WalletLoginChallengeService walletLoginChallengeService,
             RecaptchaService recaptchaService, // Inject RecaptchaService
             ILogger<TaiKhoanController> logger)
         {
@@ -46,6 +48,7 @@ namespace WebApplication3.Controllers
             _jwtSettings = jwtSettings.Value;
             _configuration = configuration;
             _developmentAuthStore = developmentAuthStore;
+            _walletLoginChallengeService = walletLoginChallengeService;
             _recaptchaService = recaptchaService;
             _logger = logger;
         }
@@ -53,6 +56,31 @@ namespace WebApplication3.Controllers
         private bool IsDevelopmentAuthEnabled()
         {
             return _configuration.GetValue<bool>("DevelopmentAuthSettings:Enabled");
+        }
+
+        private static bool TryNormalizeWalletAddress(
+            string? walletAddress,
+            out string normalizedWalletAddress,
+            out string message)
+        {
+            normalizedWalletAddress = string.Empty;
+
+            if (string.IsNullOrWhiteSpace(walletAddress))
+            {
+                message = "Địa chỉ ví không được để trống.";
+                return false;
+            }
+
+            var trimmed = walletAddress.Trim();
+            if (!Regex.IsMatch(trimmed, "^0x[a-fA-F0-9]{40}$"))
+            {
+                message = "Địa chỉ ví không đúng định dạng (phải bắt đầu bằng '0x' và dài 42 ký tự hex).";
+                return false;
+            }
+
+            normalizedWalletAddress = trimmed.ToLowerInvariant();
+            message = string.Empty;
+            return true;
         }
 
         private CookieOptions TaoCookieRefreshToken(DateTime? expiresAtUtc = null)
@@ -1016,18 +1044,40 @@ namespace WebApplication3.Controllers
             return NoContent();
         }
 
+        [HttpPost("login-metamask/nonce")]
+        [AllowAnonymous]
+        public async Task<IActionResult> CreateMetaMaskLoginNonce(
+            [FromBody] WalletLoginNonceRequestDTO model,
+            CancellationToken cancellationToken)
+        {
+            if (!TryNormalizeWalletAddress(model.DiaChiVi, out var normalizedWalletAddress, out var validationMessage))
+            {
+                return BadRequest(new { success = false, message = validationMessage });
+            }
+
+            var challenge = await _walletLoginChallengeService.CreateAsync(
+                normalizedWalletAddress,
+                cancellationToken);
+
+            return Ok(new WalletLoginNonceResponseDTO
+            {
+                Success = true,
+                DiaChiVi = challenge.DiaChiVi,
+                Nonce = challenge.Nonce,
+                Message = challenge.Message,
+                ExpiresAtUtc = challenge.ExpiresAtUtc
+            });
+        }
+
         [HttpPost("login-metamask")]
         [AllowAnonymous]
         public async Task<IActionResult> LoginWithMetamask([FromBody] WalletLoginDTO model)
         {
-            if (string.IsNullOrEmpty(model.DiaChiVi))
+            if (!TryNormalizeWalletAddress(model.DiaChiVi, out var normalizedWalletAddress, out var validationMessage))
             {
-                return BadRequest(new { success = false, message = "Địa chỉ ví không được để trống." });
+                return BadRequest(new { success = false, message = validationMessage });
             }
-            if (!model.DiaChiVi.StartsWith("0x") || model.DiaChiVi.Length != 42)
-            {
-                return BadRequest(new { success = false, message = "Địa chỉ ví không đúng định dạng (phải bắt đầu bằng '0x' và dài 42 ký tự)." });
-            }
+
             if (string.IsNullOrEmpty(model.Nonce))
             {
                 return BadRequest(new { success = false, message = "Nonce không được để trống." });
@@ -1041,9 +1091,18 @@ namespace WebApplication3.Controllers
             {
                 var signer = new EthereumMessageSigner();
                 var recoveredAddress = signer.EncodeUTF8AndEcRecover(model.Nonce, model.Signature);
-                if (recoveredAddress.ToLower() != model.DiaChiVi.ToLower())
+                if (!string.Equals(recoveredAddress, normalizedWalletAddress, StringComparison.OrdinalIgnoreCase))
                 {
                     return Unauthorized(new { success = false, message = "Chữ ký không khớp với địa chỉ ví cung cấp." });
+                }
+
+                var challengeAccepted = await _walletLoginChallengeService.ConsumeAsync(
+                    normalizedWalletAddress,
+                    model.Nonce,
+                    HttpContext.RequestAborted);
+                if (!challengeAccepted)
+                {
+                    return Unauthorized(new { success = false, message = "Phiên xác minh MetaMask đã hết hạn hoặc đã được sử dụng. Vui lòng thử lại." });
                 }
             }
             catch (FormatException ex)
@@ -1058,12 +1117,12 @@ namespace WebApplication3.Controllers
 
             if (IsDevelopmentAuthEnabled())
             {
-                var developmentUser = await _developmentAuthStore.LoginWithMetaMaskAsync(model.DiaChiVi);
+                var developmentUser = await _developmentAuthStore.LoginWithMetaMaskAsync(normalizedWalletAddress);
                 return await TaoPhanHoiDangNhapDevelopmentAsync(developmentUser);
             }
 
             var wallet = await _context.ViBlockchain
-                .FirstOrDefaultAsync(w => w.DiaChiVi.ToLower() == model.DiaChiVi.ToLower());
+                .FirstOrDefaultAsync(w => w.DiaChiVi.ToLower() == normalizedWalletAddress);
 
             TaiKhoan? user;
 
@@ -1074,12 +1133,12 @@ namespace WebApplication3.Controllers
                     user = new TaiKhoan
                     {
                         TenDangNhap = "Wallet_" + Guid.NewGuid().ToString().Substring(0, 8),
-                        Email = $"{model.DiaChiVi.Substring(0, Math.Min(8, model.DiaChiVi.Length))}{Guid.NewGuid().ToString()[..4]}@holihu-wallet.com",
+                        Email = $"{normalizedWalletAddress.Substring(0, Math.Min(8, normalizedWalletAddress.Length))}{Guid.NewGuid().ToString()[..4]}@holihu-wallet.com",
                         TrangThai = true,
                         NgayThamGia = DateOnly.FromDateTime(DateTime.UtcNow),
                         LanDangNhapCuoi = DateOnly.FromDateTime(DateTime.UtcNow),
                         MatKhau = BCrypt.Net.BCrypt.HashPassword(Guid.NewGuid().ToString()),
-                        TenHienThi = "User_" + model.DiaChiVi.Substring(2, 6),
+                        TenHienThi = "User_" + normalizedWalletAddress.Substring(2, 6),
                         IsMetaMask = true
                     };
                     _context.TaiKhoan.Add(user);
@@ -1096,7 +1155,7 @@ namespace WebApplication3.Controllers
                     var newWallet = new ViBlockchain
                     {
                         TaiKhoanId = user.Id,
-                        DiaChiVi = model.DiaChiVi,
+                        DiaChiVi = normalizedWalletAddress,
                         LoaiVi = 1,
                         SCWNonce = null,
                         ThoiGianTao = DateTime.UtcNow,
@@ -1137,12 +1196,12 @@ namespace WebApplication3.Controllers
             try
             {
                 var wallets = await GetDanhSachViAsync(user.Id);
-                _logger.LogInformation("Đăng nhập MetaMask thành công cho UserID: {UserId}, DiaChiVi: {DiaChiVi}", user.Id, model.DiaChiVi);
+                _logger.LogInformation("Đăng nhập MetaMask thành công cho UserID: {UserId}, DiaChiVi: {DiaChiVi}", user.Id, normalizedWalletAddress);
                 return await TaoPhanHoiDangNhapAsync(user, role, wallets);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Lỗi khi tạo token hoặc lưu phiên đăng nhập cho DiaChiVi: {DiaChiVi}: {Message}", model.DiaChiVi, ex.Message);
+                _logger.LogError(ex, "Lỗi khi tạo token hoặc lưu phiên đăng nhập cho DiaChiVi: {DiaChiVi}: {Message}", normalizedWalletAddress, ex.Message);
                 return StatusCode(500, new { success = false, message = "Lỗi khi tạo token hoặc lưu phiên đăng nhập, vui lòng thử lại." });
             }
         }

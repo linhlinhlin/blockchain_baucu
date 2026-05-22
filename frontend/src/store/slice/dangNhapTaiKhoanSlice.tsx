@@ -39,6 +39,14 @@ const extractApiErrorMessage = (error: any, fallback: string) =>
   error?.message ||
   fallback;
 
+const clearPersistedAccessToken = () => {
+  if (typeof localStorage !== 'undefined') {
+    localStorage.removeItem('accessToken');
+  }
+};
+
+clearPersistedAccessToken();
+
 const taoPhienDangNhapTam = (user: TaiKhoan, accessToken: string): PhienDangNhap => ({
   id: `dev-session-${user.id}`,
   taiKhoanId: user.id,
@@ -46,8 +54,8 @@ const taoPhienDangNhapTam = (user: TaiKhoan, accessToken: string): PhienDangNhap
   ip: '127.0.0.1',
   thietBi: 'Development Browser',
   trinhDuyet: navigator.userAgent,
-  ngayTao: new Date(),
-  ngayHetHan: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+  ngayTao: new Date().toISOString(),
+  ngayHetHan: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
   isActive: true,
   accessToken,
 });
@@ -142,7 +150,7 @@ const dangNhapTaiKhoanSlice = createSlice({
       state.accessToken = action.payload.accessToken;
       state.taiKhoan = action.payload.taiKhoan;
       state.phienDangNhap = action.payload.phienDangNhap;
-      localStorage.setItem('accessToken', action.payload.accessToken);
+      clearPersistedAccessToken();
     },
   },
   extraReducers: (builder) => {
@@ -166,7 +174,7 @@ const dangNhapTaiKhoanSlice = createSlice({
           state.phienDangNhap = action.payload.phienDangNhap;
           state.dangTai = false;
           state.loi = null;
-          localStorage.setItem('accessToken', action.payload.accessToken);
+          clearPersistedAccessToken();
         },
       )
       .addCase(login.rejected, (state, action) => {
@@ -192,7 +200,7 @@ const dangNhapTaiKhoanSlice = createSlice({
           state.phienDangNhap = action.payload.phienDangNhap;
           state.dangTai = false;
           state.loi = null;
-          localStorage.setItem('accessToken', action.payload.accessToken);
+          clearPersistedAccessToken();
         },
       )
       .addCase(loginWithMetaMask.rejected, (state, action) => {
@@ -213,7 +221,7 @@ const dangNhapTaiKhoanSlice = createSlice({
           state.taiKhoan = action.payload.user;
           state.phienDangNhap = action.payload.phienDangNhap;
           state.loi = null;
-          localStorage.setItem('accessToken', action.payload.accessToken);
+          clearPersistedAccessToken();
         },
       )
       .addCase(refreshJwtToken.rejected, (state, action) => {

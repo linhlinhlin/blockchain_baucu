@@ -7,4 +7,18 @@
         public string? Signature { get; set; }
         public string? RecaptchaToken { get; set; }
     }
+
+    public class WalletLoginNonceRequestDTO
+    {
+        public string? DiaChiVi { get; set; }
+    }
+
+    public class WalletLoginNonceResponseDTO
+    {
+        public bool Success { get; set; }
+        public string DiaChiVi { get; set; } = string.Empty;
+        public string Nonce { get; set; } = string.Empty;
+        public string Message { get; set; } = string.Empty;
+        public DateTimeOffset ExpiresAtUtc { get; set; }
+    }
 }

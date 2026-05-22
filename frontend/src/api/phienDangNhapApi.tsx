@@ -3,57 +3,55 @@ import { PhienDangNhap } from '../store/types';
 
 const API_URL = '/api/PhienDangNhap';
 
-const getAuthHeader = (accessTokenOverride?: string | null) => {
-  const accessToken = accessTokenOverride ?? localStorage.getItem('accessToken');
-  return { Authorization: `Bearer ${accessToken}` };
-};
+const getAuthConfig = (accessTokenOverride?: string | null) =>
+  accessTokenOverride
+    ? {
+        headers: {
+          Authorization: `Bearer ${accessTokenOverride}`,
+        },
+      }
+    : undefined;
 
 // Tạo phiên đăng nhập
 export const createPhienDangNhap = async (
   phienDangNhap: Omit<PhienDangNhap, 'id'>,
 ): Promise<PhienDangNhap> => {
-  const response = await apiClient.post(`${API_URL}/create`, phienDangNhap, {
-    headers: getAuthHeader(),
-  });
+  const response = await apiClient.post(`${API_URL}/create`, phienDangNhap);
   return response.data;
 };
 
 // Kiểm tra phiên đăng nhập
 export const checkPhienDangNhap = async (): Promise<{ valid: boolean }> => {
-  const response = await apiClient.get(`${API_URL}/check`, { headers: getAuthHeader() });
+  const response = await apiClient.get(`${API_URL}/check`);
   return response.data;
 };
 
 // Đăng xuất phiên đăng nhập
 export const logoutPhienDangNhap = async (id: string): Promise<void> => {
-  await apiClient.delete(`${API_URL}/logout/${id}`, { headers: getAuthHeader() });
+  await apiClient.delete(`${API_URL}/logout/${id}`);
 };
 
 // Lấy danh sách phiên đăng nhập của người dùng
 export const getCacPhienDangNhapByUser = async (taiKhoanID: string): Promise<PhienDangNhap[]> => {
-  const response = await apiClient.get(`${API_URL}/user/${taiKhoanID}`, {
-    headers: getAuthHeader(),
-  });
+  const response = await apiClient.get(`${API_URL}/user/${taiKhoanID}`);
   return response.data;
 };
 
 // Đăng xuất tất cả phiên đăng nhập của người dùng
 export const logoutAllPhienDangNhap = async (taiKhoanID: string): Promise<void> => {
-  await apiClient.delete(`${API_URL}/logoutAll/${taiKhoanID}`, { headers: getAuthHeader() });
+  await apiClient.delete(`${API_URL}/logoutAll/${taiKhoanID}`);
 };
 
 // Thu hồi token
 export const revokeToken = async (refreshToken: string): Promise<void> => {
-  await apiClient.post(`${API_URL}/revoke-token`, { refreshToken }, { headers: getAuthHeader() });
+  await apiClient.post(`${API_URL}/revoke-token`, { refreshToken });
   localStorage.removeItem('accessToken');
   document.cookie = 'refreshToken=; Max-Age=0';
 };
 
 // Lấy danh sách phiên đăng nhập đang hoạt động của người dùng
 export const getActiveSessions = async (userId: string): Promise<PhienDangNhap[]> => {
-  const response = await apiClient.get(`${API_URL}/active-sessions/${userId}`, {
-    headers: getAuthHeader(),
-  });
+  const response = await apiClient.get(`${API_URL}/active-sessions/${userId}`);
   return response.data;
 };
 
@@ -62,9 +60,10 @@ export const getLatestSession = async (
   taiKhoanID: string,
   accessToken?: string | null,
 ): Promise<PhienDangNhap> => {
-  const response = await apiClient.get(`${API_URL}/latest-session/${taiKhoanID}`, {
-    headers: getAuthHeader(accessToken),
-  });
+  const response = await apiClient.get(
+    `${API_URL}/latest-session/${taiKhoanID}`,
+    getAuthConfig(accessToken),
+  );
   return response.data;
 };
 

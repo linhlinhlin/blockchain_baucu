@@ -25,9 +25,8 @@ const VoterVerificationPublicEntry = () => {
   const hasSession = useSelector((state: RootState) =>
     Boolean(state.dangNhapTaiKhoan.accessToken || state.dangNhapTaiKhoan.taiKhoan),
   );
-  const hasStoredToken = Boolean(window.localStorage.getItem('accessToken'));
 
-  if (hasSession || hasStoredToken) {
+  if (hasSession) {
     return <Navigate to={`/app/verify-voter${location.search}`} replace />;
   }
 

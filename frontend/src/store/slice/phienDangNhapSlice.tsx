@@ -29,17 +29,17 @@ const trangThaiBanDau: TrangThaiPhienDangNhap = {
   loi: null,
 };
 
-const taoPhienDangNhapTam = (taiKhoanID: string): PhienDangNhap => ({
+const taoPhienDangNhapTam = (taiKhoanID: string, accessToken = ''): PhienDangNhap => ({
   id: `dev-session-${taiKhoanID}`,
   taiKhoanId: Number(taiKhoanID),
-  duLieuPhien: localStorage.getItem('accessToken') ?? '',
+  duLieuPhien: accessToken,
   ip: '127.0.0.1',
   thietBi: 'Development Browser',
   trinhDuyet: navigator.userAgent,
-  ngayTao: new Date(),
-  ngayHetHan: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+  ngayTao: new Date().toISOString(),
+  ngayHetHan: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
   isActive: true,
-  accessToken: localStorage.getItem('accessToken') ?? '',
+  accessToken,
 });
 
 export const fetchCacPhienDangNhapByUser = createAsyncThunk(
@@ -99,11 +99,15 @@ export const fetchActiveSessions = createAsyncThunk(
 // Thêm createAsyncThunk mới để lấy phiên đăng nhập gần nhất
 export const fetchLatestSession = createAsyncThunk(
   'phienDangNhap/fetchLatestSession',
-  async (taiKhoanID: string) => {
+  async (taiKhoanID: string, { getState }) => {
+    const accessToken =
+      (getState() as { dangNhapTaiKhoan?: { accessToken?: string | null } }).dangNhapTaiKhoan
+        ?.accessToken ?? null;
+
     try {
-      return await getLatestSession(taiKhoanID);
+      return await getLatestSession(taiKhoanID, accessToken);
     } catch {
-      return taoPhienDangNhapTam(taiKhoanID);
+      return taoPhienDangNhapTam(taiKhoanID, accessToken ?? '');
     }
   },
 );

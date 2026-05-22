@@ -22,6 +22,7 @@ import {
 import type { AppDispatch, RootState } from '../store/store';
 import { login, loginWithMetaMask, refreshJwtToken } from '../store/slice/dangNhapTaiKhoanSlice';
 import { fetchLatestSession } from '../store/slice/phienDangNhapSlice';
+import { layMetaMaskLoginChallenge } from '../api/dangNhapTaiKhoanApi';
 import { useWeb3 } from '../context/Web3Context';
 import { useToast } from '../components/ui/Use-toast';
 import { useGoogleReCaptcha } from 'react-google-recaptcha-v3';
@@ -283,11 +284,14 @@ export default function LoginPage() {
         duration: 10000,
       });
 
-      const authNonce = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
-      const nonce = `HoLiHu BlockVote Login\nAddress: ${walletAddress}\nNonce: ${authNonce}`;
+      const challenge = await layMetaMaskLoginChallenge(walletAddress);
+      if (!challenge.message || !challenge.diaChiVi) {
+        throw new Error('Không thể tạo phiên xác minh MetaMask. Vui lòng thử lại.');
+      }
+
       const signature = await window.ethereum.request({
         method: 'personal_sign',
-        params: [nonce, walletAddress],
+        params: [challenge.message, walletAddress],
       });
 
       if (typeof signature !== 'string' || !signature) {
@@ -297,8 +301,8 @@ export default function LoginPage() {
       setMetaMaskPhase('submitting');
       const result = await dispatch(
         loginWithMetaMask({
-          diaChiVi: walletAddress,
-          nonce,
+          diaChiVi: challenge.diaChiVi,
+          nonce: challenge.message,
           signature,
           recaptchaToken: token ?? '',
         }),
