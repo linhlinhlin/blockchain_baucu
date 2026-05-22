@@ -169,10 +169,10 @@ const Sidebar: React.FC<SidebarProps> = ({ isSidebarOpen, toggleSidebar }) => {
             type="search"
             name="search"
             autoComplete="off"
-            aria-label="Tìm ballot, cử tri"
+            aria-label="Tìm bầu cử, cử tri"
             defaultValue={searchParams.get('search') ?? ''}
             onChange={handleSearch}
-            placeholder="Tìm ballot, cử tri..."
+            placeholder="Tìm bầu cử, cử tri..."
             className="w-full rounded-[10px] border border-[var(--clay-border)] bg-[var(--clay-surface)] py-2 pl-9 pr-3 text-sm text-[var(--clay-text)] placeholder:text-[var(--clay-muted-soft)] focus:outline-none focus:ring-2 focus:ring-[var(--clay-primary-focus)]"
           />
         </div>
