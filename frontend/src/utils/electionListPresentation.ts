@@ -14,6 +14,19 @@ export interface ElectionGroupMilestone {
   timestamp: number;
 }
 
+export function buildElectionDetailPath(groupKey: string): string {
+  return `/app/elections/${encodeURIComponent(groupKey)}`;
+}
+
+export function buildElectionConsolePath(groupKey: string, electionAddress?: string | null): string {
+  const params = new URLSearchParams({ group: groupKey });
+  if (electionAddress) {
+    params.set('election', electionAddress);
+  }
+
+  return `/app/dashboard?${params.toString()}`;
+}
+
 export function filterElectionGroups(
   items: ElectionV1GroupListItem[],
   searchTerm: string,

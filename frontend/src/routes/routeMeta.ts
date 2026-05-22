@@ -119,6 +119,18 @@ export function resolveRouteMeta(pathname: string): RouteMeta {
   const hit = ROUTE_META[key];
   if (hit) return hit;
 
+  if (/^\/app\/elections\/[^/]+$/.test(key)) {
+    return {
+      title: 'Chi tiết bầu cử',
+      section: 'Bầu cử',
+      breadcrumb: [
+        HOME,
+        { label: 'Bầu cử', to: '/app/elections' },
+        { label: 'Chi tiết bầu cử' },
+      ],
+    };
+  }
+
   if (/^\/app\/elections\/[^/]+\/elections-tienhanh$/.test(key)) {
     return {
       title: 'Chi tiết bầu cử',

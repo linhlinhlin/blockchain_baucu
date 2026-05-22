@@ -51,7 +51,7 @@ const AppAfterLogin: React.FC = () => {
 
         <main
           id="main-content"
-          className="flex-1 mt-[60px] md:mt-0 md:ml-[var(--sidebar-w)]"
+          className="mt-[60px] min-w-0 flex-1 md:ml-[var(--sidebar-w)] md:mt-0 md:w-[calc(100%_-_var(--sidebar-w))] md:flex-none"
         >
           <div className="min-h-screen bg-[var(--clay-bg)] p-4 sm:p-5 lg:p-5">
             {routeMeta.breadcrumb.length > 1 && (
