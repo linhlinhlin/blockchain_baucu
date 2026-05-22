@@ -93,6 +93,11 @@ export default function CuocBauCuCuaNguoiDungPage() {
                 Ví: {shortenAddress(currentAccount ?? currentUser?.diaChiVi)}
               </span>
             </div>
+            {!currentAccount && !currentUser?.diaChiVi && (
+              <p className="mt-2 text-xs text-amber-600">
+                Chưa có ví MetaMask. Kết nối ví ở trang quản lý smart contract để commit/reveal phiếu on-chain.
+              </p>
+            )}
           </div>
 
           <div className="flex flex-col gap-3 sm:flex-row">
@@ -142,6 +147,7 @@ export default function CuocBauCuCuaNguoiDungPage() {
               type="search"
               name="ballot-search"
               autoComplete="off"
+              aria-label="Tìm ballot"
               value={searchTerm}
               onChange={(event) => setSearchTerm(event.target.value)}
               placeholder="Tìm theo tên ballot, mô tả hoặc group key…"
