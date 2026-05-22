@@ -17,6 +17,11 @@ import type { RootState, AppDispatch } from '../store/store';
 import { Loader2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { clearState } from '../store/slice/phieuMoiPhienBauCuSlice';
+import {
+  buildVerifyTransactionPath,
+  extractVerifyTransactionTarget,
+  isTransactionHash,
+} from '../utils/transactionVerification';
 
 type QRDataType = 'TEXT' | 'URL' | 'EMAIL' | 'PHONE' | 'SMS' | 'WIFI' | 'VCARD' | 'OTHER';
 
@@ -242,31 +247,38 @@ const QuetMaQRPage: React.FC = () => {
   const processQRData = (data: string) => {
     try {
       let type: QRDataType = 'TEXT';
+      const trimmedData = data.trim();
 
       // Nhật ký dữ liệu đầu vào để gỡ lỗi
-      console.log('QR Data content:', data);
+      console.log('QR Data content:', trimmedData);
 
-      if (data.startsWith('http://') || data.startsWith('https://')) {
+      if (trimmedData.startsWith('http://') || trimmedData.startsWith('https://')) {
         type = 'URL';
-      } else if (data.startsWith('mailto:')) {
+      } else if (trimmedData.startsWith('mailto:')) {
         type = 'EMAIL';
-      } else if (data.startsWith('tel:')) {
+      } else if (trimmedData.startsWith('tel:')) {
         type = 'PHONE';
-      } else if (data.startsWith('sms:')) {
+      } else if (trimmedData.startsWith('sms:')) {
         type = 'SMS';
-      } else if (data.startsWith('WIFI:')) {
+      } else if (trimmedData.startsWith('WIFI:')) {
         type = 'WIFI';
-      } else if (data.startsWith('BEGIN:VCARD')) {
+      } else if (trimmedData.startsWith('BEGIN:VCARD')) {
         type = 'VCARD';
       }
 
-      setScannedData({ type, content: data });
+      setScannedData({ type, content: trimmedData });
 
       if (type === 'URL') {
         try {
-          const url = new URL(data);
+          const url = new URL(trimmedData);
           console.log('URL parsed:', url.toString());
           console.log('URL params:', Array.from(url.searchParams.entries()));
+
+          const verificationTarget = extractVerifyTransactionTarget(url);
+          if (verificationTarget) {
+            navigate(buildVerifyTransactionPath(verificationTarget.txHash, verificationTarget.chainId));
+            return;
+          }
 
           const tokenParam = url.searchParams.get('token');
           const groupKeyParam = url.searchParams.get('groupKey');
@@ -328,11 +340,16 @@ const QuetMaQRPage: React.FC = () => {
           console.error('URL parsing error:', urlError);
 
           // Nếu URL không hợp lệ, kiểm tra xem dữ liệu có phải là token trực tiếp không
-          if (data.length > 10 && !data.includes(' ')) {
-            console.log('Trying direct token:', data);
-            setToken(data);
+          if (isTransactionHash(trimmedData)) {
+            navigate(buildVerifyTransactionPath(trimmedData));
+            return;
+          }
 
-            dispatch(xacThucPhieuMoi(data))
+          if (trimmedData.length > 10 && !trimmedData.includes(' ')) {
+            console.log('Trying direct token:', trimmedData);
+            setToken(trimmedData);
+
+            dispatch(xacThucPhieuMoi(trimmedData))
               .unwrap()
               .then(() => {
                 setIsValidating(false);
@@ -349,11 +366,16 @@ const QuetMaQRPage: React.FC = () => {
         }
       } else {
         // Thử xem dữ liệu văn bản có phải là token trực tiếp không
-        if (data.length > 10 && !data.includes(' ')) {
-          console.log('Trying direct token from text:', data);
-          setToken(data);
+        if (isTransactionHash(trimmedData)) {
+          navigate(buildVerifyTransactionPath(trimmedData));
+          return;
+        }
 
-          dispatch(xacThucPhieuMoi(data))
+        if (trimmedData.length > 10 && !trimmedData.includes(' ')) {
+          console.log('Trying direct token from text:', trimmedData);
+          setToken(trimmedData);
+
+          dispatch(xacThucPhieuMoi(trimmedData))
             .unwrap()
             .then(() => {
               setIsValidating(false);

@@ -77,6 +77,7 @@ const FAQ = lazy(() => import('../pages/FaqPage'));
 const BlockchainSetupPage = lazy(() => import('../pages/BlockchainSetupPage'));
 const DieuLePage = lazy(() => import('../pages/DieuLePage'));
 const VoterVerificationPage = lazy(() => import('../pages/VoterVerificationPage'));
+const VerifyTransactionPage = lazy(() => import('../pages/VerifyTransactionPage'));
 
 const AdminPage = lazy(() => import('../pages/AdminPage'));
 
@@ -161,6 +162,10 @@ const router = createBrowserRouter([
       {
         path: 'verify-voter',
         element: <VoterVerificationPublicEntry />,
+      },
+      {
+        path: 'verify-tx',
+        element: <VerifyTransactionPage />,
       },
       // === Forgot password flow (canonical EN, Đợt 14) ===
       {
@@ -440,6 +445,10 @@ const router = createBrowserRouter([
       {
         path: 'verify-voter',
         element: <VoterVerificationPage />,
+      },
+      {
+        path: 'verify-tx',
+        element: <VerifyTransactionPage />,
       },
       {
         path: 'elections',

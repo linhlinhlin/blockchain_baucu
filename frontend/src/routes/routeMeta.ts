@@ -50,10 +50,21 @@ const ROUTE_META: Record<string, RouteMeta> = {
     section: 'Cử tri',
     breadcrumb: [HOME, { label: 'Cử tri' }, { label: 'Xác minh cử tri' }],
   },
+  '/app/verify-tx': {
+    title: 'Kiểm chứng giao dịch',
+    section: 'Cử tri',
+    breadcrumb: [HOME, { label: 'Cử tri' }, { label: 'Kiểm chứng giao dịch' }],
+  },
   '/verify-voter': {
     title: 'Xác minh cử tri',
     section: 'Cử tri',
     breadcrumb: [{ label: 'Xác minh cử tri' }],
+    outsideShell: true,
+  },
+  '/verify-tx': {
+    title: 'Kiểm chứng giao dịch',
+    section: 'Cử tri',
+    breadcrumb: [{ label: 'Kiểm chứng giao dịch' }],
     outsideShell: true,
   },
 };

@@ -23,6 +23,7 @@ export const PATHS = {
   thanks: '/thanks',
   blockchainSetup: '/blockchain-setup',
   verifyVoter: '/verify-voter',
+  verifyTx: '/verify-tx',
 
   // App (post-login)
   app: '/app',
@@ -32,6 +33,7 @@ export const PATHS = {
   notifications: '/app/notifications',
   files: '/app/files',
   scan: '/app/scan',
+  appVerifyTx: '/app/verify-tx',
   account: '/app/account',
   settings: '/app/settings',
   admin: '/app/admin',

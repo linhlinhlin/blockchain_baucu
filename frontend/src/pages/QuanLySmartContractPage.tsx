@@ -36,6 +36,7 @@ import {
   Tabs,
   type StatusTone,
 } from '../components/ui/clay';
+import { buildVerifyTransactionUrl } from '../utils/transactionVerification';
 
 const TARGET_CHAIN_ID = 11155111;
 const TARGET_CHAIN_ID_HEX = '0xaa36a7';
@@ -139,6 +140,7 @@ type ElectionV1TransactionEntry = {
   kind: ElectionV1TransactionKind;
   txHash: string;
   url: string;
+  verifyUrl: string;
   source: 'deployment' | 'chain';
   electionAddress: string;
   actorAddress?: string | null;
@@ -226,7 +228,11 @@ function formatTransactionTime(entry: ElectionV1TransactionEntry) {
   return entry.blockNumber ? `Block ${entry.blockNumber}` : 'Đang cập nhật';
 }
 
-function buildDeploymentTransaction(detail: ElectionV1Detail, explorerBaseUrl: string): ElectionV1TransactionEntry | null {
+function buildDeploymentTransaction(
+  detail: ElectionV1Detail,
+  explorerBaseUrl: string,
+  chainId = TARGET_CHAIN_ID,
+): ElectionV1TransactionEntry | null {
   if (!detail.txHash) {
     return null;
   }
@@ -236,6 +242,7 @@ function buildDeploymentTransaction(detail: ElectionV1Detail, explorerBaseUrl: s
     kind: 'create',
     txHash: detail.txHash,
     url: buildTransactionUrl(explorerBaseUrl, detail.txHash),
+    verifyUrl: buildVerifyTransactionUrl(detail.txHash, chainId),
     source: 'deployment',
     electionAddress: detail.address,
     actorAddress: detail.admin,
@@ -459,6 +466,7 @@ async function loadElectionTransactions(
   detail: ElectionV1Detail,
   rpcUrl: string,
   explorerBaseUrl: string,
+  chainId = TARGET_CHAIN_ID,
 ): Promise<ElectionV1TransactionEntry[]> {
   const provider = new ethers.JsonRpcProvider(rpcUrl || DEFAULT_RPC_URL);
   const eventInterface = new ethers.Interface(electionV1EventAbi);
@@ -499,6 +507,7 @@ async function loadElectionTransactions(
         id: `chain:${txHash.toLowerCase()}:${log.index}`,
         txHash,
         url: buildTransactionUrl(explorerBaseUrl, txHash),
+        verifyUrl: buildVerifyTransactionUrl(txHash, chainId),
         source: 'chain' as const,
         electionAddress: detail.address,
         blockNumber: log.blockNumber,
@@ -604,8 +613,8 @@ function BlockchainTransactionHistory({
             Giao dịch có thể kiểm chứng
           </h3>
           <p className="mt-1 max-w-3xl text-sm leading-6 text-[var(--clay-muted)]">
-            Admin và cử tri có thể mở Etherscan, sao chép mã giao dịch hoặc quét QR để đối chiếu
-            trực tiếp trên Sepolia.
+            Admin và cử tri quét QR để mở trang kiểm chứng của HoLiHu trước, sau đó có thể đối
+            chiếu thêm trên Etherscan.
           </p>
         </div>
         <StatusBadge tone={error ? 'warning' : 'success'}>
@@ -704,7 +713,7 @@ function BlockchainTransactionHistory({
             <>
               <div className="mt-3 flex justify-center rounded-[14px] border border-[var(--clay-border-light)] bg-white p-3">
                 <QRCode
-                  value={selectedEntry.url}
+                  value={selectedEntry.verifyUrl}
                   size={184}
                   bgColor="#ffffff"
                   fgColor="#111827"
@@ -718,11 +727,11 @@ function BlockchainTransactionHistory({
               <div className="mt-3 grid gap-2">
                 <button
                   type="button"
-                  onClick={() => onCopyUrl(selectedEntry.url)}
+                  onClick={() => onCopyUrl(selectedEntry.verifyUrl)}
                   className="inline-flex min-h-10 items-center justify-center gap-2 rounded-[12px] border border-[var(--clay-border)] px-3 text-sm font-semibold text-[var(--clay-text)] hover:bg-[var(--clay-surface-soft)]"
                 >
                   <Clipboard className="h-4 w-4" aria-hidden="true" />
-                  Sao chép link
+                  Sao chép link kiểm chứng
                 </button>
                 <a
                   href={selectedEntry.url}
@@ -775,13 +784,14 @@ export default function QuanLySmartContractPage() {
   }, [detail?.address, connectedAccount, votePackageRevision]);
 
   const explorerBaseUrl = useMemo(() => getExplorerBaseUrl(publicConfig), [publicConfig]);
+  const configuredChainId = Number(publicConfig?.chainId ?? TARGET_CHAIN_ID);
 
   const transactionHistory = useMemo(() => {
     if (!detail) {
       return [];
     }
 
-    const deployment = buildDeploymentTransaction(detail, explorerBaseUrl);
+    const deployment = buildDeploymentTransaction(detail, explorerBaseUrl, configuredChainId);
     const entries = [
       ...(deployment ? [deployment] : []),
       ...chainTransactions.filter((entry) => entry.electionAddress.toLowerCase() === detail.address.toLowerCase()),
@@ -804,7 +814,7 @@ export default function QuanLySmartContractPage() {
         }
         return (a.timestamp ?? 0) - (b.timestamp ?? 0);
       });
-  }, [chainTransactions, detail, explorerBaseUrl]);
+  }, [chainTransactions, configuredChainId, detail, explorerBaseUrl]);
 
   useEffect(() => {
     void bootstrap();
@@ -931,6 +941,7 @@ export default function QuanLySmartContractPage() {
         targetDetail,
         publicConfig?.rpcUrl ?? DEFAULT_RPC_URL,
         explorerBaseUrl,
+        configuredChainId,
       );
       setChainTransactions(entries);
       setTransactionsError(null);
@@ -1167,7 +1178,7 @@ export default function QuanLySmartContractPage() {
 
   async function copyTransactionUrl(url: string) {
     await navigator.clipboard.writeText(url);
-    toast.success('Đã sao chép link Etherscan.');
+    toast.success('Đã sao chép link kiểm chứng.');
   }
 
   const [detailTab, setDetailTab] = useState<'cand' | 'state'>('cand');
