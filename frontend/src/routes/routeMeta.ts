@@ -2,7 +2,7 @@
 // KHÔNG sửa cây route trong AppRoutes.tsx. Chỉ tra cứu theo location.pathname.
 // Hợp đồng: .specify/specs/010-ux-professionalization/contracts/route-ia.md
 
-export type Section = 'Bầu cử' | 'Cử tri' | 'Khác';
+export type Section = 'Bầu cử' | 'Cử tri' | 'Khác' | 'Quản trị';
 
 export interface Crumb {
   label: string;
@@ -55,6 +55,41 @@ const ROUTE_META: Record<string, RouteMeta> = {
     section: 'Cử tri',
     breadcrumb: [HOME, { label: 'Cử tri' }, { label: 'Kiểm chứng giao dịch' }],
   },
+  '/app/account': {
+    title: 'Tài khoản',
+    section: 'Khác',
+    breadcrumb: [HOME, { label: 'Tài khoản' }],
+  },
+  '/app/notifications': {
+    title: 'Thông báo',
+    section: 'Khác',
+    breadcrumb: [HOME, { label: 'Khác' }, { label: 'Thông báo' }],
+  },
+  '/app/files': {
+    title: 'Quản lý file',
+    section: 'Khác',
+    breadcrumb: [HOME, { label: 'Khác' }, { label: 'Quản lý file' }],
+  },
+  '/app/settings': {
+    title: 'Cài đặt',
+    section: 'Khác',
+    breadcrumb: [HOME, { label: 'Khác' }, { label: 'Cài đặt' }],
+  },
+  '/app/admin': {
+    title: 'Quản trị',
+    section: 'Quản trị',
+    breadcrumb: [HOME, { label: 'Quản trị' }],
+  },
+  '/app/admin/roles': {
+    title: 'Quản lý vai trò',
+    section: 'Quản trị',
+    breadcrumb: [HOME, { label: 'Quản trị' }, { label: 'Quản lý vai trò' }],
+  },
+  '/app/admin/permissions': {
+    title: 'Phân quyền',
+    section: 'Quản trị',
+    breadcrumb: [HOME, { label: 'Quản trị' }, { label: 'Phân quyền' }],
+  },
   '/verify-voter': {
     title: 'Xác minh cử tri',
     section: 'Cử tri',
@@ -83,6 +118,22 @@ export function resolveRouteMeta(pathname: string): RouteMeta {
   const key = normalize(pathname);
   const hit = ROUTE_META[key];
   if (hit) return hit;
+
+  if (/^\/app\/elections\/[^/]+\/elections-tienhanh$/.test(key)) {
+    return {
+      title: 'Chi tiết bầu cử',
+      section: 'Bầu cử',
+      breadcrumb: [HOME, { label: 'Bầu cử' }, { label: 'Chi tiết bầu cử' }],
+    };
+  }
+
+  if (/^\/app\/elections\/[^/]+\/rules$/.test(key)) {
+    return {
+      title: 'Điều lệ bầu cử',
+      section: 'Bầu cử',
+      breadcrumb: [HOME, { label: 'Bầu cử' }, { label: 'Điều lệ bầu cử' }],
+    };
+  }
 
   const seg = key.split('/').filter(Boolean).pop() ?? 'app';
   const title = seg

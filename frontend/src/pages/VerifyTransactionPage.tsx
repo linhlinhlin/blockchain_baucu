@@ -125,6 +125,10 @@ export default function VerifyTransactionPage() {
   const chainLabel = chainId === SEPOLIA_CHAIN_ID ? 'Ethereum Sepolia' : `Chain ${chainId}`;
 
   useEffect(() => {
+    document.title = 'Kiểm chứng giao dịch | HoLiHu BlockVote';
+  }, []);
+
+  useEffect(() => {
     let alive = true;
 
     async function loadTransaction() {

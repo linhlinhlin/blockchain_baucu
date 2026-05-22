@@ -3,7 +3,7 @@
 import type React from 'react';
 import { useState, useRef, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import jsQR from 'jsqr';
 import { Button, Panel, StatusBadge, fieldControlClass } from '../components/ui/clay';
 import { AlertTriangle, Upload, QrCode, ImageIcon } from 'lucide-react';
@@ -22,6 +22,7 @@ import {
   extractVerifyTransactionTarget,
   isTransactionHash,
 } from '../utils/transactionVerification';
+import { buildVoterVerificationPath, resolveScanQueryTarget } from '../utils/qrRouting';
 
 type QRDataType = 'TEXT' | 'URL' | 'EMAIL' | 'PHONE' | 'SMS' | 'WIFI' | 'VCARD' | 'OTHER';
 
@@ -63,11 +64,29 @@ const QuetMaQRPage: React.FC = () => {
 
   const dispatch = useDispatch<AppDispatch>();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const handledInitialQueryRef = useRef(false);
 
   const { phieuMoi, dangTai, loi } = useSelector((state: RootState) => state.phieuMoiPhienBauCu);
   const { cuocBauCu } = useSelector((state: RootState) => state.cuocBauCuById);
   const { guiOtpThanhCong, xacMinhOtpThanhCong } = useSelector((state: RootState) => state.maOTP);
   const user = useSelector((state: RootState) => state.dangNhapTaiKhoan.taiKhoan);
+
+  useEffect(() => {
+    if (handledInitialQueryRef.current) return;
+
+    const target = resolveScanQueryTarget(searchParams);
+    if (!target) return;
+
+    handledInitialQueryRef.current = true;
+    if (target.kind === 'redirect') {
+      navigate(target.path, { replace: true });
+      return;
+    }
+
+    setError(target.message);
+    setIsValidating(true);
+  }, [navigate, searchParams]);
 
   useEffect(() => {
     dispatch(clearState());
@@ -284,13 +303,13 @@ const QuetMaQRPage: React.FC = () => {
           const groupKeyParam = url.searchParams.get('groupKey');
           const isElectionV1Invite = url.pathname.includes('/verify-voter');
           if (groupKeyParam && isElectionV1Invite) {
-            navigate(`/verify-voter?groupKey=${encodeURIComponent(groupKeyParam)}`);
+            navigate(buildVoterVerificationPath({ groupKey: groupKeyParam }));
             return;
           }
 
           if (tokenParam) {
             if (isElectionV1Invite) {
-              navigate(`/verify-voter?token=${encodeURIComponent(tokenParam)}`);
+              navigate(buildVoterVerificationPath({ token: tokenParam }));
               return;
             }
 
@@ -315,7 +334,7 @@ const QuetMaQRPage: React.FC = () => {
             if (possibleToken && possibleToken.length > 10) {
               console.log('Trying alternative token from path:', possibleToken);
               if (isElectionV1Invite) {
-                navigate(`/verify-voter?token=${encodeURIComponent(possibleToken)}`);
+                navigate(buildVoterVerificationPath({ token: possibleToken }));
                 return;
               }
 

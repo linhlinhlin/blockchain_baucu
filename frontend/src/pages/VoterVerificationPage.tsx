@@ -99,6 +99,10 @@ export default function VoterVerificationPage() {
   );
 
   useEffect(() => {
+    document.title = 'Xác minh cử tri | HoLiHu BlockVote';
+  }, []);
+
+  useEffect(() => {
     let active = true;
 
     async function loadInvite() {
