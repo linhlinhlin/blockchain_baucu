@@ -236,6 +236,14 @@ public sealed class DevelopmentAuthStore
 
     private Task SyncSequenceAsync(CancellationToken cancellationToken = default)
     {
+        if (!string.Equals(
+                _storeDbContext.Database.ProviderName,
+                "Npgsql.EntityFrameworkCore.PostgreSQL",
+                StringComparison.Ordinal))
+        {
+            return Task.CompletedTask;
+        }
+
         // PostgreSQL sequences are not auto-advanced when rows are inserted with explicit PK values.
         // This call forces the sequence to the current MAX(Id) so subsequent auto-generated inserts
         // do not collide with existing rows.
