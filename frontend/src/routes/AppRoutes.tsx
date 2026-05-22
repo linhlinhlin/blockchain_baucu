@@ -36,7 +36,6 @@ import { ReCaptchaProvider } from '../components/ui/Use-recaptcha';
 import { isRecaptchaEnabled } from '../config/runtimeFlags';
 
 const CacPhienBauCuPage = lazy(() => import('../pages/CacCuocBauCuPage'));
-const HomePage = lazy(() => import('../pages/HomePage'));
 const LoginPage = lazy(() => import('../pages/LoginPage'));
 const RoleManagementPage = lazy(() => import('../pages/QuanLyVaiTroAdminPage'));
 const RoleAssignmentPage = lazy(() => import('../pages/PhanQuyenAdminPage'));
@@ -348,7 +347,7 @@ const router = createBrowserRouter([
     children: [
       {
         index: true,
-        element: <HomePage />,
+        element: <Navigate to="/app/dashboard" replace />,
       },
       // Đợt 14: 'elections' canonical = UserElectionsPage (định nghĩa bên dưới).
       // 'elections/new' canonical = TaoCuocBauCuPage. Sub-path redirect cũ:
@@ -533,14 +532,7 @@ const router = createBrowserRouter([
       </AppWithProviders>
     ),
   },
-], {
-  // Đợt 13.1: hết warning "A component suspended while responding to synchronous
-  // input" khi navigation tải lazy route — react-router tự bọc state-update
-  // điều hướng trong startTransition (chuẩn v7).
-  future: {
-    v7_startTransition: true,
-  },
-});
+]);
 
 export function AppRoutes() {
   return <RouterProvider router={router} />;

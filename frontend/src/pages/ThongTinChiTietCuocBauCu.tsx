@@ -49,8 +49,9 @@ export default function TienHanhPhienBauCuPage() {
           );
           setUngCuViens(electionCandidates);
 
-          if (currentUser && currentUser.id) {
-            setIsParticipating(electionVoters.some((voter) => voter.id === currentUser.id));
+          const currentUserId = Number(currentUser?.id);
+          if (Number.isFinite(currentUserId)) {
+            setIsParticipating(electionVoters.some((voter) => voter.id === currentUserId));
           }
         } catch (error) {
           console.error('Error fetching election data:', error);
@@ -61,12 +62,13 @@ export default function TienHanhPhienBauCuPage() {
   }, [id, dispatch, currentUser]);
 
   const handleParticipation = async () => {
-    if (!cuocBauCu || !currentUser || !currentUser.id) return;
+    const currentUserId = Number(currentUser?.id);
+    if (!cuocBauCu || !Number.isFinite(currentUserId)) return;
 
     const newVoter: CuTri = {
-      id: currentUser.id,
-      sdt: currentUser.sdt,
-      email: currentUser.email,
+      id: currentUserId,
+      sdt: currentUser?.sdt,
+      email: currentUser?.email,
       xacMinh: false,
       boPhieu: false,
       soLanGuiOTP: 0,
