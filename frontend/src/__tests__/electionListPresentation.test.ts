@@ -1,5 +1,6 @@
 import type { ElectionV1GroupListItem } from '../api/electionV1Api';
 import {
+  buildElectionConsolePath,
   describeGroupPositions,
   filterElectionGroups,
   getElectionGroupMilestone,
@@ -57,6 +58,12 @@ function makeGroup(overrides: Partial<ElectionV1GroupListItem>): ElectionV1Group
 }
 
 describe('election list presentation', () => {
+  test('builds the explicit console destination for row actions', () => {
+    expect(buildElectionConsolePath('bau cu/lop', '0x2222222222222222222222222222222222222222')).toBe(
+      '/app/dashboard?group=bau+cu%2Flop&election=0x2222222222222222222222222222222222222222',
+    );
+  });
+
   test('filters owned elections only when a known wallet is available', () => {
     const items = [makeGroup({ admin: adminA }), makeGroup({ groupKey: 'khac', admin: adminB })];
 
