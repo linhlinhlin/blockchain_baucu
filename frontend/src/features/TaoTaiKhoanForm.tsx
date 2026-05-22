@@ -756,7 +756,7 @@ export function NewAccountForm({ onSave }: Props) {
           )}
         </div>
 
-        {/* reCAPTCHA notice */}
+        {isRecaptchaEnabled && (
         <div className="mt-6 p-3 bg-[#162A45]/70 border border-[#2A3A5A] rounded-lg">
           <div className="flex items-center justify-between mb-2">
             <div className="flex items-center space-x-2">
@@ -801,6 +801,7 @@ export function NewAccountForm({ onSave }: Props) {
             </div>
           )}
         </div>
+        )}
 
         {/* Điều khoản */}
         <div className="mt-6">
@@ -847,7 +848,7 @@ export function NewAccountForm({ onSave }: Props) {
         </div>
 
         {/* Container rõ ràng cho reCAPTCHA */}
-        <div id="recaptcha-container" className="mt-4 h-[60px] relative z-50"></div>
+        {isRecaptchaEnabled && <div id="recaptcha-container" className="mt-4 h-[60px] relative z-50"></div>}
 
         {/* Submit button */}
         <motion.button

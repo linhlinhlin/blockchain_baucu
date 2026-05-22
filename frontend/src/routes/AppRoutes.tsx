@@ -46,7 +46,7 @@ import { Web3Provider } from '../context/Web3Context';
 import { ThemeProvider } from '../context/ThemeContext';
 import { ToastProvider } from '../components/ui/Use-toast';
 import { ReCaptchaProvider } from '../components/ui/Use-recaptcha';
-import { isRecaptchaEnabled } from '../config/runtimeFlags';
+import { isRecaptchaEnabled, recaptchaSiteKey } from '../config/runtimeFlags';
 import type { RootState } from '../store/store';
 
 const CacPhienBauCuPage = lazy(() => import('../pages/CacCuocBauCuPage'));
@@ -103,7 +103,7 @@ const AppWithProviders = ({
       <ToastProvider>
         {useRecaptcha && isRecaptchaEnabled ? (
         <GoogleReCaptchaProvider
-          reCaptchaKey={import.meta.env.VITE_RECAPTCHA_SITE_KEY ?? ''}
+          reCaptchaKey={recaptchaSiteKey}
           scriptProps={{
             async: false,
             defer: true,
