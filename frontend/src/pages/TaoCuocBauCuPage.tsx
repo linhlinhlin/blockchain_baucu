@@ -139,6 +139,22 @@ function getPositionCompletionPercent(progress: ReturnType<typeof getPositionPro
   return Math.round((completedCoreItems / 3) * 100);
 }
 
+function getScheduleStatusText(scheduleState: ReturnType<typeof getScheduleState>) {
+  if (!scheduleState.hasAllDates) {
+    return 'Chọn đủ 3 mốc thời gian.';
+  }
+
+  if (!scheduleState.startsInFuture) {
+    return 'Mốc mở bỏ phiếu phải ở tương lai.';
+  }
+
+  if (!scheduleState.isOrdered) {
+    return 'Thứ tự cần là mở bỏ phiếu < đóng bỏ phiếu < kết thúc kiểm phiếu.';
+  }
+
+  return 'Lịch hợp lệ.';
+}
+
 function getRequirementAction(requirement: Requirement | null) {
   if (!requirement) {
     return {
@@ -316,8 +332,37 @@ export default function TaoCuocBauCuPage() {
   const readyPositionCount = positions.filter((position) => getPositionProgress(position).ready).length;
   const voterCount =
     voterMode === 'wallets' ? parsedVoterWallets.length : parsedRosterVoters.length;
+  const walletInputHasErrors = invalidVoterWallets.length > 0 || duplicateVoterWallets.length > 0;
+  const rosterInputHasErrors = invalidRosterRows.length > 0;
+  const walletInputStatusText =
+    parsedVoterWallets.length === 0
+      ? 'Chưa có ví'
+      : walletInputHasErrors
+        ? 'Cần sửa danh sách ví'
+        : `${parsedVoterWallets.length} ví hợp lệ`;
+  const rosterInputStatusText =
+    parsedRosterVoters.length === 0
+      ? 'Chưa có cử tri'
+      : rosterInputHasErrors
+        ? 'Cần sửa danh sách cử tri'
+        : `${parsedRosterVoters.length} cử tri hợp lệ`;
+  const voterInputStatusText =
+    voterMode === 'wallets' ? walletInputStatusText : rosterInputStatusText;
+  const voterInputTone =
+    voterMode === 'wallets'
+      ? parsedVoterWallets.length === 0
+        ? 'neutral'
+        : walletInputHasErrors
+          ? 'danger'
+          : 'success'
+      : parsedRosterVoters.length === 0
+        ? 'neutral'
+        : rosterInputHasErrors
+          ? 'danger'
+          : 'success';
   const outstandingRequirements = requirements.filter((requirement) => !requirement.ok);
   const nextAction = getRequirementAction(firstInvalidRequirement);
+  const scheduleStatusText = getScheduleStatusText(scheduleState);
   const showRailMessage =
     Boolean(message) &&
     (submitAttempted || submitting || Boolean(activeDraft) || message !== DEFAULT_CREATE_MESSAGE);
@@ -703,9 +748,15 @@ export default function TaoCuocBauCuPage() {
           value={currentUser?.tenHienThi ?? currentUser?.tenDangNhap ?? 'Chưa có'}
         />
         <SummaryRow label="Ví tạo" value={currentAccount ? shortenAddress(currentAccount) : 'Chưa nối'} />
+        <SummaryRow label="Chức vụ" value={`${readyPositionCount}/${positions.length} hoàn tất`} />
+        <SummaryRow label="Lịch" value={scheduleState.isValid ? 'Hợp lệ' : 'Cần chỉnh'} />
         <SummaryRow
-          label={voterMode === 'wallets' ? 'Cấu hình ví' : 'Danh sách xác thực'}
-          value={`${readyPositionCount}/${positions.length} chức vụ · ${voterCount} cử tri`}
+          label="Cử tri"
+          value={
+            voterMode === 'wallets'
+              ? `${voterCount} ví trực tiếp`
+              : `${voterCount} dòng QR/OTP`
+          }
         />
       </div>
 
@@ -1165,11 +1216,23 @@ export default function TaoCuocBauCuPage() {
             <Wizard.Panel value="b3">
               <div data-wizard-step="b3">
                 <SectionCard
-                  title="Lịch & danh sách cử tri"
-                  description="Commit start ở tương lai và Commit start < Commit end < Reveal end."
+                  title="Lịch bỏ phiếu & cử tri"
+                  className="!p-4"
                 >
-                  <div className="grid gap-3 md:grid-cols-3">
-                    <Field label="Commit start">
+                  <div className="flex flex-wrap items-start justify-between gap-2">
+                    <div>
+                      <p className="text-sm font-semibold text-[var(--clay-text)]">Lịch hoạt động</p>
+                      <p className="mt-0.5 text-[13px] leading-snug text-[var(--clay-muted)]">
+                        {scheduleStatusText}
+                      </p>
+                    </div>
+                    <StatusBadge tone={scheduleState.isValid ? 'success' : 'warning'}>
+                      {scheduleState.isValid ? 'Hợp lệ' : 'Cần chỉnh'}
+                    </StatusBadge>
+                  </div>
+
+                  <div className="mt-3 grid gap-3 md:grid-cols-3">
+                    <Field label="Mở bỏ phiếu">
                       <input
                         id="commit-start"
                         name="commit-start"
@@ -1180,7 +1243,7 @@ export default function TaoCuocBauCuPage() {
                         className={fieldControlClass}
                       />
                     </Field>
-                    <Field label="Commit end">
+                    <Field label="Đóng bỏ phiếu">
                       <input
                         id="commit-end"
                         name="commit-end"
@@ -1191,7 +1254,7 @@ export default function TaoCuocBauCuPage() {
                         className={fieldControlClass}
                       />
                     </Field>
-                    <Field label="Reveal end">
+                    <Field label="Kết thúc kiểm phiếu">
                       <input
                         id="reveal-end"
                         name="reveal-end"
@@ -1204,40 +1267,74 @@ export default function TaoCuocBauCuPage() {
                     </Field>
                   </div>
                   {showInlineErrors && !scheduleState.isValid && (
-                    <FieldError message="Lịch phải thỏa mãn Commit start ở tương lai và Commit start < Commit end < Reveal end." />
+                    <FieldError message="Lịch phải bắt đầu ở tương lai và theo đúng thứ tự: mở bỏ phiếu, đóng bỏ phiếu, kết thúc kiểm phiếu." />
                   )}
 
-                  <fieldset className="mt-5">
-                    <legend className="mb-2 text-sm font-semibold text-[var(--clay-text)]">
-                      Chế độ cử tri
-                    </legend>
-                    <div className="grid gap-3 md:grid-cols-2" role="group" aria-label="Chọn chế độ nhập cử tri">
-                      <Button
+                  <div className="mt-4 border-t border-[var(--clay-border)] pt-4">
+                    <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+                      <p className="text-sm font-semibold text-[var(--clay-text)]">
+                        Cử tri
+                      </p>
+                      <StatusBadge tone={voterInputTone}>{voterInputStatusText}</StatusBadge>
+                    </div>
+                    <div className="grid gap-2 md:grid-cols-2" role="group" aria-label="Chọn cách nhập cử tri">
+                      <button
                         type="button"
-                        variant={voterMode === 'wallets' ? 'primary' : 'secondary'}
-                        size="lg"
                         aria-pressed={voterMode === 'wallets'}
                         onClick={() => setVoterMode('wallets')}
-                        iconLeft={<Wallet className="h-4 w-4" aria-hidden="true" />}
+                        className={`rounded-[14px] border p-2.5 text-left transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--clay-primary-focus)] ${
+                          voterMode === 'wallets'
+                            ? 'border-[var(--clay-primary)] bg-[var(--clay-primary-light)]'
+                            : 'border-[var(--clay-border)] bg-[var(--clay-surface)] hover:border-[var(--clay-primary)]'
+                        }`}
                       >
-                        Nhập ví trực tiếp
-                      </Button>
-                      <Button
+                        <div className="flex items-start gap-3">
+                          <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-[10px] bg-[var(--clay-surface-soft)] text-[var(--clay-primary)]">
+                            <Wallet className="h-4 w-4" aria-hidden="true" />
+                          </span>
+                          <span className="min-w-0">
+                            <span className="block text-sm font-semibold text-[var(--clay-text)]">
+                              Nhập ví trực tiếp
+                            </span>
+                            <span className="mt-1 block text-[12px] leading-snug text-[var(--clay-muted)]">
+                              Khi đã có ví của từng cử tri.
+                            </span>
+                          </span>
+                        </div>
+                      </button>
+                      <button
                         type="button"
-                        variant={voterMode === 'roster' ? 'primary' : 'secondary'}
-                        size="lg"
                         aria-pressed={voterMode === 'roster'}
                         onClick={() => setVoterMode('roster')}
-                        iconLeft={<QrCode className="h-4 w-4" aria-hidden="true" />}
+                        className={`rounded-[14px] border p-2.5 text-left transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--clay-primary-focus)] ${
+                          voterMode === 'roster'
+                            ? 'border-[var(--clay-primary)] bg-[var(--clay-primary-light)]'
+                            : 'border-[var(--clay-border)] bg-[var(--clay-surface)] hover:border-[var(--clay-primary)]'
+                        }`}
                       >
-                        Danh sách QR / OTP
-                      </Button>
+                        <div className="flex items-start gap-3">
+                          <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-[10px] bg-[var(--clay-surface-soft)] text-[var(--clay-primary)]">
+                            <QrCode className="h-4 w-4" aria-hidden="true" />
+                          </span>
+                          <span className="min-w-0">
+                            <span className="block text-sm font-semibold text-[var(--clay-text)]">
+                              QR / OTP xác thực
+                            </span>
+                            <span className="mt-1 block text-[12px] leading-snug text-[var(--clay-muted)]">
+                              Khi cử tri cần tự xác thực và liên kết ví.
+                            </span>
+                          </span>
+                        </div>
+                      </button>
                     </div>
-                  </fieldset>
+                  </div>
 
                   {voterMode === 'wallets' ? (
-                    <div className="mt-5">
-                      <Field label="Danh sách ví cử tri" hint="Mỗi dòng một địa chỉ ví.">
+                    <div className="mt-3">
+                      <Field
+                        label="Ví cử tri"
+                        hint="Mỗi dòng một địa chỉ ví 0x... Hệ thống tự tách theo xuống dòng, dấu phẩy hoặc dấu chấm phẩy."
+                      >
                         <textarea
                           id="voter-wallets-input"
                           name="voter-wallets-input"
@@ -1245,11 +1342,30 @@ export default function TaoCuocBauCuPage() {
                           spellCheck={false}
                           value={voterWalletsInput}
                           onChange={(event) => setVoterWalletsInput(event.target.value)}
-                          rows={3}
+                          rows={2}
                           className={`${fieldControlClass} font-mono`}
-                          placeholder="0x1234…abcd"
+                          placeholder={'0x1111111111111111111111111111111111111111\n0x2222222222222222222222222222222222222222'}
                         />
                       </Field>
+                      <div className="mt-2 flex flex-wrap gap-2">
+                        <StatusBadge
+                          tone={
+                            parsedVoterWallets.length === 0
+                              ? 'neutral'
+                              : walletInputHasErrors
+                                ? 'danger'
+                                : 'success'
+                          }
+                        >
+                          {walletInputStatusText}
+                        </StatusBadge>
+                        {invalidVoterWallets.length > 0 && (
+                          <StatusBadge tone="danger">{invalidVoterWallets.length} ví sai định dạng</StatusBadge>
+                        )}
+                        {duplicateVoterWallets.length > 0 && (
+                          <StatusBadge tone="danger">{duplicateVoterWallets.length} ví bị trùng</StatusBadge>
+                        )}
+                      </div>
                       {showInlineErrors && parsedVoterWallets.length === 0 && (
                         <FieldError message="Thêm ít nhất 1 địa chỉ ví cử tri." />
                       )}
@@ -1265,10 +1381,10 @@ export default function TaoCuocBauCuPage() {
                       )}
                     </div>
                   ) : (
-                    <div className="mt-5">
+                    <div className="mt-3">
                       <Field
-                        label="Danh sách cử tri"
-                        hint="Mỗi dòng: Họ tên,email,mã sinh viên. Hệ thống tạo QR chung để cử tri tự xác thực OTP và liên kết ví trước khi triển khai."
+                        label="Cử tri qua QR / OTP"
+                        hint="Mỗi dòng: Họ tên,email,mã sinh viên. Mã sinh viên có thể để trống."
                       >
                         <textarea
                           id="roster-input"
@@ -1277,11 +1393,28 @@ export default function TaoCuocBauCuPage() {
                           spellCheck={false}
                           value={rosterInput}
                           onChange={(event) => setRosterInput(event.target.value)}
-                          rows={5}
+                          rows={2}
                           className={fieldControlClass}
-                          placeholder="Nguyễn Văn A,a@example.com,SV001"
+                          placeholder={'Nguyễn Văn A,a@example.com,SV001\nTrần Thị B,b@example.com,SV002'}
                         />
                       </Field>
+                      <div className="mt-2 flex flex-wrap gap-2">
+                        <StatusBadge
+                          tone={
+                            parsedRosterVoters.length === 0
+                              ? 'neutral'
+                              : rosterInputHasErrors
+                                ? 'danger'
+                                : 'success'
+                          }
+                        >
+                          {rosterInputStatusText}
+                        </StatusBadge>
+                        {invalidRosterRows.length > 0 && (
+                          <StatusBadge tone="danger">{invalidRosterRows.length} dòng cần sửa</StatusBadge>
+                        )}
+                        <StatusBadge tone="info">OTP gửi về email cử tri</StatusBadge>
+                      </div>
                       {showInlineErrors && parsedRosterVoters.length === 0 && (
                         <FieldError message="Thêm ít nhất 1 dòng cử tri." />
                       )}

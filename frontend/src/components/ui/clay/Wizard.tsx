@@ -40,7 +40,7 @@ export function Wizard({ steps, current, onStepChange, children, rail, className
       <div className="mb-4 overflow-x-auto">
         <Stepper steps={steps} onStepChange={onStepChange} />
       </div>
-      <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_340px]">
+      <div className="grid gap-6 min-[1200px]:grid-cols-[minmax(0,1fr)_340px]">
         <div className="min-w-0">
           {panels.map((p) => {
             const active = p.props.value === current;
@@ -57,7 +57,7 @@ export function Wizard({ steps, current, onStepChange, children, rail, className
           })}
         </div>
         {rail && (
-          <aside className="xl:sticky xl:top-6 xl:self-start">{rail}</aside>
+          <aside className="min-[1200px]:sticky min-[1200px]:top-6 min-[1200px]:self-start">{rail}</aside>
         )}
       </div>
     </div>
