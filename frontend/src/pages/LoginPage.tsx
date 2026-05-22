@@ -15,7 +15,6 @@ import {
   KeyRound,
   Loader2,
   LockKeyhole,
-  ShieldCheck,
   UserRound,
   WalletCards,
 } from 'lucide-react';
@@ -39,12 +38,6 @@ declare global {
 
 type LoginMode = 'credentials' | 'metamask';
 type MetaMaskPhase = 'idle' | 'connecting' | 'signing' | 'submitting';
-
-const trustNotes = [
-  'Phiên đăng nhập dùng cookie refresh token, không lưu access token lâu dài.',
-  'MetaMask chỉ được yêu cầu khi người dùng chủ động chọn đăng nhập bằng ví.',
-  'Các thao tác on-chain được tách riêng để tránh ký nhầm giao dịch.',
-];
 
 const metaMaskSteps = [
   {
@@ -371,32 +364,7 @@ export default function LoginPage() {
         url={window.location.href}
       />
 
-      <div className="mx-auto grid max-w-6xl overflow-hidden rounded-[18px] border border-[var(--clay-border)] bg-white lg:grid-cols-[0.9fr_1.1fr]">
-        <aside className="relative hidden min-h-[680px] overflow-hidden bg-[var(--surface-black)] p-8 text-white lg:flex lg:flex-col lg:justify-between">
-          <div className="relative z-10">
-            <div className="inline-flex items-center gap-2 rounded-full border border-white/20 px-3 py-1 text-xs font-bold uppercase tracking-[0.16em] text-white/70">
-              <ShieldCheck className="h-3.5 w-3.5" aria-hidden="true" />
-              Secure Access
-            </div>
-            <h1 className="clay-display mt-6 text-balance text-5xl font-bold leading-[0.96]">
-              Vào hệ thống bằng cách ít gây rối nhất.
-            </h1>
-            <p className="mt-5 text-pretty text-sm leading-7 text-white/70">
-              Tài khoản dùng cho quản trị và nghiệp vụ. MetaMask dùng khi bạn muốn xác minh ví hoặc
-              thao tác on-chain. Hai luồng được tách rõ để tránh ký nhầm.
-            </p>
-          </div>
-
-          <div className="relative z-10 grid gap-3">
-            {trustNotes.map((note) => (
-              <div key={note} className="flex items-start gap-3 rounded-[18px] border border-white/10 bg-white/[0.04] p-4">
-                <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[var(--state-success)]" />
-                <p className="text-sm leading-6 text-white/70">{note}</p>
-              </div>
-            ))}
-          </div>
-        </aside>
-
+      <div className="mx-auto max-w-3xl overflow-hidden rounded-[18px] border border-[var(--clay-border)] bg-white">
         <main className="p-5 sm:p-8 lg:p-10">
           <div className="mx-auto max-w-xl">
             <div className="mb-8">
