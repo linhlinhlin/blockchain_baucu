@@ -36,6 +36,10 @@ const AppAfterLogin: React.FC = () => {
     }
   }, [accessToken, location.pathname]);
 
+  useEffect(() => {
+    document.title = `${routeMeta.title} | HoLiHu BlockVote`;
+  }, [routeMeta.title]);
+
   return (
     <ThemeProvider>
       <Toaster position="top-right" />
