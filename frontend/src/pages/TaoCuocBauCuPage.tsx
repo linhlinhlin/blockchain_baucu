@@ -91,6 +91,10 @@ function buildSharedRosterInviteUrl(draft: ElectionV1RosterDraft) {
   return `${origin}/verify-voter?groupKey=${encodeURIComponent(draft.groupKey)}`;
 }
 
+const DEFAULT_CREATE_MESSAGE = 'Sẵn sàng tạo một ballot gồm nhiều chức vụ trên Sepolia.';
+const compactControlClass =
+  'w-full rounded-[10px] border border-[rgba(0,0,0,0.08)] bg-[var(--clay-surface)] px-3 py-2 text-sm text-[var(--clay-text)] placeholder:text-[var(--clay-muted-soft)] focus:outline focus:outline-2 focus:outline-offset-2 focus:outline-[var(--clay-primary-focus)] disabled:opacity-55';
+
 function getRequirementAction(requirement: Requirement | null) {
   if (!requirement) {
     return {
@@ -187,12 +191,11 @@ export default function TaoCuocBauCuPage() {
   const [rosterInput, setRosterInput] = useState('');
   const [positions, setPositions] = useState<PositionDraft[]>([
     createPositionDraft(1),
-    createPositionDraft(2),
   ]);
   const [submitting, setSubmitting] = useState(false);
   const [submitAttempted, setSubmitAttempted] = useState(false);
   const [activeDraft, setActiveDraft] = useState<ElectionV1RosterDraft | null>(null);
-  const [message, setMessage] = useState('Sẵn sàng tạo một ballot gồm nhiều chức vụ trên Sepolia.');
+  const [message, setMessage] = useState(DEFAULT_CREATE_MESSAGE);
   // Đợt 10 (spec 010) US3 — Wizard 4 bước (giữ toàn bộ state/handler bên dưới nguyên vẹn).
   const [step, setStep] = useState<'b1' | 'b2' | 'b3' | 'b4'>('b1');
   const draftKeyFromUrl = searchParams.get('draft')?.trim() ?? '';
@@ -271,6 +274,9 @@ export default function TaoCuocBauCuPage() {
     voterMode === 'wallets' ? parsedVoterWallets.length : parsedRosterVoters.length;
   const outstandingRequirements = requirements.filter((requirement) => !requirement.ok);
   const nextAction = getRequirementAction(firstInvalidRequirement);
+  const showRailMessage =
+    Boolean(message) &&
+    (submitAttempted || submitting || Boolean(activeDraft) || message !== DEFAULT_CREATE_MESSAGE);
   const walletTone = currentAccount ? (isNetworkConnected ? 'success' : 'warning') : 'neutral';
   const walletLabel = currentAccount
     ? isNetworkConnected
@@ -282,6 +288,8 @@ export default function TaoCuocBauCuPage() {
     : currentAccount
       ? 'Kiểm tra Sepolia'
       : 'Kết nối MetaMask';
+  const nextActionIsWallet =
+    firstInvalidRequirement?.id === 'wallet' || firstInvalidRequirement?.id === 'network';
 
   useEffect(() => {
     if (!draftKeyFromUrl || !accessToken) {
@@ -601,26 +609,12 @@ export default function TaoCuocBauCuPage() {
   const goto = (k: 'b1' | 'b2' | 'b3' | 'b4') => setStep(k);
 
   const rail = (
-    <SummaryRail
-      title="Tình trạng tạo ballot"
-      className="xl:max-h-[calc(100vh-14rem)] xl:overflow-auto"
-      footer={
-        <div
-          className="rounded-[12px] border border-[var(--clay-border)] bg-[var(--clay-surface-soft)] px-3 py-2 text-[13px] leading-relaxed text-[var(--clay-text)]"
-          aria-live="polite"
-        >
-          {message}
-        </div>
-      }
-    >
+    <SummaryRail title="Tạo ballot">
       <div className="flex flex-wrap gap-1.5">
         <StatusBadge tone={accessToken ? 'success' : 'warning'}>
           {accessToken ? 'Đã đăng nhập' : 'Cần đăng nhập'}
         </StatusBadge>
         <StatusBadge tone={walletTone}>{walletLabel}</StatusBadge>
-        <StatusBadge tone={voterMode === 'wallets' ? 'neutral' : 'warning'}>
-          {voterMode === 'wallets' ? 'Ví trực tiếp' : 'Roster OTP'}
-        </StatusBadge>
       </div>
 
       <div className="grid gap-2">
@@ -630,14 +624,9 @@ export default function TaoCuocBauCuPage() {
         />
         <SummaryRow label="Ví tạo" value={currentAccount ? shortenAddress(currentAccount) : 'Chưa nối'} />
         <SummaryRow
-          label="Chức vụ"
-          value={`${filledPositionCount}/${positions.length} · ${filledCandidateCount} ứng viên`}
+          label={voterMode === 'wallets' ? 'Cấu hình ví' : 'Cấu hình roster'}
+          value={`${filledPositionCount}/${positions.length} chức vụ · ${voterCount} cử tri`}
         />
-        <SummaryRow
-          label={voterMode === 'wallets' ? 'Cử tri ví' : 'Cử tri roster'}
-          value={voterCount}
-        />
-        <SummaryRow label="Lịch" value={scheduleState.isValid ? 'Hợp lệ' : 'Cần sửa'} />
       </div>
 
       <div className="rounded-[14px] border border-[var(--clay-border)] bg-[var(--clay-surface-soft)] p-3">
@@ -645,64 +634,58 @@ export default function TaoCuocBauCuPage() {
         <p className="mt-1 text-[15px] font-semibold text-[var(--clay-text)]">{nextAction.label}</p>
         <p className="mt-1 text-[13px] leading-relaxed text-[var(--clay-muted)]">{nextAction.detail}</p>
         <Button
+          id="connect-wallet-button"
           type="button"
           variant={firstInvalidRequirement ? 'secondary' : 'primary'}
           size="sm"
           className="mt-3 w-full"
-          onClick={() =>
-            firstInvalidRequirement ? focusRequirement(firstInvalidRequirement) : goto('b4')
-          }
+          onClick={() => {
+            if (nextActionIsWallet) {
+              void handleWalletSetup();
+              return;
+            }
+            if (firstInvalidRequirement) {
+              focusRequirement(firstInvalidRequirement);
+              return;
+            }
+            goto('b4');
+          }}
           iconRight={<ArrowRight className="h-4 w-4" aria-hidden="true" />}
         >
-          {firstInvalidRequirement ? 'Đi tới mục cần sửa' : 'Tới bước xác nhận'}
+          {nextActionIsWallet
+            ? walletActionLabel
+            : firstInvalidRequirement
+              ? 'Đi tới mục cần sửa'
+              : 'Tới bước xác nhận'}
         </Button>
       </div>
 
-      <div className="grid gap-2 border-t border-[var(--clay-border)] pt-3">
-        <Button
-          id="connect-wallet-button"
-          type="button"
-          variant={currentAccount ? 'ghost' : 'secondary'}
-          size="md"
-          onClick={() => void handleWalletSetup()}
-          iconLeft={<Wallet className="h-4 w-4" aria-hidden="true" />}
-        >
-          {walletActionLabel}
-        </Button>
-      </div>
-
-      <div className="space-y-2 border-t border-[var(--clay-border)] pt-3">
-        <div className="flex items-center gap-2 text-[13px] font-medium text-[var(--clay-text)]">
-          {outstandingRequirements.length === 0 ? (
-            <CheckCircle2 className="h-4 w-4 text-[var(--state-success)]" aria-hidden="true" />
-          ) : (
-            <XCircle className="h-4 w-4 text-[var(--state-danger)]" aria-hidden="true" />
-          )}
-          {outstandingRequirements.length === 0
-            ? 'Đã đủ điều kiện'
-            : `Còn ${outstandingRequirements.length} mục cần hoàn tất`}
-        </div>
-        {outstandingRequirements.slice(0, 3).map((requirement) => (
-          <button
-            key={requirement.id}
-            type="button"
-            onClick={() => focusRequirement(requirement)}
-            className="block w-full rounded-[10px] px-2 py-1.5 text-left text-[13px] leading-snug text-[var(--clay-muted)] hover:bg-[var(--clay-surface-soft)] hover:text-[var(--clay-text)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[var(--clay-primary-focus)]"
-          >
-            {requirement.label}
-          </button>
-        ))}
-        {outstandingRequirements.length > 3 && (
-          <p className="px-2 text-[12px] text-[var(--clay-muted)]">
-            +{outstandingRequirements.length - 3} mục khác
-          </p>
+      <div className="flex items-center gap-2 border-t border-[var(--clay-border)] pt-3 text-[13px] font-medium text-[var(--clay-text)]">
+        {outstandingRequirements.length === 0 ? (
+          <CheckCircle2 className="h-4 w-4 text-[var(--state-success)]" aria-hidden="true" />
+        ) : (
+          <XCircle className="h-4 w-4 text-[var(--state-danger)]" aria-hidden="true" />
         )}
+        {outstandingRequirements.length === 0
+          ? 'Đã đủ điều kiện'
+          : `Còn ${outstandingRequirements.length} mục cần hoàn tất`}
       </div>
+
+      {showRailMessage && (
+        <div className="flex items-center gap-2 text-[13px] font-medium text-[var(--clay-text)]">
+          <div
+            className="rounded-[12px] border border-[var(--clay-border)] bg-[var(--clay-surface-soft)] px-3 py-2 text-[13px] leading-relaxed text-[var(--clay-text)]"
+            aria-live="polite"
+          >
+            {message}
+          </div>
+        </div>
+      )}
     </SummaryRail>
   );
 
   const stepNavButtons = (prev?: 'b1' | 'b2' | 'b3', next?: 'b2' | 'b3' | 'b4') => (
-    <div className="mt-6 flex items-center justify-between gap-3">
+    <div className="mt-3 flex items-center justify-between gap-3">
       {prev ? (
         <Button
           type="button"
@@ -731,7 +714,7 @@ export default function TaoCuocBauCuPage() {
   return (
     <div className="text-[var(--clay-text)]">
       <div className="mx-auto max-w-[1440px]">
-        <div className="mb-5">
+        <div className="mb-3">
           <h1 className="text-[1.75rem] font-semibold tracking-[-0.015em] text-[var(--clay-text)]">
             Tạo bầu cử
           </h1>
@@ -749,7 +732,7 @@ export default function TaoCuocBauCuPage() {
                   title="Thông tin đợt bầu cử"
                   description="Tên và mô tả để người dùng nhận diện ballot."
                 >
-                  <div className="grid gap-4 md:grid-cols-2">
+                  <div className="grid gap-3 md:grid-cols-2">
                     <Field label="Tên cuộc bầu cử" className="md:col-span-2">
                       <input
                         id="ballot-title"
@@ -774,7 +757,7 @@ export default function TaoCuocBauCuPage() {
                         autoComplete="off"
                         value={description}
                         onChange={(event) => setDescription(event.target.value)}
-                        rows={4}
+                        rows={3}
                         className={fieldControlClass}
                         placeholder="Mô tả ngắn về phạm vi và quy tắc của đợt bầu cử…"
                       />
@@ -823,89 +806,95 @@ export default function TaoCuocBauCuPage() {
                     />
                   )}
 
-                  <div className="mt-4 space-y-5">
+                  <div className="mt-3 space-y-4">
                     {positions.map((position, positionIndex) => (
-                      <Panel key={position.id} className="bg-[var(--clay-surface-soft)]">
-                        <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                          <div className="min-w-0">
-                            <p className="text-xs font-semibold uppercase tracking-[-0.01em] text-[var(--clay-muted)]">
-                              Chức vụ {positionIndex + 1}
-                            </p>
-                            <p className="mt-1 truncate text-[17px] font-semibold text-[var(--clay-text)]">
-                              {position.title || 'Chưa đặt tên chức vụ'}
-                            </p>
-                          </div>
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            onClick={() => removePosition(position.id)}
-                            iconLeft={<Trash2 className="h-4 w-4" aria-hidden="true" />}
-                          >
-                            Xóa chức vụ
-                          </Button>
-                        </div>
-
-                        <div className="grid gap-4 md:grid-cols-2">
-                          <Field label="Tên chức vụ">
-                            <input
-                              id={`${position.id}-title`}
-                              name={`${position.id}-title`}
-                              autoComplete="off"
-                              value={position.title}
-                              onChange={(event) =>
-                                updatePosition(position.id, { title: event.target.value })
-                              }
-                              className={fieldControlClass}
-                              placeholder="Ví dụ: Lớp trưởng…"
-                            />
-                          </Field>
-                          <Field label="Mô tả chức vụ">
-                            <input
-                              id={`${position.id}-description`}
-                              name={`${position.id}-description`}
-                              autoComplete="off"
-                              value={position.description}
-                              onChange={(event) =>
-                                updatePosition(position.id, { description: event.target.value })
-                              }
-                              className={fieldControlClass}
-                              placeholder="Ví dụ: Bầu 1 người cho vai trò này…"
-                            />
-                          </Field>
-                        </div>
-
-                        <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                          <p className="text-sm font-semibold text-[var(--clay-text)]">
-                            Ứng viên cho {position.title || `chức vụ ${positionIndex + 1}`}
-                          </p>
-                          <Button
-                            type="button"
-                            variant="secondary"
-                            onClick={() => addCandidate(position.id)}
-                            iconLeft={<Plus className="h-4 w-4" aria-hidden="true" />}
-                          >
-                            Thêm ứng viên
-                          </Button>
-                        </div>
-
-                        {showInlineErrors &&
-                          position.title.trim().length > 0 &&
-                          position.candidates.filter(
-                            (candidate) => candidate.displayName.trim().length > 0,
-                          ).length < 2 && (
-                            <FieldError message="Mỗi chức vụ cần ít nhất 2 ứng viên có tên." />
-                          )}
-
-                        <div className="mt-4 space-y-3">
-                          {position.candidates.map((candidate, candidateIndex) => (
-                            <div
-                              key={candidate.id}
-                              className="grid gap-3 rounded-[14px] border border-[var(--clay-border)] bg-[var(--clay-surface)] p-3 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto]"
+                      <Panel key={position.id} padded={false} className="bg-[var(--clay-surface-soft)]">
+                        <div className="p-4">
+                          <div className="mb-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                            <div className="min-w-0">
+                              <p className="text-xs font-semibold uppercase tracking-[-0.01em] text-[var(--clay-muted)]">
+                                Chức vụ {positionIndex + 1}
+                              </p>
+                              {position.title && (
+                                <p className="mt-0.5 truncate text-[15px] font-semibold text-[var(--clay-text)]">
+                                  {position.title}
+                                </p>
+                              )}
+                            </div>
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              onClick={() => removePosition(position.id)}
+                              iconLeft={<Trash2 className="h-4 w-4" aria-hidden="true" />}
                             >
-                              <Field label={`Tên ứng viên ${candidateIndex + 1}`}>
+                              Xóa chức vụ
+                            </Button>
+                          </div>
+
+                          <div className="grid gap-3 md:grid-cols-2">
+                            <Field label="Tên chức vụ">
+                              <input
+                                id={`${position.id}-title`}
+                                name={`${position.id}-title`}
+                                autoComplete="off"
+                                value={position.title}
+                                onChange={(event) =>
+                                  updatePosition(position.id, { title: event.target.value })
+                                }
+                                className={fieldControlClass}
+                                placeholder="Ví dụ: Lớp trưởng…"
+                              />
+                            </Field>
+                            <Field label="Mô tả chức vụ">
+                              <input
+                                id={`${position.id}-description`}
+                                name={`${position.id}-description`}
+                                autoComplete="off"
+                                value={position.description}
+                                onChange={(event) =>
+                                  updatePosition(position.id, { description: event.target.value })
+                                }
+                                className={fieldControlClass}
+                                placeholder="Ví dụ: Bầu 1 người cho vai trò này…"
+                              />
+                            </Field>
+                          </div>
+
+                          <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                            <p className="text-sm font-semibold text-[var(--clay-text)]">
+                              Ứng viên cho {position.title || `chức vụ ${positionIndex + 1}`}
+                            </p>
+                            <Button
+                              type="button"
+                              variant="secondary"
+                              onClick={() => addCandidate(position.id)}
+                              iconLeft={<Plus className="h-4 w-4" aria-hidden="true" />}
+                            >
+                              Thêm ứng viên
+                            </Button>
+                          </div>
+
+                          {showInlineErrors &&
+                            position.title.trim().length > 0 &&
+                            position.candidates.filter(
+                              (candidate) => candidate.displayName.trim().length > 0,
+                            ).length < 2 && (
+                              <FieldError message="Mỗi chức vụ cần ít nhất 2 ứng viên có tên." />
+                            )}
+
+                          <div className="mt-3 space-y-2">
+                            {position.candidates.map((candidate, candidateIndex) => (
+                              <div
+                                key={candidate.id}
+                                className="grid gap-2 rounded-[12px] border border-[var(--clay-border)] bg-[var(--clay-surface)] p-2 md:grid-cols-[2rem_minmax(0,1fr)_minmax(0,1fr)_auto] md:items-center"
+                              >
+                                <span className="hidden h-9 w-8 items-center justify-center rounded-[10px] bg-[var(--clay-surface-soft)] text-xs font-semibold text-[var(--clay-muted)] md:inline-flex">
+                                  {candidateIndex + 1}
+                                </span>
                                 <input
                                   id={`${candidate.id}-name`}
                                   name={`${candidate.id}-name`}
+                                  aria-label={`Tên ứng viên ${candidateIndex + 1}`}
                                   autoComplete="off"
                                   value={candidate.displayName}
                                   onChange={(event) =>
@@ -913,14 +902,13 @@ export default function TaoCuocBauCuPage() {
                                       displayName: event.target.value,
                                     })
                                   }
-                                  className={fieldControlClass}
-                                  placeholder="Ví dụ: Nguyễn Văn A…"
+                                  className={compactControlClass}
+                                  placeholder={`Tên ứng viên ${candidateIndex + 1}`}
                                 />
-                              </Field>
-                              <Field label="Ví ứng viên (tùy chọn)">
                                 <input
                                   id={`${candidate.id}-wallet`}
                                   name={`${candidate.id}-wallet`}
+                                  aria-label={`Ví ứng viên ${candidateIndex + 1} tùy chọn`}
                                   autoComplete="off"
                                   spellCheck={false}
                                   value={candidate.walletAddress}
@@ -929,22 +917,21 @@ export default function TaoCuocBauCuPage() {
                                       walletAddress: event.target.value,
                                     })
                                   }
-                                  className={`${fieldControlClass} font-mono`}
-                                  placeholder="0x1234…abcd"
+                                  className={`${compactControlClass} font-mono`}
+                                  placeholder="Ví ứng viên (tùy chọn)"
                                 />
-                              </Field>
-                              <div className="flex items-end">
                                 <Button
                                   type="button"
                                   variant="ghost"
+                                  size="sm"
+                                  aria-label={`Xóa ứng viên ${candidateIndex + 1}`}
                                   onClick={() => removeCandidate(position.id, candidate.id)}
                                   iconLeft={<Trash2 className="h-4 w-4" aria-hidden="true" />}
-                                >
-                                  Xóa
-                                </Button>
+                                  className="h-9 w-9 px-0"
+                                />
                               </div>
-                            </div>
-                          ))}
+                            ))}
+                          </div>
                         </div>
                       </Panel>
                     ))}
@@ -961,7 +948,7 @@ export default function TaoCuocBauCuPage() {
                   title="Lịch & danh sách cử tri"
                   description="Commit start ở tương lai và Commit start < Commit end < Reveal end."
                 >
-                  <div className="grid gap-4 md:grid-cols-3">
+                  <div className="grid gap-3 md:grid-cols-3">
                     <Field label="Commit start">
                       <input
                         id="commit-start"
@@ -1038,7 +1025,7 @@ export default function TaoCuocBauCuPage() {
                           spellCheck={false}
                           value={voterWalletsInput}
                           onChange={(event) => setVoterWalletsInput(event.target.value)}
-                          rows={5}
+                          rows={3}
                           className={`${fieldControlClass} font-mono`}
                           placeholder="0x1234…abcd"
                         />
@@ -1070,7 +1057,7 @@ export default function TaoCuocBauCuPage() {
                           spellCheck={false}
                           value={rosterInput}
                           onChange={(event) => setRosterInput(event.target.value)}
-                          rows={7}
+                          rows={5}
                           className={fieldControlClass}
                           placeholder="Nguyễn Văn A,a@example.com,SV001"
                         />

@@ -229,7 +229,7 @@ export function buildCreateFlowRequirements(input: {
       ok: Boolean(input.currentAccount),
       targetId: 'connect-wallet-button',
     },
-    ...(input.voterMode === 'wallets'
+    ...(input.voterMode === 'wallets' && Boolean(input.currentAccount)
       ? [
           {
             id: 'network',

@@ -37,7 +37,7 @@ export function Wizard({ steps, current, onStepChange, children, rail, className
 
   return (
     <div className={className}>
-      <div className="mb-6 overflow-x-auto">
+      <div className="mb-4 overflow-x-auto">
         <Stepper steps={steps} onStepChange={onStepChange} />
       </div>
       <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_340px]">

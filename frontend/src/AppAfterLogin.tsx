@@ -49,7 +49,7 @@ const AppAfterLogin: React.FC = () => {
           id="main-content"
           className="flex-1 mt-[60px] md:mt-0 md:ml-[var(--sidebar-w)]"
         >
-          <div className="min-h-screen bg-[var(--clay-bg)] p-4 sm:p-6 lg:p-8">
+          <div className="min-h-screen bg-[var(--clay-bg)] p-4 sm:p-5 lg:p-5">
             {routeMeta.breadcrumb.length > 1 && (
               <div className="mb-4">
                 <Breadcrumb trail={routeMeta.breadcrumb} />
