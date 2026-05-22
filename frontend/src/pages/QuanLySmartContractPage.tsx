@@ -1,6 +1,16 @@
 import { useEffect, useMemo, useState } from 'react';
 import { ethers } from 'ethers';
-import { ArrowRight, ExternalLink, Loader2, RefreshCw, Vote, Wallet } from 'lucide-react';
+import {
+  ArrowRight,
+  CheckCircle2,
+  ExternalLink,
+  ListChecks,
+  Plus,
+  RefreshCw,
+  ShieldCheck,
+  Vote,
+  Wallet,
+} from 'lucide-react';
 import toast from 'react-hot-toast';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import {
@@ -20,6 +30,7 @@ import {
 // KHÔNG đụng — xem .specify/specs/010-ux-professionalization/s4s5-reference.md.
 import {
   Button,
+  EmptyState,
   Panel,
   StatusBadge,
   Tabs,
@@ -710,45 +721,136 @@ export default function QuanLySmartContractPage() {
   const phaseLabel = detail?.onChain?.phaseLabel ?? 'Unknown';
   const maxResultCount = Math.max(1, ...(detail?.onChain?.results ?? []).map((item) => item.count));
   const currentPositionTitle = detail?.positionTitle || detail?.manifest?.positionTitle || detail?.title;
+  const currentPositionLabel = currentPositionTitle ? String(currentPositionTitle) : null;
+  const selectedGroup = groupItems.find((item) => item.groupKey === selectedGroupKey) ?? null;
+  const selectedPositions = groupDetail?.positions ?? selectedGroup?.positions ?? [];
+  const totalPositions = groupItems.reduce((sum, item) => sum + item.positionCount, 0);
+  const selectedGroupTitle = groupDetail?.title ?? selectedGroup?.title ?? null;
+  const selectedGroupVoterCount = groupDetail?.voterCount ?? selectedGroup?.voterCount ?? 0;
+  const walletBalanceLabel = walletBalance ? `${Number.parseFloat(walletBalance).toFixed(4)} SEP` : 'Chưa có số dư';
+  const dashboardMetrics = [
+    {
+      label: 'Ballot group',
+      value: String(groupItems.length),
+      sub: selectedGroupTitle ?? 'Chưa chọn ballot',
+    },
+    {
+      label: 'Chức vụ đã deploy',
+      value: String(totalPositions),
+      sub: selectedGroup ? `${selectedPositions.length} chức vụ trong ballot đang chọn` : 'Chọn ballot để xem chức vụ',
+    },
+    {
+      label: 'Giai đoạn hiện tại',
+      value: detail ? phaseLabel : 'Chưa chọn',
+      sub: currentPositionLabel ?? 'Mở một chức vụ để xem on-chain state',
+    },
+    {
+      label: 'Ví MetaMask',
+      value: connectedAccount ? shortenAddress(connectedAccount) : 'Chưa nối',
+      sub: connectedAccount ? walletBalanceLabel : 'Cần ví Sepolia để thao tác',
+    },
+  ];
+  const metricCellBorders = [
+    'border-b md:border-r xl:border-b-0',
+    'border-b xl:border-b-0 xl:border-r',
+    'border-b md:border-b-0 md:border-r xl:border-r',
+    '',
+  ];
+  const operationSteps = [
+    {
+      title: 'Chọn ballot group',
+      done: Boolean(selectedGroup),
+      body: selectedGroupTitle ?? 'Chọn một ballot ở danh sách bên trái hoặc tạo ballot mới.',
+    },
+    {
+      title: 'Chọn chức vụ',
+      done: Boolean(detail),
+      body: currentPositionLabel ?? 'Mỗi chức vụ là một ElectionV1 contract độc lập.',
+    },
+    {
+      title: 'Kiểm tra ví',
+      done: Boolean(connectedAccount),
+      body: connectedAccount ? `${shortenAddress(connectedAccount)} · ${walletBalanceLabel}` : 'Kết nối MetaMask ở mạng Sepolia.',
+    },
+    {
+      title: 'Commit / reveal / finalize',
+      done: Boolean(detail?.onChain?.finalized),
+      body: detail ? `Đang ở giai đoạn ${phaseLabel}.` : 'Khi đã chọn chức vụ, dashboard sẽ mở đúng hành động khả dụng.',
+    },
+  ];
 
   const ballotList = (
-    <Panel>
-      <p className="text-sm font-semibold text-[var(--clay-text)]">Danh sách ballot</p>
-      <div className="mt-3 max-h-[280px] space-y-2 overflow-auto pr-1">
-        {groupItems.map((group) => {
-          const active = selectedGroupKey === group.groupKey;
-          return (
-            <button
-              key={group.groupKey}
-              type="button"
-              onClick={() => openGroup(group.groupKey)}
-              className={`w-full rounded-[12px] border p-3 text-left transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-[var(--clay-primary-focus)] ${
-                active
-                  ? 'border-[var(--clay-primary)] bg-[var(--clay-primary-light)]'
-                  : 'border-[var(--clay-border)] bg-[var(--clay-surface)] hover:bg-[var(--clay-surface-soft)]'
-              }`}
-            >
-              <div className="flex items-start justify-between gap-3">
-                <div className="min-w-0">
-                  <p className="truncate text-sm font-semibold text-[var(--clay-text)]">
-                    {group.title}
-                  </p>
-                  <p className="mt-0.5 text-xs text-[var(--clay-muted)]">
-                    {group.positionCount} chức vụ
-                  </p>
-                </div>
-                <span className="shrink-0 rounded-full border border-[var(--clay-border)] bg-[var(--clay-surface)] px-2 py-0.5 text-[11px] text-[var(--clay-muted)]">
-                  {group.groupKey}
-                </span>
-              </div>
-            </button>
-          );
-        })}
+    <Panel padded={false} className="overflow-hidden">
+      <div className="border-b border-[var(--clay-border)] p-4">
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <p className="text-sm font-semibold text-[var(--clay-text)]">Ballot group</p>
+            <p className="mt-1 text-xs leading-relaxed text-[var(--clay-muted)]">
+              Chọn ballot trước, sau đó chọn từng chức vụ để thao tác on-chain.
+            </p>
+          </div>
+          <StatusBadge tone="neutral">{groupItems.length}</StatusBadge>
+        </div>
       </div>
-      <div className="mt-4 border-t border-[var(--clay-border)] pt-3">
-        <p className="text-sm font-semibold text-[var(--clay-text)]">Chức vụ trong ballot</p>
-        {groupDetail ? (
-          <div className="mt-3 max-h-[260px] space-y-2 overflow-auto pr-1">
+
+      <div className="max-h-[300px] space-y-2 overflow-auto p-3">
+        {groupItems.length > 0 ? (
+          groupItems.map((group) => {
+            const active = selectedGroupKey === group.groupKey;
+            return (
+              <button
+                key={group.groupKey}
+                type="button"
+                onClick={() => openGroup(group.groupKey)}
+                className={`w-full rounded-[12px] border p-3 text-left transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-[var(--clay-primary-focus)] ${
+                  active
+                    ? 'border-[var(--clay-primary)] bg-[var(--clay-primary-light)]'
+                    : 'border-[var(--clay-border)] bg-[var(--clay-surface)] hover:bg-[var(--clay-surface-soft)]'
+                }`}
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-semibold text-[var(--clay-text)]">
+                      {group.title}
+                    </p>
+                    <p className="mt-0.5 text-xs text-[var(--clay-muted)]">
+                      {group.positionCount} chức vụ · {group.voterCount} cử tri
+                    </p>
+                  </div>
+                  <span className="max-w-[112px] shrink-0 truncate rounded-full border border-[var(--clay-border)] bg-[var(--clay-surface)] px-2 py-0.5 text-[11px] text-[var(--clay-muted)]">
+                    {group.groupKey}
+                  </span>
+                </div>
+              </button>
+            );
+          })
+        ) : (
+          <div className="px-2 py-8 text-center">
+            <ListChecks className="mx-auto h-8 w-8 text-[var(--clay-muted)]" aria-hidden="true" />
+            <p className="mt-3 text-sm font-semibold text-[var(--clay-text)]">Chưa có ballot group</p>
+            <p className="mt-1 text-xs leading-relaxed text-[var(--clay-muted)]">
+              Tạo ballot mới để dashboard có dữ liệu vận hành.
+            </p>
+          </div>
+        )}
+      </div>
+
+      <div className="border-t border-[var(--clay-border)] p-4">
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <p className="text-sm font-semibold text-[var(--clay-text)]">Chức vụ trong ballot</p>
+            <p className="mt-1 text-xs text-[var(--clay-muted)]">
+              {selectedGroup
+                ? `${selectedGroupVoterCount} cử tri trong ballot đang chọn`
+                : 'Chọn ballot group để xem danh sách chức vụ.'}
+            </p>
+          </div>
+          <StatusBadge tone={selectedPositions.length > 0 ? 'info' : 'neutral'}>
+            {selectedPositions.length}
+          </StatusBadge>
+        </div>
+        {groupDetail && groupDetail.positions.length > 0 ? (
+          <div className="mt-3 max-h-[280px] space-y-2 overflow-auto pr-1">
             {groupDetail.positions.map((position) => {
               const active =
                 selectedElectionAddress?.toLowerCase() === position.address.toLowerCase();
@@ -763,7 +865,7 @@ export default function QuanLySmartContractPage() {
                       : 'border-[var(--clay-border)] bg-[var(--clay-surface)] hover:bg-[var(--clay-surface-soft)]'
                   }`}
                 >
-                  <p className="text-sm font-semibold text-[var(--clay-text)]">
+                  <p className="truncate text-sm font-semibold text-[var(--clay-text)]">
                     {position.positionTitle || position.title}
                   </p>
                   <p className="mt-0.5 text-xs text-[var(--clay-muted)]">
@@ -774,8 +876,10 @@ export default function QuanLySmartContractPage() {
             })}
           </div>
         ) : (
-          <p className="mt-3 text-sm text-[var(--clay-muted)]">
-            Chọn một ballot để xem các chức vụ.
+          <p className="mt-3 text-sm leading-relaxed text-[var(--clay-muted)]">
+            {groupDetail
+              ? 'Ballot này chưa có chức vụ được deploy.'
+              : 'Sau khi chọn ballot, các chức vụ sẽ hiện ở đây để mở dashboard chi tiết.'}
           </p>
         )}
       </div>
@@ -789,28 +893,22 @@ export default function QuanLySmartContractPage() {
   return (
     <div className="text-[var(--clay-text)]">
       <div className="mx-auto max-w-[1440px]">
-        <div className="mb-5 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-          <div>
-            <h1 className="text-[1.75rem] font-semibold tracking-[-0.015em] text-[var(--clay-text)]">
+        <div className="mb-5 flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+          <div className="max-w-3xl">
+            <StatusBadge tone="info">ElectionV1 · Sepolia</StatusBadge>
+            <h1 className="mt-3 text-[1.75rem] font-semibold text-[var(--clay-text)]">
               Bảng điều khiển
             </h1>
             <p className="mt-1 text-[15px] text-[var(--clay-muted)]">
-              Chọn một ballot group rồi từng chức vụ để commit, reveal và finalize trên Sepolia.
+              Trung tâm vận hành ballot: theo dõi cấu hình, chọn chức vụ, commit/reveal phiếu và finalize đúng giai đoạn.
             </p>
-            <div className="mt-2 flex flex-wrap gap-1.5">
-              <StatusBadge tone="neutral">Chain {publicConfig?.chainId ?? TARGET_CHAIN_ID}</StatusBadge>
-              <StatusBadge tone="neutral">Factory {shortenAddress(publicConfig?.factoryAddress)}</StatusBadge>
-              <StatusBadge tone={connectedAccount ? 'success' : 'neutral'}>
-                {shortenAddress(connectedAccount)}
-              </StatusBadge>
-              <StatusBadge tone="info">{walletBalance ? `${walletBalance} SEP` : 'n/a'}</StatusBadge>
-            </div>
           </div>
           <div className="flex flex-col gap-2 sm:flex-row">
             <Button
               type="button"
               variant="secondary"
               size="lg"
+              className="whitespace-nowrap"
               onClick={() => void connectWallet()}
               iconLeft={<Wallet className="h-4 w-4" aria-hidden="true" />}
             >
@@ -820,6 +918,7 @@ export default function QuanLySmartContractPage() {
               type="button"
               variant="ghost"
               size="lg"
+              className="whitespace-nowrap"
               onClick={() => void refreshAll()}
               iconLeft={<RefreshCw className="h-4 w-4" aria-hidden="true" />}
             >
@@ -827,9 +926,9 @@ export default function QuanLySmartContractPage() {
             </Button>
             <Link
               to="/app/elections/new"
-              className="inline-flex min-h-[44px] items-center justify-center gap-2 rounded-[12px] bg-[var(--clay-primary)] px-5 text-[15px] text-white hover:bg-[var(--clay-primary-focus)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--clay-primary-focus)]"
+              className="inline-flex min-h-[44px] items-center justify-center gap-2 whitespace-nowrap rounded-[12px] bg-[var(--clay-primary)] px-5 text-[15px] text-white hover:bg-[var(--clay-primary-focus)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--clay-primary-focus)]"
             >
-              <ArrowRight className="h-4 w-4" aria-hidden="true" />
+              <Plus className="h-4 w-4" aria-hidden="true" />
               Tạo bầu cử
             </Link>
           </div>
@@ -852,7 +951,28 @@ export default function QuanLySmartContractPage() {
           </div>
         )}
 
-        <div className="grid gap-6 lg:grid-cols-[300px_minmax(0,1fr)]">
+        <Panel padded={false} className="mb-6 overflow-hidden">
+          <div className="grid md:grid-cols-2 xl:grid-cols-4">
+            {dashboardMetrics.map((metric, index) => (
+              <div
+                key={metric.label}
+                className={`border-[var(--clay-border)] p-4 ${metricCellBorders[index] ?? ''}`}
+              >
+                <p className="text-xs font-semibold uppercase text-[var(--clay-muted)]">
+                  {metric.label}
+                </p>
+                <p className="mt-2 truncate text-2xl font-semibold text-[var(--clay-text)]">
+                  {metric.value}
+                </p>
+                <p className="mt-1 text-xs leading-relaxed text-[var(--clay-muted)]">
+                  {metric.sub}
+                </p>
+              </div>
+            ))}
+          </div>
+        </Panel>
+
+        <div className="grid gap-6 lg:grid-cols-[340px_minmax(0,1fr)]">
           <div className="space-y-4 lg:sticky lg:top-6 lg:self-start">
             {ballotList}
             <Panel className="p-4">
@@ -866,14 +986,13 @@ export default function QuanLySmartContractPage() {
           <div className="min-w-0">
             {detail ? (
               <Panel>
-                {/* Sticky phase header */}
-                <div className="sticky top-0 z-10 -mx-5 mb-5 flex flex-col gap-3 border-b border-[var(--clay-border)] bg-[var(--clay-surface)] px-5 pb-4 md:-mx-6 md:px-6 sm:flex-row sm:items-start sm:justify-between">
+                <div className="-mx-5 mb-5 flex flex-col gap-3 border-b border-[var(--clay-border)] px-5 pb-4 md:-mx-6 md:px-6 sm:flex-row sm:items-start sm:justify-between">
                   <div className="min-w-0">
-                    <p className="text-xs font-semibold uppercase tracking-[-0.01em] text-[var(--clay-muted)]">
+                    <p className="text-xs font-semibold uppercase text-[var(--clay-muted)]">
                       {groupDetail?.title ?? detail.groupTitle ?? 'Ballot group'}
                     </p>
-                    <h2 className="mt-1 truncate text-2xl font-semibold tracking-[-0.015em] text-[var(--clay-text)]">
-                      {`${currentPositionTitle ?? ''}`}
+                    <h2 className="mt-1 truncate text-2xl font-semibold text-[var(--clay-text)]">
+                      {currentPositionLabel ?? 'Chưa rõ chức vụ'}
                     </h2>
                     <p className="mt-1 text-sm leading-6 text-[var(--clay-muted)]">
                       {detail.description || 'Không có mô tả.'}
@@ -893,7 +1012,7 @@ export default function QuanLySmartContractPage() {
                       key={k}
                       className="rounded-[14px] border border-[var(--clay-border)] bg-[var(--clay-surface-soft)] p-4"
                     >
-                      <p className="text-xs font-semibold uppercase tracking-[-0.01em] text-[var(--clay-muted)]">
+                      <p className="text-xs font-semibold uppercase text-[var(--clay-muted)]">
                         {k}
                       </p>
                       <p className="mt-1.5 text-sm font-semibold text-[var(--clay-text)]">{v}</p>
@@ -1008,7 +1127,7 @@ export default function QuanLySmartContractPage() {
                                 {revealReason ?? 'Sẵn sàng reveal cho chức vụ này.'}
                               </p>
                               <p className="text-[11px] text-[var(--state-warning)]">
-                                ⚠️ Bí mật phiếu được mã hoá cục bộ bằng chữ ký ví. Reveal phải dùng{' '}
+                                Lưu ý: bí mật phiếu được mã hoá cục bộ bằng chữ ký ví. Reveal phải dùng{' '}
                                 <strong>đúng ví và đúng trình duyệt/thiết bị</strong> đã commit; xoá
                                 dữ liệu trình duyệt sẽ mất khả năng reveal.
                               </p>
@@ -1059,11 +1178,60 @@ export default function QuanLySmartContractPage() {
                 />
               </Panel>
             ) : (
-              <Panel className="flex items-center justify-center p-12">
-                <p className="text-sm text-[var(--clay-muted)]">
-                  Chọn một ballot và một chức vụ để bắt đầu bỏ phiếu.
-                </p>
-              </Panel>
+              <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_320px]">
+                <EmptyState
+                  className="min-h-[360px]"
+                  icon={<Vote className="h-6 w-6" aria-hidden="true" />}
+                  title={groupItems.length === 0 ? 'Chưa có ballot để vận hành' : 'Chọn ballot và chức vụ'}
+                  description={
+                    groupItems.length === 0
+                      ? 'Dashboard sẽ có số liệu sau khi bạn tạo ballot group đầu tiên.'
+                      : 'Mở một chức vụ trong ballot group để xem trạng thái on-chain, danh sách ứng viên và các hành động commit/reveal/finalize.'
+                  }
+                  action={
+                    groupItems.length === 0 ? (
+                      <Link
+                        to="/app/elections/new"
+                        className="inline-flex min-h-[40px] items-center justify-center gap-2 rounded-[12px] bg-[var(--clay-primary)] px-4 text-sm text-white hover:bg-[var(--clay-primary-focus)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--clay-primary-focus)]"
+                      >
+                        Tạo bầu cử
+                        <ArrowRight className="h-4 w-4" aria-hidden="true" />
+                      </Link>
+                    ) : (
+                      <span className="text-xs font-semibold text-[var(--clay-primary)]">
+                        Chọn mục ở danh sách bên trái
+                      </span>
+                    )
+                  }
+                />
+                <Panel className="p-4">
+                  <div className="flex items-center gap-2">
+                    <ShieldCheck className="h-4 w-4 text-[var(--clay-primary)]" aria-hidden="true" />
+                    <p className="text-sm font-semibold text-[var(--clay-text)]">Luồng vận hành</p>
+                  </div>
+                  <div className="mt-4 space-y-4">
+                    {operationSteps.map((step, index) => (
+                      <div key={step.title} className="flex gap-3">
+                        <div
+                          className={`mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full border text-xs font-semibold ${
+                            step.done
+                              ? 'border-[var(--state-success)] bg-[var(--state-success-soft)] text-[var(--state-success)]'
+                              : 'border-[var(--clay-border)] bg-[var(--clay-surface-soft)] text-[var(--clay-muted)]'
+                          }`}
+                        >
+                          {step.done ? <CheckCircle2 className="h-4 w-4" aria-hidden="true" /> : index + 1}
+                        </div>
+                        <div className="min-w-0">
+                          <p className="text-sm font-semibold text-[var(--clay-text)]">{step.title}</p>
+                          <p className="mt-0.5 text-xs leading-relaxed text-[var(--clay-muted)]">
+                            {step.body}
+                          </p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </Panel>
+              </div>
             )}
           </div>
         </div>
