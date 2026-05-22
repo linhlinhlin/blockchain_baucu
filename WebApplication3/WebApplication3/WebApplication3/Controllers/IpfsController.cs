@@ -25,8 +25,8 @@ namespace WebApplication3.Controllers
         {
             _httpClientFactory = httpClientFactory;
             _logger = logger;
-            _pinataApiKey = configuration["Pinata:ApiKey"];
-            _pinataApiSecret = configuration["Pinata:ApiSecret"];
+            _pinataApiKey = configuration["Pinata:ApiKey"] ?? string.Empty;
+            _pinataApiSecret = configuration["Pinata:ApiSecret"] ?? string.Empty;
         }
 
         /// <summary>

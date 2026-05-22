@@ -1,4 +1,3 @@
-﻿using DocumentFormat.OpenXml.Office2016.Drawing.ChartDrawing;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Mvc.Routing;
@@ -15,7 +14,6 @@ using WebApplication3.Data;
 using WebApplication3.Infrastructure;
 using WebApplication3.Models;
 using WebApplication3.Repositories;
-using WebApplication3.Service;
 using WebApplication3.Services;
 
 // Other using statements...
@@ -108,17 +106,12 @@ builder.Services.AddScoped<IFileRepository, FileRepository>();
 builder.Services.AddHttpClient();
 builder.Services.AddScoped<RecaptchaService>();
 
-// Thêm CryptoService
-builder.Services.AddScoped<CryptoService>();
-
 builder.Services.AddScoped<OtpController>();
 builder.Services.AddSingleton<ElectionV1ReadService>();
 builder.Services.AddScoped<ElectionV1CreateService>();
 builder.Services.AddScoped<ElectionV1RosterService>();
 builder.Services.AddScoped<DevelopmentAuthStore>();
-builder.Services.Configure<LegacyBlockchainSettings>(
-    builder.Configuration.GetSection("LegacyBlockchainSettings"));
-builder.Services.AddLegacyBlockchainStack(builder.Configuration);
+builder.Services.AddWalletLookupServices();
 
 builder.Services.AddScoped<PinataService>();
 
@@ -145,8 +138,6 @@ builder.Services.AddAuthentication(options =>
 })
 .AddJwtBearer(options =>
 {
-
-#pragma warning disable CS8604 
     options.TokenValidationParameters = new TokenValidationParameters
     {
         ValidateIssuer = true,
@@ -155,10 +146,9 @@ builder.Services.AddAuthentication(options =>
         ValidateIssuerSigningKey = true,
         ValidIssuer = builder.Configuration["JwtSettings:Issuer"],
         ValidAudience = builder.Configuration["JwtSettings:Audience"],
-        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["JwtSettings:Secret"]!)),
+        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(configuredJwtSecret)),
         ClockSkew = TimeSpan.Zero // Giảm thời gian lệch giữa máy chủ và token
     };
-#pragma warning restore CS8604 // Possible null reference argument.
 });
 
 

@@ -1,17 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useForm, FieldError } from 'react-hook-form';
 import { useDispatch, useSelector } from 'react-redux';
-import { Button } from '../components/ui/Button';
-import { Input } from '../components/ui/Input';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from '../components/ui/Card';
-import { Label } from '../components/ui/Label';
 import { NavLink, useNavigate, useLocation } from 'react-router-dom';
 import { Eye, EyeOff } from 'lucide-react';
 import { FaExclamationCircle } from 'react-icons/fa';
@@ -29,6 +18,7 @@ import {
   AlertDialogAction,
   AlertDialogCancel,
 } from '../components/ui/AlterDialog';
+import { Button, Panel, fieldControlClass } from '../components/ui/clay';
 
 export default function DatLaiMatKhauPage() {
   const [showPassword, setShowPassword] = useState(false);
@@ -45,7 +35,7 @@ export default function DatLaiMatKhauPage() {
   useEffect(() => {
     if (!user || !user.id) {
       alert('Không tìm thấy thông tin người dùng. Vui lòng thử lại.');
-      navigate('/tim-tai-khoan');
+      navigate('/forgot-password');
     }
   }, [user, navigate]);
 
@@ -78,20 +68,19 @@ export default function DatLaiMatKhauPage() {
     }
   };
 
-  const labelStyle = 'mb-1 font-semibold text-gray-700 dark:text-gray-300 flex items-center';
-  const inputStyle =
-    'form-input w-full p-3 border rounded-md shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50 dark:bg-gray-700 dark:text-gray-300';
-  const errorStyle = 'text-red-500 text-xs mt-1 flex items-center';
-
   function getEditorStyle(fieldError: FieldError | (FieldError | undefined)[] | undefined) {
     if (Array.isArray(fieldError)) {
-      return fieldError.some((error) => error) ? 'border-red-500' : '';
+      return fieldError.some((error) => error) ? 'border-[var(--state-danger)]' : '';
     }
-    return fieldError ? 'border-red-500' : '';
+    return fieldError ? 'border-[var(--state-danger)]' : '';
   }
 
+  const labelStyle =
+    'mb-1.5 flex items-center text-xs font-semibold uppercase tracking-[-0.01em] text-[var(--clay-muted)]';
+  const errorStyle = 'mt-1 flex items-center text-[12px] text-[var(--state-danger)]';
+
   return (
-    <div className="min-h-screen bg-gradient-to-r from-blue-700 to-purple-800 flex items-center justify-center px-4 sm:px-6 lg:px-8">
+    <div className="flex min-h-[70vh] items-center justify-center bg-[var(--clay-bg)] px-4 py-10 text-[var(--clay-text)]">
       <SEO
         title="Đặt lại mật khẩu | Nền Tảng Bầu Cử Blockchain"
         description="Trang đặt lại mật khẩu cho tài khoản của bạn trên hệ thống Bầu Cử Blockchain."
@@ -100,97 +89,95 @@ export default function DatLaiMatKhauPage() {
         url={window.location.href}
         image={`${window.location.origin}/logo.png`}
       />
-      <Card className="w-full max-w-md bg-white shadow-lg rounded-lg">
-        <CardHeader className="space-y-1 text-center">
-          <CardTitle className="text-3xl font-bold text-gray-800">Đặt lại mật khẩu</CardTitle>
-          <CardDescription className="text-gray-600">
+      <Panel className="w-full max-w-md">
+        <div className="mb-5 text-center">
+          <h1 className="text-2xl font-semibold tracking-[-0.015em] text-[var(--clay-text)]">
+            Đặt lại mật khẩu
+          </h1>
+          <p className="mt-1 text-sm text-[var(--clay-muted)]">
             Tạo mật khẩu mới cho tài khoản của bạn
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSubmit(onSubmit)}>
-            <div className="space-y-6">
-              <div className="space-y-2">
-                <Label htmlFor="password" className={labelStyle}>
-                  Mật khẩu mới <span className="text-red-500 ml-1">*</span>
-                </Label>
-                <div className="relative">
-                  <Input
-                    id="password"
-                    type={showPassword ? 'text' : 'password'}
-                    placeholder="Nhập mật khẩu mới"
-                    {...register('matKhau', {
-                      required: 'Bạn phải nhập mật khẩu',
-                      pattern: {
-                        value: /^(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/,
-                        message:
-                          'Mật khẩu phải có ít nhất 8 ký tự, bao gồm 1 ký tự viết hoa, 1 ký tự số và 1 ký tự đặc biệt',
-                      },
-                    })}
-                    className={`${inputStyle} ${getEditorStyle(errors.matKhau)}`}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute inset-y-0 right-0 flex items-center pr-3"
-                  >
-                    {showPassword ? (
-                      <EyeOff className="h-5 w-5 text-gray-400" />
-                    ) : (
-                      <Eye className="h-5 w-5 text-gray-400" />
-                    )}
-                  </button>
-                  {errors.matKhau && (
-                    <div className={errorStyle}>
-                      <FaExclamationCircle className="h-4 w-4 mr-1" />
-                      <small>{errors.matKhau.message}</small>
-                    </div>
-                  )}
-                </div>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="confirm-password" className={labelStyle}>
-                  Xác nhận mật khẩu mới <span className="text-red-500 ml-1">*</span>
-                </Label>
-                <Input
-                  id="confirm-password"
-                  type="password"
-                  placeholder="Xác nhận mật khẩu mới"
-                  {...register('xacNhanMatKhau', {
-                    required: 'Bạn phải xác nhận mật khẩu',
-                    validate: (value) =>
-                      value === watch('matKhau') || 'Mật khẩu và xác nhận mật khẩu không khớp',
+          </p>
+        </div>
+        <form onSubmit={handleSubmit(onSubmit)}>
+          <div className="space-y-5">
+            <div>
+              <label htmlFor="password" className={labelStyle}>
+                Mật khẩu mới <span className="ml-1 text-[var(--state-danger)]">*</span>
+              </label>
+              <div className="relative">
+                <input
+                  id="password"
+                  type={showPassword ? 'text' : 'password'}
+                  placeholder="Nhập mật khẩu mới"
+                  {...register('matKhau', {
+                    required: 'Bạn phải nhập mật khẩu',
+                    pattern: {
+                      value: /^(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/,
+                      message:
+                        'Mật khẩu phải có ít nhất 8 ký tự, bao gồm 1 ký tự viết hoa, 1 ký tự số và 1 ký tự đặc biệt',
+                    },
                   })}
-                  className={`${inputStyle} ${getEditorStyle(errors.xacNhanMatKhau)}`}
+                  className={`${fieldControlClass} pr-12 ${getEditorStyle(errors.matKhau)}`}
                 />
-                {errors.xacNhanMatKhau && (
-                  <div className={errorStyle}>
-                    <FaExclamationCircle className="h-4 w-4 mr-1" />
-                    <small>{errors.xacNhanMatKhau.message}</small>
-                  </div>
-                )}
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute inset-y-0 right-0 flex items-center pr-3 text-[var(--clay-muted)]"
+                  aria-label={showPassword ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'}
+                >
+                  {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                </button>
               </div>
+              {errors.matKhau && (
+                <div className={errorStyle}>
+                  <FaExclamationCircle className="mr-1 h-3.5 w-3.5" />
+                  <small>{errors.matKhau.message}</small>
+                </div>
+              )}
             </div>
-            <Button
-              type="submit"
-              className="w-full mt-6 bg-blue-600 text-white py-3 rounded-lg shadow-lg hover:bg-blue-700 transition-colors duration-300"
-              disabled={dangTai}
-            >
-              Đặt lại mật khẩu
-            </Button>
-          </form>
-        </CardContent>
-        <CardFooter className="flex justify-center ">
+            <div>
+              <label htmlFor="confirm-password" className={labelStyle}>
+                Xác nhận mật khẩu mới <span className="ml-1 text-[var(--state-danger)]">*</span>
+              </label>
+              <input
+                id="confirm-password"
+                type="password"
+                placeholder="Xác nhận mật khẩu mới"
+                {...register('xacNhanMatKhau', {
+                  required: 'Bạn phải xác nhận mật khẩu',
+                  validate: (value) =>
+                    value === watch('matKhau') || 'Mật khẩu và xác nhận mật khẩu không khớp',
+                })}
+                className={`${fieldControlClass} ${getEditorStyle(errors.xacNhanMatKhau)}`}
+              />
+              {errors.xacNhanMatKhau && (
+                <div className={errorStyle}>
+                  <FaExclamationCircle className="mr-1 h-3.5 w-3.5" />
+                  <small>{errors.xacNhanMatKhau.message}</small>
+                </div>
+              )}
+            </div>
+          </div>
+          <Button
+            type="submit"
+            variant="primary"
+            size="lg"
+            className="mt-6 w-full"
+            disabled={dangTai}
+            loading={dangTai}
+          >
+            Đặt lại mật khẩu
+          </Button>
+        </form>
+        <div className="mt-4 flex justify-center">
           <NavLink
             to="/login"
-            className={({ isActive }) =>
-              isActive ? 'text-sm text-blue-600 underline' : 'text-sm text-blue-600 hover:underline'
-            }
+            className="text-sm text-[var(--clay-primary)] hover:underline"
           >
             Quay lại đăng nhập
           </NavLink>
-        </CardFooter>
-      </Card>
+        </div>
+      </Panel>
 
       <AlertDialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <AlertDialogContent>

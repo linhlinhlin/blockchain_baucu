@@ -5,10 +5,8 @@ import { useState, useRef, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import jsQR from 'jsqr';
-import { Button } from '../components/ui/Button';
-import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/Card';
-import { AlertTriangle, Upload, QrCode, ImageIcon, CheckCircle } from 'lucide-react';
-import { Input } from '../components/ui/Input';
+import { Button, Panel, StatusBadge, fieldControlClass } from '../components/ui/clay';
+import { AlertTriangle, Upload, QrCode, ImageIcon } from 'lucide-react';
 import Html5QrcodeWrapper from '../components/Html5QrcodeWrapper';
 import ModalOTP from '../components/ModalOTP';
 import { xacThucPhieuMoi, thamGiaPhienBauCu } from '../store/slice/phieuMoiPhienBauCuSlice';
@@ -425,150 +423,152 @@ const QuetMaQRPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
-        <Card className="w-full max-w-md bg-white border border-gray-200 shadow-sm">
-          <CardHeader className="border-b border-gray-200">
-            <div className="flex items-center space-x-4">
-              <CardTitle className="text-xl font-semibold text-gray-900">Quét mã QR</CardTitle>
-            </div>
-          </CardHeader>
-          <CardContent className="p-4">
-            {scanning ? (
-              <div className="relative">
-                <Html5QrcodeWrapper
-                  fps={10}
-                  qrbox={Math.max(250, 50)}
-                  disableFlip={false}
-                  verbose={false}
-                  onScan={handleScan}
-                  onError={handleError}
-                />
-                <div className="mt-4">
-                  <div className="grid grid-cols-2 gap-4">
-                    <Button
-                      onClick={() => fileInputRef.current?.click()}
-                      className="bg-sky-500 hover:bg-sky-600 text-white"
-                    >
-                      <ImageIcon className="mr-2 h-4 w-4" />
-                      Quét ảnh có sẵn
-                    </Button>
-                    <Button
-                      onClick={() => setScanning(false)}
-                      className="bg-sky-500 hover:bg-sky-600 text-white"
-                    >
-                      <QrCode className="mr-2 h-4 w-4" />
-                      Mã QR của tôi
-                    </Button>
-                  </div>
-                </div>
-              </div>
-            ) : (
-              <div className="space-y-4">
+    <div className="flex min-h-[70vh] items-start justify-center px-4 py-8 text-[var(--clay-text)]">
+      <div className="w-full max-w-md">
+        <div className="mb-5 text-center">
+          <h1 className="text-[1.75rem] font-semibold tracking-[-0.015em] text-[var(--clay-text)]">
+            Quét mã QR
+          </h1>
+          <p className="mt-1 text-[15px] text-[var(--clay-muted)]">
+            Quét hoặc tải lên mã QR mời để tham gia phiên bầu cử.
+          </p>
+        </div>
+        <Panel>
+          {scanning ? (
+            <div>
+              <Html5QrcodeWrapper
+                fps={10}
+                qrbox={Math.max(250, 50)}
+                disableFlip={false}
+                verbose={false}
+                onScan={handleScan}
+                onError={handleError}
+              />
+              <div className="mt-4 grid grid-cols-2 gap-3">
                 <Button
-                  onClick={() => setScanning(true)}
-                  className="w-full bg-sky-500 hover:bg-sky-600"
-                  disabled={processingImage}
+                  type="button"
+                  variant="secondary"
+                  onClick={() => fileInputRef.current?.click()}
+                  iconLeft={<ImageIcon className="h-4 w-4" aria-hidden="true" />}
                 >
-                  <QrCode className="mr-2 h-4 w-4" />
-                  Bắt đầu quét
+                  Quét ảnh có sẵn
                 </Button>
-                <div className="relative">
-                  <Button
-                    onClick={() => fileInputRef.current?.click()}
-                    className="w-full"
-                    variant="outline"
-                    disabled={processingImage}
-                  >
-                    {processingImage ? (
-                      <>
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Đang xử lý ảnh...
-                      </>
-                    ) : (
-                      <>
-                        <Upload className="mr-2 h-4 w-4" />
-                        Tải lên ảnh mã QR
-                      </>
-                    )}
-                  </Button>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  onClick={() => setScanning(false)}
+                  iconLeft={<QrCode className="h-4 w-4" aria-hidden="true" />}
+                >
+                  Đóng quét
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              <Button
+                type="button"
+                variant="primary"
+                size="lg"
+                className="w-full"
+                onClick={() => setScanning(true)}
+                disabled={processingImage}
+                iconLeft={<QrCode className="h-4 w-4" aria-hidden="true" />}
+              >
+                Bắt đầu quét
+              </Button>
+              <Button
+                type="button"
+                variant="secondary"
+                size="lg"
+                className="w-full"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={processingImage}
+                loading={processingImage}
+                iconLeft={<Upload className="h-4 w-4" aria-hidden="true" />}
+              >
+                {processingImage ? 'Đang xử lý ảnh…' : 'Tải lên ảnh mã QR'}
+              </Button>
+              <input
+                type="file"
+                ref={fileInputRef}
+                onChange={handleFileUpload}
+                accept="image/*"
+                className="hidden"
+                disabled={processingImage}
+              />
+            </div>
+          )}
+
+          {scannedData && (
+            <div className="mt-4 rounded-[14px] border border-[var(--clay-border)] bg-[var(--clay-surface-soft)] p-4">
+              <div className="mb-2 flex items-center gap-2">
+                <p className="text-sm font-semibold text-[var(--clay-text)]">Thông tin mã QR</p>
+                <StatusBadge tone="info">{scannedData.type}</StatusBadge>
+              </div>
+              <p className="break-words text-sm text-[var(--clay-muted)]">{scannedData.content}</p>
+              {token && !isValidating && !error && (
+                <div className="mt-4 space-y-3">
+                  {cuocBauCu && (
+                    <div className="space-y-1 text-sm text-[var(--clay-muted)]">
+                      <p>
+                        <strong className="text-[var(--clay-text)]">Cuộc bầu cử:</strong>{' '}
+                        {cuocBauCu.tenCuocBauCu}
+                      </p>
+                      <p>
+                        <strong className="text-[var(--clay-text)]">Bắt đầu:</strong>{' '}
+                        {cuocBauCu.ngayBatDau}
+                      </p>
+                      <p>
+                        <strong className="text-[var(--clay-text)]">Kết thúc:</strong>{' '}
+                        {cuocBauCu.ngayKetThuc}
+                      </p>
+                    </div>
+                  )}
                   <input
-                    type="file"
-                    ref={fileInputRef}
-                    onChange={handleFileUpload}
-                    accept="image/*"
-                    className="hidden"
-                    disabled={processingImage}
+                    type="tel"
+                    placeholder="Số điện thoại"
+                    value={sdt}
+                    onChange={(e) => setSdt(e.target.value)}
+                    className={fieldControlClass}
+                    aria-label="Số điện thoại"
                   />
+                  <Button
+                    type="button"
+                    variant="primary"
+                    size="lg"
+                    className="w-full"
+                    onClick={handleJoin}
+                    disabled={dangTai || !sdt}
+                    loading={dangTai}
+                  >
+                    Tham gia
+                  </Button>
                 </div>
-              </div>
-            )}
-            {scannedData && (
-              <div className="mt-4 p-4 bg-gray-50 rounded-lg border border-gray-200">
-                <h3 className="font-semibold mb-2 text-gray-900">Thông tin mã QR:</h3>
-                <p className="mb-2 text-gray-600">
-                  <strong className="text-gray-900">Loại:</strong> {scannedData.type}
-                </p>
-                <p className="mb-4 break-words text-gray-600">
-                  <strong className="text-gray-900">Nội dung:</strong> {scannedData.content}
-                </p>
-                {token && !isValidating && !error && (
-                  <div className="space-y-4">
-                    {cuocBauCu && (
-                      <div className="mb-4">
-                        <p className="text-gray-600">
-                          <strong className="text-gray-900">Tên cuộc bầu cử:</strong>{' '}
-                          {cuocBauCu.tenCuocBauCu}
-                        </p>
-                        <p className="text-gray-600">
-                          <strong className="text-gray-900">Ngày bắt đầu:</strong>{' '}
-                          {cuocBauCu.ngayBatDau}
-                        </p>
-                        <p className="text-gray-600">
-                          <strong className="text-gray-900">Ngày kết thúc:</strong>{' '}
-                          {cuocBauCu.ngayKetThuc}
-                        </p>
-                      </div>
-                    )}
-                    <Input
-                      type="tel"
-                      placeholder="Số điện thoại"
-                      value={sdt}
-                      onChange={(e) => setSdt(e.target.value)}
-                      className="mb-4"
-                    />
-                    <Button onClick={handleJoin} disabled={dangTai || !sdt} className="w-full">
-                      {dangTai ? (
-                        <>
-                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                          Đang xử lý...
-                        </>
-                      ) : (
-                        'Tham gia'
-                      )}
-                    </Button>
-                  </div>
-                )}
-              </div>
-            )}
-            {error && (
-              <div className="mt-4 text-red-600 flex items-center p-4 bg-red-50 border border-red-200 rounded-lg">
-                <AlertTriangle className="mr-2 h-4 w-4" />
-                {error}
-              </div>
-            )}
-          </CardContent>
-        </Card>
+              )}
+            </div>
+          )}
 
-        <ModalOTP
-          isOpen={isOtpModalOpen}
-          onClose={() => setIsOtpModalOpen(false)}
-          onVerify={handleVerifyOtp}
-          email={user?.email || ''}
-          onResend={handleResendOtp}
-          error={otpError}
-        />
-
+          {error && (
+            <div
+              role="alert"
+              className="mt-4 flex items-center gap-2 rounded-[12px] border border-[var(--state-danger)] bg-[var(--state-danger-soft)] p-3 text-sm text-[var(--state-danger)]"
+            >
+              <AlertTriangle className="h-4 w-4 shrink-0" aria-hidden="true" />
+              {error}
+            </div>
+          )}
+        </Panel>
       </div>
+
+      <ModalOTP
+        isOpen={isOtpModalOpen}
+        onClose={() => setIsOtpModalOpen(false)}
+        onVerify={handleVerifyOtp}
+        email={user?.email || ''}
+        onResend={handleResendOtp}
+        error={otpError}
+      />
+    </div>
   );
 };
 

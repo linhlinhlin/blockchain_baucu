@@ -59,9 +59,6 @@ public partial class ApplicationDbContext : DbContext
     public virtual DbSet<PhienDangNhap> PhienDangNhaps { get; set; }
     public virtual DbSet<RevokedToken> RevokedTokens { get; set; }
     public DbSet<ViBlockchain> ViBlockchain { get; set; }
-    public DbSet<BlockchainTransaction> BlockchainTransactions { get; set; }
-    public DbSet<KhoaPhien> KhoaPhiens { get; set; }
-    public object VaiTro { get; internal set; }
     public DbSet<DieuLe> DieuLes { get; set; }
     public DbSet<XacNhanDieuLe> XacNhanDieuLes { get; set; }
 
@@ -77,30 +74,6 @@ public partial class ApplicationDbContext : DbContext
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
-        modelBuilder.Entity<KhoaPhien>(entity =>
-        {
-            entity.ToTable("KhoaPhien");
-            entity.HasKey(e => e.MaKhoaID);
-
-            entity.Property(e => e.TaiKhoanID).IsRequired();
-            entity.Property(e => e.ViID).IsRequired();
-            entity.Property(e => e.Khoa)
-                  .IsRequired()
-                  .HasMaxLength(66); // Giới hạn độ dài hợp lý cho khóa mã hóa
-            entity.Property(e => e.ThoiHan).IsRequired();
-            entity.Property(e => e.ThoiHanUnix).IsRequired(); // Thêm trường mới
-
-            entity.HasOne(e => e.TaiKhoan)
-                  .WithMany(t => t.KhoaPhiens)
-                  .HasForeignKey(e => e.TaiKhoanID)
-                  .OnDelete(DeleteBehavior.Cascade);
-
-            entity.HasOne(e => e.ViBlockchain)
-                  .WithMany(v => v.KhoaPhiens)
-                  .HasForeignKey(e => e.ViID)
-                  .OnDelete(DeleteBehavior.Cascade);
-        });
-
         // Cấu hình cho bảng DieuLe
         modelBuilder.Entity<DieuLe>()
             .HasOne(d => d.CuocBauCu)
@@ -329,25 +302,6 @@ public partial class ApplicationDbContext : DbContext
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_CuocBauCu_TaiKhoan");
         });
-
-        modelBuilder.Entity<BlockchainTransaction>(entity =>
-        {
-            entity.HasKey(e => e.Id);
-            entity.ToTable("BlockchainTransaction");
-
-            entity.Property(e => e.TransactionHash).HasMaxLength(66).IsRequired();
-            entity.Property(e => e.LoaiGiaoDich).HasMaxLength(50).IsRequired();
-            entity.Property(e => e.TrangThai).IsRequired();
-            entity.Property(e => e.BlockNumber).IsRequired(false);
-            entity.Property(e => e.NgayTao).HasColumnType("datetime").HasDefaultValueSql("GETDATE()");
-            entity.Property(e => e.NgayCapNhat).HasColumnType("datetime").IsRequired(false);
-            entity.Property(e => e.DoiTuongId).IsRequired(false);
-            entity.Property(e => e.LoaiDoiTuong).HasMaxLength(50).IsRequired(false);
-            entity.Property(e => e.MetaData).HasColumnType("nvarchar(max)").IsRequired(false);
-            entity.Property(e => e.SoLanThu).IsRequired().HasDefaultValue(0);
-        });
-
-
 
         modelBuilder.Entity<LichSuHoatDong>(entity =>
         {

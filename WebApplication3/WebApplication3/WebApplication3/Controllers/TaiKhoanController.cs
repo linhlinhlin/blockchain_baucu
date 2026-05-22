@@ -14,7 +14,6 @@ using Microsoft.Extensions.Options;
 using System;
 using Nethereum.Signer;
 using WebApplication3.Services;
-using Nethereum.JsonRpc.Client;
 using Microsoft.Extensions.Logging;
 using System.Text.RegularExpressions;
 using WebApplication3.Infrastructure;
@@ -29,8 +28,6 @@ namespace WebApplication3.Controllers
         private readonly JwtService _jwtService;
         private readonly JwtSettings _jwtSettings;
         private readonly IConfiguration _configuration;
-        private readonly CryptoService _cryptoService;
-        private readonly BlockchainService _blockchainService;
         private readonly RecaptchaService _recaptchaService; // Thêm RecaptchaService
         private readonly ILogger<TaiKhoanController> _logger;
         private readonly DevelopmentAuthStore _developmentAuthStore;
@@ -40,8 +37,6 @@ namespace WebApplication3.Controllers
             JwtService jwtService,
             IOptions<JwtSettings> jwtSettings,
             IConfiguration configuration,
-            CryptoService cryptoService,
-            BlockchainService blockchainService,
             DevelopmentAuthStore developmentAuthStore,
             RecaptchaService recaptchaService, // Inject RecaptchaService
             ILogger<TaiKhoanController> logger)
@@ -50,8 +45,6 @@ namespace WebApplication3.Controllers
             _jwtService = jwtService;
             _jwtSettings = jwtSettings.Value;
             _configuration = configuration;
-            _cryptoService = cryptoService;
-            _blockchainService = blockchainService;
             _developmentAuthStore = developmentAuthStore;
             _recaptchaService = recaptchaService;
             _logger = logger;
@@ -178,7 +171,7 @@ namespace WebApplication3.Controllers
                         return BadRequest(new { success = false, message = "Token reCAPTCHA không được để trống." });
                     }
 
-                    bool isRecaptchaValid = await _recaptchaService.VerifyRecaptchaAsync(model.RecaptchaToken, "login");
+                    bool isRecaptchaValid = await _recaptchaService.VerifyRecaptchaAsync(model.RecaptchaToken, "login_page");
                     if (!isRecaptchaValid)
                     {
                         _logger.LogWarning("Xác minh reCAPTCHA thất bại cho TenDangNhap: {TenDangNhap}", model.TenDangNhap);
@@ -336,7 +329,7 @@ namespace WebApplication3.Controllers
                 }
 
                 // Lấy địa chỉ ví SCW
-                string scwAddress = null;
+                string? scwAddress = null;
                 var wallets = await _context.ViBlockchain
                     .Where(w => w.TaiKhoanId == user.Id)
                     .ToListAsync();
@@ -651,7 +644,7 @@ namespace WebApplication3.Controllers
                         return BadRequest(new { success = false, message = "Token reCAPTCHA không được để trống" });
                     }
 
-                    bool isRecaptchaValid = await _recaptchaService.VerifyRecaptchaAsync(model.RecaptchaToken);
+                    bool isRecaptchaValid = await _recaptchaService.VerifyRecaptchaAsync(model.RecaptchaToken, "register");
                     if (!isRecaptchaValid)
                     {
                         _logger.LogWarning($"reCAPTCHA verification failed for registration attempt with username: {model.TenDangNhap}");
@@ -735,6 +728,17 @@ namespace WebApplication3.Controllers
             "yopmail.com", "trashmail.com", "fakeinbox.com", "sharklasers.com",
             "dispostable.com", "getairmail.com", "mintemail.com"
         };
+
+        private bool IsStrongPassword(string password)
+        {
+            return !string.IsNullOrEmpty(password)
+                && password.Length >= 8
+                && password.Any(char.IsUpper)
+                && password.Any(char.IsLower)
+                && password.Any(char.IsDigit)
+                && password.Any(c => !char.IsLetterOrDigit(c))
+                && !password.Contains(" ");
+        }
 
         private bool IsValidEmail(string email)
         {
@@ -1061,7 +1065,7 @@ namespace WebApplication3.Controllers
             var wallet = await _context.ViBlockchain
                 .FirstOrDefaultAsync(w => w.DiaChiVi.ToLower() == model.DiaChiVi.ToLower());
 
-            TaiKhoan user;
+            TaiKhoan? user;
 
             if (wallet == null)
             {
@@ -1140,164 +1144,6 @@ namespace WebApplication3.Controllers
             {
                 _logger.LogError(ex, "Lỗi khi tạo token hoặc lưu phiên đăng nhập cho DiaChiVi: {DiaChiVi}: {Message}", model.DiaChiVi, ex.Message);
                 return StatusCode(500, new { success = false, message = "Lỗi khi tạo token hoặc lưu phiên đăng nhập, vui lòng thử lại." });
-            }
-        }
-
-        // Phương thức hỗ trợ tạo SCW (đã loại bỏ CreateSCWForUser cũ)
-
-        private bool IsStrongPassword(string password)
-        {
-            // Kiểm tra độ dài tối thiểu
-            if (string.IsNullOrEmpty(password) || password.Length < 8)
-                return false;
-
-            // Kiểm tra có ít nhất 1 chữ hoa
-            if (!password.Any(char.IsUpper))
-                return false;
-
-            // Kiểm tra có ít nhất 1 chữ thường
-            if (!password.Any(char.IsLower))
-                return false;
-
-            // Kiểm tra có ít nhất 1 chữ số
-            if (!password.Any(char.IsDigit))
-                return false;
-
-            // Kiểm tra có ít nhất 1 ký tự đặc biệt
-            if (!password.Any(c => !char.IsLetterOrDigit(c)))
-                return false;
-
-            // Kiểm tra không có khoảng trắng
-            if (password.Contains(" "))
-                return false;
-
-            return true;
-        }
-
-        // Phương thức tạo SCW cho người dùng
-        // Sửa phương thức CreateSCWForUser để trả về địa chỉ SCW thay vì boolean
-        //private async Task<string> CreateSCWForUser(int userId, string metamaskAddress)
-        //{
-        //    try
-        //    {
-        //        _logger.LogInformation("🔹 Bắt đầu tạo SCW cho UserID: {UserId}, MetaMask: {MetaMaskAddress}", userId, metamaskAddress);
-
-        //        // ✅ 1. Sinh salt
-        //        string salt = _cryptoService.GenerateSalt($"user_{userId}_{DateTime.UtcNow.Ticks}");
-        //        _logger.LogInformation("✅ Salt được sinh ra: {Salt}", salt);
-
-        //        // ✅ 2. Lấy factory address từ config
-        //        string factoryAddress = _configuration["BlockchainSettings:ContractAddresses:CuocBauCuFactory"] ?? "0x7969c5eD335650692Bc04293B07F5BF2e7A673C0";
-
-        //        // ✅ 3. Dự đoán địa chỉ SCW
-        //        string predictedScw = await _blockchainService.PredictSCWAddress(factoryAddress, metamaskAddress, salt);
-        //        _logger.LogInformation("✅ Địa chỉ SCW dự đoán: {PredictedScw}", predictedScw);
-
-        //        // ✅ 4. Kiểm tra SCW trong DB trước (tối ưu hơn blockchain)
-        //        bool isAlreadyInDB = await _context.ViBlockchain.AnyAsync(w => w.DiaChiVi.ToLower() == predictedScw.ToLower());
-        //        if (isAlreadyInDB)
-        //        {
-        //            _logger.LogWarning("⚠️ SCW đã tồn tại trong DB: {PredictedScw}", predictedScw);
-        //            return predictedScw; // Trả về ngay nếu đã có trong DB
-        //        }
-
-        //        // ✅ 5. Kiểm tra SCW trên blockchain
-        //        if (await _blockchainService.CheckSCWExists(predictedScw))
-        //        {
-        //            _logger.LogWarning("⚠️ SCW đã tồn tại trên blockchain nhưng chưa có trong DB: {PredictedScw}", predictedScw);
-        //            // Lưu vào DB nếu cần (trường hợp hiếm)
-        //            await SaveSCWToDB(userId, predictedScw);
-        //            return predictedScw;
-        //        }
-
-        //        // ✅ 6. Triển khai SCW (tách khỏi transaction)
-        //        _logger.LogInformation("🚀 Triển khai SCW cho địa chỉ: {PredictedScw}", predictedScw);
-        //        string deployResult = null;
-        //        try
-        //        {
-        //            deployResult = await _blockchainService.DeploySimpleAccount(metamaskAddress, salt);
-        //            _logger.LogInformation("✅ Kết quả triển khai SCW: {DeployResult}", deployResult);
-        //        }
-        //        catch (Exception ex)
-        //        {
-        //            _logger.LogError(ex, "❌ Lỗi khi triển khai SCW cho {PredictedScw}: {Message}", predictedScw, ex.Message);
-        //            return null; // Không tiếp tục nếu deploy thất bại
-        //        }
-
-        //        // ✅ 7. Kiểm tra lại SCW trên blockchain
-        //        if (!await _blockchainService.CheckSCWExists(predictedScw))
-        //        {
-        //            _logger.LogError("❌ SCW không được triển khai thành công: {PredictedScw}", predictedScw);
-        //            return null;
-        //        }
-
-        //        // ✅ 8. Lưu SCW vào DB với transaction
-        //        await SaveSCWToDB(userId, predictedScw);
-
-        //        // ✅ 9. Kiểm tra và mint token nếu cần
-        //        try
-        //        {
-        //            decimal minRequiredBalance = 10M;
-        //            decimal tokenBalance = await _blockchainService.GetTokenBalance(predictedScw);
-        //            _logger.LogInformation("💰 Số dư token hiện tại của {PredictedScw}: {Balance}", predictedScw, tokenBalance);
-
-        //            if (tokenBalance < minRequiredBalance)
-        //            {
-        //                decimal amountToMint = minRequiredBalance - tokenBalance;
-        //                _logger.LogInformation("🔹 Cấp {Amount} token cho {PredictedScw}", amountToMint, predictedScw);
-        //                await _blockchainService.MintInitialTokens(predictedScw, amountToMint.ToString());
-        //                _logger.LogInformation("✅ Đã mint {Amount} token thành công cho {PredictedScw}", amountToMint, predictedScw);
-        //            }
-        //            else
-        //            {
-        //                _logger.LogInformation("✅ Không cần mint token vì số dư đã đủ");
-        //            }
-        //        }
-        //        catch (Exception ex)
-        //        {
-        //            _logger.LogWarning(ex, "⚠️ Lỗi khi mint token cho SCW {ScwAddress}: {Message}", predictedScw, ex.Message);
-        //        }
-
-        //        return predictedScw;
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        _logger.LogError(ex, "❌ Lỗi hệ thống khi tạo SCW cho UserID {UserId}: {Message}", userId, ex.Message);
-        //        return null;
-        //    }
-        //}
-
-        /// <summary>
-        /// Lưu SCW vào DB với transaction riêng
-        /// </summary>
-        private async Task SaveSCWToDB(int userId, string predictedScw)
-        {
-            using (var transaction = await _context.Database.BeginTransactionAsync())
-            {
-                try
-                {
-                    var viScw = new ViBlockchain
-                    {
-                        TaiKhoanId = userId,
-                        DiaChiVi = predictedScw,
-                        LoaiVi = 2, // 2 = SCW
-                        SCWNonce = 0,
-                        ThoiGianTao = DateTime.UtcNow,
-                        TrangThai = true,
-                        IsPrimaryWallet = false,
-                        NguonTao = "login"
-                    };
-                    _context.ViBlockchain.Add(viScw);
-                    await _context.SaveChangesAsync();
-                    await transaction.CommitAsync();
-                    _logger.LogInformation("✅ Đã lưu SCW vào DB cho UserID: {UserId}, DiaChiVi: {PredictedScw}", userId, predictedScw);
-                }
-                catch (Exception ex)
-                {
-                    await transaction.RollbackAsync();
-                    _logger.LogError(ex, "❌ Lỗi khi lưu SCW vào DB cho UserID {UserId}: {Message}", userId, ex.Message);
-                    throw; // Ném lỗi để caller xử lý
-                }
             }
         }
     }

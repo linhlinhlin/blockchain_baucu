@@ -77,3 +77,9 @@ WebApplication3/**/Properties/ServiceDependencies/
 Thumbs.db
 desktop.ini
 *.rar
+
+# Đợt 10 temp (không commit)
+.tsc_*.txt
+frontend/tsconfig.clay.json
+.fix2.txt
+.tmp_*.cjs

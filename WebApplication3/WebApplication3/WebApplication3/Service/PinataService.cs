@@ -4,7 +4,7 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json.Linq;
-namespace WebApplication3.Service
+namespace WebApplication3.Services
 {
     public class PinataService
     {
@@ -17,7 +17,7 @@ namespace WebApplication3.Service
             _logger = logger;
         }
 
-        public async Task<(bool Success, string Cid, string Url, string Error)> UploadImageAsync(IFormFile file)
+        public async Task<(bool Success, string? Cid, string? Url, string? Error)> UploadImageAsync(IFormFile file)
         {
             try
             {
@@ -41,6 +41,11 @@ namespace WebApplication3.Service
 
                 var obj = JObject.Parse(json);
                 var cid = obj["IpfsHash"]?.ToString();
+                if (string.IsNullOrWhiteSpace(cid))
+                {
+                    return (false, null, null, "Pinata response did not include IpfsHash.");
+                }
+
                 var url = $"https://gateway.pinata.cloud/ipfs/{cid}";
 
                 return (true, cid, url, null);

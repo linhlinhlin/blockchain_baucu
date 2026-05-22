@@ -5,9 +5,9 @@ namespace WebApplication3.Models
     public class DangKyTaiKhoanDTO
     {
         public int Id { get; set; }
-        public string TenDangNhap { get; set; }
-        public string MatKhau { get; set; }
-        public string Email { get; set; }
+        public string TenDangNhap { get; set; } = string.Empty;
+        public string MatKhau { get; set; } = string.Empty;
+        public string Email { get; set; } = string.Empty;
         public string? Ho { get; set; }
         public string? Ten { get; set; }
         public string? Sdt { get; set; }

@@ -13,7 +13,7 @@ namespace WebApplication3.Models
         public DateOnly? LanDangNhapCuoi { get; set; }
         public string? RefreshToken { get; set; }
         public DateTime? RefreshTokenExpiryTime { get; set; }
-        public VaiTroDTO VaiTro { get; set; }
+        public VaiTroDTO VaiTro { get; set; } = null!;
         public virtual ICollection<CuocBauCu> CuocBauCus { get; set; } = new List<CuocBauCu>();
 
         // Thêm các trường mới

@@ -143,7 +143,7 @@ const ThongBaoKhongCoCuocBauCu: React.FC = () => {
             <Button
               variant="link"
               className="text-gray-500 dark:text-gray-400 hover:text-blue-500 dark:hover:text-blue-400"
-              onClick={() => navigate('/app/user-elections')}
+              onClick={() => navigate('/app/elections')}
             >
               Xem tất cả cuộc bầu cử
               <ChevronRight className="ml-1 h-4 w-4" />

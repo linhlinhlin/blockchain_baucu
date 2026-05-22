@@ -7,8 +7,11 @@ export async function authenticate(
 ): Promise<TaiKhoan | undefined> {
   try {
     const taiKhoans = await searchCacTaiKhoan({ tenDangNhap });
-    if (taiKhoans.length > 0 && taiKhoans[0].matKhau === matKhau) {
-      return taiKhoans[0];
+    // Đợt 10.1: searchCacTaiKhoan type-annotation pre-existing không khớp
+    // (legacy auth). Assertion type-only (runtime-noop), KHÔNG đổi so sánh.
+    const acc = taiKhoans[0] as unknown as TaiKhoan | undefined;
+    if (taiKhoans.length > 0 && acc?.matKhau === matKhau) {
+      return acc;
     }
     return undefined;
   } catch (error) {

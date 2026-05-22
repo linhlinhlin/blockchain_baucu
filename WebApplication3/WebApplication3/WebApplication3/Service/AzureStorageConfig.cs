@@ -2,9 +2,9 @@
 {
     public class AzureStorageConfig
     {
-        public string AccountName { get; set; }
-        public string ContainerName { get; set; }
-        public string ConnectionString { get; set; }
+        public string AccountName { get; set; } = string.Empty;
+        public string ContainerName { get; set; } = string.Empty;
+        public string ConnectionString { get; set; } = string.Empty;
     }
 
 }

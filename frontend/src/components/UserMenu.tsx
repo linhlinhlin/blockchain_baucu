@@ -411,7 +411,7 @@ const UserMenu: React.FC<UserMenuProps> = ({ isCollapsed = false, inMobileMenu =
 
               <div className="py-1">
                 <NavLink
-                  to="/app/account-info"
+                  to="/app/account"
                   className="flex min-h-11 items-center px-4 py-2.5 text-sm text-[var(--clay-text)] transition-colors hover:bg-[var(--clay-surface-soft)]"
                   onClick={() => setIsAccountMenuOpen(false)}
                 >
@@ -420,7 +420,7 @@ const UserMenu: React.FC<UserMenuProps> = ({ isCollapsed = false, inMobileMenu =
                 </NavLink>
 
                 <NavLink
-                  to="/app/quan-ly-smart-contract"
+                  to="/app/dashboard"
                   className="flex min-h-11 items-center px-4 py-2.5 text-sm text-[var(--clay-text)] transition-colors hover:bg-[var(--clay-surface-soft)]"
                   onClick={() => setIsAccountMenuOpen(false)}
                 >
@@ -429,7 +429,7 @@ const UserMenu: React.FC<UserMenuProps> = ({ isCollapsed = false, inMobileMenu =
                 </NavLink>
 
                 <NavLink
-                  to="/app/upcoming-elections"
+                  to="/app/notifications"
                   className="flex min-h-11 items-center px-4 py-2.5 text-sm text-[var(--clay-text)] transition-colors hover:bg-[var(--clay-surface-soft)]"
                   onClick={() => setIsAccountMenuOpen(false)}
                 >

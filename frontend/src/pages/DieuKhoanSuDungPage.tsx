@@ -137,13 +137,13 @@ const DieuKhoanSuDungPage = () => {
   };
 
   // Light/dark mode styles
-  const bgColor = theme === 'dark' ? 'bg-[#0A1416]' : 'bg-gray-50';
-  const textColor = theme === 'dark' ? 'text-white' : 'text-gray-800';
-  const cardBg = theme === 'dark' ? 'bg-[#263238]' : 'bg-white';
-  const cardBorder = theme === 'dark' ? 'border-[#455A64]' : 'border-gray-200';
-  const sectionBg = theme === 'dark' ? 'bg-[#1E272C]' : 'bg-gray-50';
-  const highlightColor = theme === 'dark' ? 'text-[#0288D1]' : 'text-blue-600';
-  const secondaryTextColor = theme === 'dark' ? 'text-[#B0BEC5]' : 'text-gray-600';
+  const bgColor = theme === 'dark' ? 'bg-[var(--clay-bg)]' : 'bg-[var(--clay-surface-soft)]';
+  const textColor = theme === 'dark' ? 'text-white' : 'text-[var(--clay-text)]';
+  const cardBg = theme === 'dark' ? 'bg-[var(--clay-surface-soft)]' : 'bg-white';
+  const cardBorder = theme === 'dark' ? 'border-[var(--clay-muted)]' : 'border-[var(--clay-border)]';
+  const sectionBg = theme === 'dark' ? 'bg-[var(--clay-surface)]' : 'bg-[var(--clay-surface-soft)]';
+  const highlightColor = theme === 'dark' ? 'text-[var(--clay-primary)]' : 'text-[var(--clay-primary)]';
+  const secondaryTextColor = theme === 'dark' ? 'text-[var(--clay-muted-soft)]' : 'text-[var(--clay-muted)]';
 
   return (
     <div className={`min-h-screen ${bgColor} ${textColor} relative overflow-hidden`}>
@@ -155,23 +155,23 @@ const DieuKhoanSuDungPage = () => {
           opacity: headerOpacity,
           backdropFilter: `blur(${headerBlur}px)`,
         }}
-        className="sticky top-0 z-50 bg-opacity-80 backdrop-blur-sm border-b border-gray-200 dark:border-gray-800"
+        className="sticky top-0 z-50 bg-opacity-80 backdrop-blur-sm border-b border-[var(--clay-border)] dark:border-[var(--clay-border)]"
       >
         <div className="container mx-auto px-4 py-4 flex justify-between items-center">
           <Link
             to="/"
             className={`flex items-center space-x-2 ${
-              theme === 'dark' ? 'text-white' : 'text-gray-900'
+              theme === 'dark' ? 'text-white' : 'text-[var(--clay-text)]'
             } hover:opacity-80 transition-opacity`}
           >
             <div className="relative w-10 h-10">
-              <div className="absolute inset-0 bg-gradient-to-r from-[#0288D1] to-[#6A1B9A] rounded-full blur-sm opacity-70"></div>
+              <div className="absolute inset-0 bg-gradient-to-r from-[var(--clay-primary)] to-[var(--clay-primary-dark)] rounded-full blur-sm opacity-70"></div>
               <div
                 className={`relative flex items-center justify-center w-full h-full rounded-full ${
-                  theme === 'dark' ? 'bg-[#0A1416]' : 'bg-white'
-                } border border-[#0288D1]/30`}
+                  theme === 'dark' ? 'bg-[var(--clay-bg)]' : 'bg-white'
+                } border border-[var(--clay-primary)]/30`}
               >
-                <FileText className="h-5 w-5 text-[#0288D1]" />
+                <FileText className="h-5 w-5 text-[var(--clay-primary)]" />
               </div>
             </div>
             <div>
@@ -185,8 +185,8 @@ const DieuKhoanSuDungPage = () => {
               onClick={copyUrlToClipboard}
               className={`flex items-center space-x-1 px-3 py-1.5 rounded-full ${
                 theme === 'dark'
-                  ? 'bg-[#37474F] hover:bg-[#455A64] text-white'
-                  : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
+                  ? 'bg-[var(--clay-text)] hover:bg-[var(--clay-muted)] text-white'
+                  : 'bg-[var(--clay-surface-soft)] hover:bg-[var(--clay-border)] text-[var(--clay-muted)]'
               } transition-colors`}
               aria-label="Copy URL"
             >
@@ -207,8 +207,8 @@ const DieuKhoanSuDungPage = () => {
               to="/"
               className={`flex items-center space-x-1 px-3 py-1.5 rounded-full ${
                 theme === 'dark'
-                  ? 'bg-[#0288D1] hover:bg-[#01579B] text-white'
-                  : 'bg-blue-600 hover:bg-blue-700 text-white'
+                  ? 'bg-[var(--clay-primary)] hover:bg-[var(--clay-primary-dark)] text-white'
+                  : 'bg-[var(--clay-primary)] hover:bg-[var(--clay-primary-dark)] text-white'
               } transition-colors`}
             >
               <Home className="h-4 w-4" />
@@ -220,8 +220,8 @@ const DieuKhoanSuDungPage = () => {
 
       {/* Hero Section */}
       <div
-        className={`relative py-16 ${theme === 'dark' ? 'bg-[#1A2327]' : 'bg-blue-50'} border-b ${
-          theme === 'dark' ? 'border-[#37474F]' : 'border-blue-100'
+        className={`relative py-16 ${theme === 'dark' ? 'bg-[var(--clay-surface)]' : 'bg-[var(--clay-primary-light)]'} border-b ${
+          theme === 'dark' ? 'border-[var(--clay-text)]' : 'border-[var(--clay-border)]'
         } overflow-hidden`}
       >
         {/* Background Hexagons */}
@@ -237,7 +237,7 @@ const DieuKhoanSuDungPage = () => {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5 }}
               className={`text-4xl md:text-5xl lg:text-6xl font-bold mb-4 ${
-                theme === 'dark' ? 'text-white' : 'text-gray-900'
+                theme === 'dark' ? 'text-white' : 'text-[var(--clay-text)]'
               }`}
             >
               Điều Khoản Sử Dụng
@@ -260,7 +260,7 @@ const DieuKhoanSuDungPage = () => {
             >
               <div
                 className={`flex items-center space-x-2 px-4 py-2 rounded-full ${
-                  theme === 'dark' ? 'bg-[#37474F] text-[#B0BEC5]' : 'bg-gray-100 text-gray-600'
+                  theme === 'dark' ? 'bg-[var(--clay-text)] text-[var(--clay-muted-soft)]' : 'bg-[var(--clay-surface-soft)] text-[var(--clay-muted)]'
                 }`}
               >
                 <Clock className="h-4 w-4" />
@@ -268,7 +268,7 @@ const DieuKhoanSuDungPage = () => {
               </div>
               <div
                 className={`flex items-center space-x-2 px-4 py-2 rounded-full ${
-                  theme === 'dark' ? 'bg-[#37474F] text-[#B0BEC5]' : 'bg-gray-100 text-gray-600'
+                  theme === 'dark' ? 'bg-[var(--clay-text)] text-[var(--clay-muted-soft)]' : 'bg-[var(--clay-surface-soft)] text-[var(--clay-muted)]'
                 }`}
               >
                 <Info className="h-4 w-4" />
@@ -286,15 +286,15 @@ const DieuKhoanSuDungPage = () => {
           <div
             className={`${cardBg} border ${cardBorder} rounded-xl shadow-lg overflow-hidden transition-all duration-300`}
           >
-            <div className="p-4 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
+            <div className="p-4 border-b border-[var(--clay-border)] dark:border-[var(--clay-border)] flex justify-between items-center">
               <h2 className="text-xl font-bold flex items-center">
-                <FileText className="h-5 w-5 mr-2 text-[#0288D1]" />
+                <FileText className="h-5 w-5 mr-2 text-[var(--clay-primary)]" />
                 Mục lục
               </h2>
               <button
                 onClick={() => setIsTocVisible(!isTocVisible)}
                 className={`p-2 rounded-full ${
-                  theme === 'dark' ? 'hover:bg-[#37474F]' : 'hover:bg-gray-100'
+                  theme === 'dark' ? 'hover:bg-[var(--clay-text)]' : 'hover:bg-[var(--clay-surface-soft)]'
                 } transition-colors`}
                 aria-label="Toggle Table of Contents"
               >
@@ -316,20 +316,20 @@ const DieuKhoanSuDungPage = () => {
                         className={`w-full text-left px-3 py-2 rounded-lg flex items-center transition-colors ${
                           activeSection === section.id
                             ? theme === 'dark'
-                              ? 'bg-[#0288D1]/20 text-[#0288D1]'
-                              : 'bg-blue-50 text-blue-600'
+                              ? 'bg-[var(--clay-primary)]/20 text-[var(--clay-primary)]'
+                              : 'bg-[var(--clay-primary-light)] text-[var(--clay-primary)]'
                             : theme === 'dark'
-                              ? 'hover:bg-[#37474F] text-[#B0BEC5]'
-                              : 'hover:bg-gray-100 text-gray-700'
+                              ? 'hover:bg-[var(--clay-text)] text-[var(--clay-muted-soft)]'
+                              : 'hover:bg-[var(--clay-surface-soft)] text-[var(--clay-muted)]'
                         }`}
                       >
                         <div
                           className={`w-1.5 h-1.5 rounded-full mr-2 ${
                             activeSection === section.id
-                              ? 'bg-[#0288D1]'
+                              ? 'bg-[var(--clay-primary)]'
                               : theme === 'dark'
-                                ? 'bg-[#455A64]'
-                                : 'bg-gray-300'
+                                ? 'bg-[var(--clay-muted)]'
+                                : 'bg-[var(--clay-border)]'
                           }`}
                         ></div>
                         {section.title}
@@ -341,17 +341,17 @@ const DieuKhoanSuDungPage = () => {
             )}
 
             <div
-              className={`p-4 border-t ${theme === 'dark' ? 'border-gray-700' : 'border-gray-200'}`}
+              className={`p-4 border-t ${theme === 'dark' ? 'border-[var(--clay-border)]' : 'border-[var(--clay-border)]'}`}
             >
               <Link
-                to="/chinh-sach-bao-mat"
+                to="/privacy"
                 className={`flex items-center space-x-2 px-3 py-2 rounded-lg ${
                   theme === 'dark'
-                    ? 'hover:bg-[#37474F] text-[#B0BEC5]'
-                    : 'hover:bg-gray-100 text-gray-700'
+                    ? 'hover:bg-[var(--clay-text)] text-[var(--clay-muted-soft)]'
+                    : 'hover:bg-[var(--clay-surface-soft)] text-[var(--clay-muted)]'
                 } transition-colors`}
               >
-                <Shield className="h-4 w-4 text-[#0288D1]" />
+                <Shield className="h-4 w-4 text-[var(--clay-primary)]" />
                 <span>Xem Chính Sách Bảo Mật</span>
               </Link>
             </div>
@@ -389,16 +389,16 @@ const DieuKhoanSuDungPage = () => {
 
                   <div
                     className={`p-4 rounded-lg ${
-                      theme === 'dark' ? 'bg-[#37474F]' : 'bg-blue-50'
+                      theme === 'dark' ? 'bg-[var(--clay-text)]' : 'bg-[var(--clay-primary-light)]'
                     } flex items-start space-x-3 mb-4`}
                   >
                     <AlertTriangle
                       className={`h-5 w-5 mt-0.5 flex-shrink-0 ${
-                        theme === 'dark' ? 'text-amber-400' : 'text-amber-500'
+                        theme === 'dark' ? 'text-[var(--state-warning)]' : 'text-[var(--state-warning)]'
                       }`}
                     />
                     <p
-                      className={`text-sm ${theme === 'dark' ? 'text-[#B0BEC5]' : 'text-gray-700'}`}
+                      className={`text-sm ${theme === 'dark' ? 'text-[var(--clay-muted-soft)]' : 'text-[var(--clay-muted)]'}`}
                     >
                       Vui lòng đọc kỹ các Điều Khoản này trước khi sử dụng Nền Tảng. Nếu bạn không
                       đồng ý với bất kỳ phần nào của Điều Khoản, vui lòng không sử dụng Nền Tảng.
@@ -409,11 +409,11 @@ const DieuKhoanSuDungPage = () => {
                     <div
                       className={`p-4 rounded-lg border ${
                         theme === 'dark'
-                          ? 'border-[#455A64] bg-[#1E272C]'
-                          : 'border-gray-200 bg-white'
+                          ? 'border-[var(--clay-muted)] bg-[var(--clay-surface)]'
+                          : 'border-[var(--clay-border)] bg-white'
                       }`}
                     >
-                      <Shield className="h-8 w-8 text-[#0288D1] mb-2" />
+                      <Shield className="h-8 w-8 text-[var(--clay-primary)] mb-2" />
                       <h3 className="font-semibold mb-2">Bảo Mật Tuyệt Đối</h3>
                       <p className={`text-sm ${secondaryTextColor}`}>
                         Dữ liệu được mã hóa và lưu trữ an toàn trên blockchain
@@ -422,11 +422,11 @@ const DieuKhoanSuDungPage = () => {
                     <div
                       className={`p-4 rounded-lg border ${
                         theme === 'dark'
-                          ? 'border-[#455A64] bg-[#1E272C]'
-                          : 'border-gray-200 bg-white'
+                          ? 'border-[var(--clay-muted)] bg-[var(--clay-surface)]'
+                          : 'border-[var(--clay-border)] bg-white'
                       }`}
                     >
-                      <Users className="h-8 w-8 text-[#6A1B9A] mb-2" />
+                      <Users className="h-8 w-8 text-[var(--clay-primary-dark)] mb-2" />
                       <h3 className="font-semibold mb-2">Minh Bạch Hoàn Toàn</h3>
                       <p className={`text-sm ${secondaryTextColor}`}>
                         Mọi giao dịch đều được ghi lại và có thể kiểm chứng
@@ -435,11 +435,11 @@ const DieuKhoanSuDungPage = () => {
                     <div
                       className={`p-4 rounded-lg border ${
                         theme === 'dark'
-                          ? 'border-[#455A64] bg-[#1E272C]'
-                          : 'border-gray-200 bg-white'
+                          ? 'border-[var(--clay-muted)] bg-[var(--clay-surface)]'
+                          : 'border-[var(--clay-border)] bg-white'
                       }`}
                     >
-                      <Lock className="h-8 w-8 text-[#00796B] mb-2" />
+                      <Lock className="h-8 w-8 text-[var(--clay-primary)] mb-2" />
                       <h3 className="font-semibold mb-2">Không Thể Thay Đổi</h3>
                       <p className={`text-sm ${secondaryTextColor}`}>
                         Dữ liệu một khi đã được ghi vào blockchain không thể bị sửa đổi
@@ -483,12 +483,12 @@ const DieuKhoanSuDungPage = () => {
 
                   <div
                     className={`p-4 rounded-lg ${
-                      theme === 'dark' ? 'bg-[#37474F]' : 'bg-gray-50'
-                    } border-l-4 border-[#0288D1] mb-4`}
+                      theme === 'dark' ? 'bg-[var(--clay-text)]' : 'bg-[var(--clay-surface-soft)]'
+                    } border-l-4 border-[var(--clay-primary)] mb-4`}
                   >
                     <h4 className="font-semibold mb-2">Lưu ý quan trọng</h4>
                     <p
-                      className={`text-sm ${theme === 'dark' ? 'text-[#B0BEC5]' : 'text-gray-700'}`}
+                      className={`text-sm ${theme === 'dark' ? 'text-[var(--clay-muted-soft)]' : 'text-[var(--clay-muted)]'}`}
                     >
                       Chúng tôi có quyền thay đổi, sửa đổi, bổ sung hoặc xóa bỏ các phần của Điều
                       Khoản này vào bất kỳ lúc nào. Những thay đổi sẽ có hiệu lực ngay khi được đăng
@@ -508,8 +508,8 @@ const DieuKhoanSuDungPage = () => {
                       </div>
                     </div>
                     <Link
-                      to="/chinh-sach-bao-mat"
-                      className="px-4 py-2 bg-white text-blue-600 rounded-lg font-medium hover:bg-blue-50 transition-colors"
+                      to="/privacy"
+                      className="px-4 py-2 bg-white text-[var(--clay-primary)] rounded-lg font-medium hover:bg-[var(--clay-primary-light)] transition-colors"
                     >
                       Tìm hiểu thêm
                     </Link>
@@ -536,12 +536,12 @@ const DieuKhoanSuDungPage = () => {
                     <div
                       className={`p-4 rounded-lg border ${
                         theme === 'dark'
-                          ? 'border-[#455A64] bg-[#1E272C]'
-                          : 'border-gray-200 bg-white'
+                          ? 'border-[var(--clay-muted)] bg-[var(--clay-surface)]'
+                          : 'border-[var(--clay-border)] bg-white'
                       }`}
                     >
                       <h3 className="font-semibold mb-2 flex items-center">
-                        <span className="w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center mr-2">
+                        <span className="w-8 h-8 rounded-full bg-[var(--clay-primary-light)] text-[var(--clay-primary)] flex items-center justify-center mr-2">
                           1
                         </span>
                         Tổ Chức Bầu Cử
@@ -554,12 +554,12 @@ const DieuKhoanSuDungPage = () => {
                     <div
                       className={`p-4 rounded-lg border ${
                         theme === 'dark'
-                          ? 'border-[#455A64] bg-[#1E272C]'
-                          : 'border-gray-200 bg-white'
+                          ? 'border-[var(--clay-muted)] bg-[var(--clay-surface)]'
+                          : 'border-[var(--clay-border)] bg-white'
                       }`}
                     >
                       <h3 className="font-semibold mb-2 flex items-center">
-                        <span className="w-8 h-8 rounded-full bg-purple-100 text-purple-600 flex items-center justify-center mr-2">
+                        <span className="w-8 h-8 rounded-full bg-[var(--clay-primary-light)] text-[var(--clay-primary)] flex items-center justify-center mr-2">
                           2
                         </span>
                         Tham Gia Bỏ Phiếu
@@ -572,12 +572,12 @@ const DieuKhoanSuDungPage = () => {
                     <div
                       className={`p-4 rounded-lg border ${
                         theme === 'dark'
-                          ? 'border-[#455A64] bg-[#1E272C]'
-                          : 'border-gray-200 bg-white'
+                          ? 'border-[var(--clay-muted)] bg-[var(--clay-surface)]'
+                          : 'border-[var(--clay-border)] bg-white'
                       }`}
                     >
                       <h3 className="font-semibold mb-2 flex items-center">
-                        <span className="w-8 h-8 rounded-full bg-green-100 text-green-600 flex items-center justify-center mr-2">
+                        <span className="w-8 h-8 rounded-full bg-[var(--state-success-soft)] text-[var(--state-success)] flex items-center justify-center mr-2">
                           3
                         </span>
                         Kiểm Tra Kết Quả
@@ -590,12 +590,12 @@ const DieuKhoanSuDungPage = () => {
                     <div
                       className={`p-4 rounded-lg border ${
                         theme === 'dark'
-                          ? 'border-[#455A64] bg-[#1E272C]'
-                          : 'border-gray-200 bg-white'
+                          ? 'border-[var(--clay-muted)] bg-[var(--clay-surface)]'
+                          : 'border-[var(--clay-border)] bg-white'
                       }`}
                     >
                       <h3 className="font-semibold mb-2 flex items-center">
-                        <span className="w-8 h-8 rounded-full bg-amber-100 text-amber-600 flex items-center justify-center mr-2">
+                        <span className="w-8 h-8 rounded-full bg-[var(--state-warning-soft)] text-[var(--state-warning)] flex items-center justify-center mr-2">
                           4
                         </span>
                         Nghiên Cứu & Phát Triển
@@ -629,15 +629,15 @@ const DieuKhoanSuDungPage = () => {
 
                   <div
                     className={`p-4 rounded-lg ${
-                      theme === 'dark' ? 'bg-[#37474F]' : 'bg-amber-50'
-                    } border-l-4 border-amber-500 mb-4`}
+                      theme === 'dark' ? 'bg-[var(--clay-text)]' : 'bg-[var(--state-warning-soft)]'
+                    } border-l-4 border-[var(--state-warning)] mb-4`}
                   >
                     <h4 className="font-semibold mb-2 flex items-center">
-                      <AlertTriangle className="h-5 w-5 mr-2 text-amber-500" />
+                      <AlertTriangle className="h-5 w-5 mr-2 text-[var(--state-warning)]" />
                       Hạn chế sử dụng
                     </h4>
                     <p
-                      className={`text-sm ${theme === 'dark' ? 'text-[#B0BEC5]' : 'text-gray-700'}`}
+                      className={`text-sm ${theme === 'dark' ? 'text-[var(--clay-muted-soft)]' : 'text-[var(--clay-muted)]'}`}
                     >
                       Nền Tảng không được sử dụng cho các mục đích bất hợp pháp, gian lận, hoặc bất
                       kỳ hoạt động nào vi phạm pháp luật hiện hành. Chúng tôi có quyền từ chối dịch
@@ -700,8 +700,8 @@ const DieuKhoanSuDungPage = () => {
 
                   <div
                     className={`p-5 rounded-lg ${
-                      theme === 'dark' ? 'bg-[#1E272C]' : 'bg-white'
-                    } border ${theme === 'dark' ? 'border-[#455A64]' : 'border-gray-200'} mb-6`}
+                      theme === 'dark' ? 'bg-[var(--clay-surface)]' : 'bg-white'
+                    } border ${theme === 'dark' ? 'border-[var(--clay-muted)]' : 'border-[var(--clay-border)]'} mb-6`}
                   >
                     <h3 className="text-xl font-semibold mb-4">
                       Trách Nhiệm Của Người Tổ Chức Bầu Cử
@@ -710,10 +710,10 @@ const DieuKhoanSuDungPage = () => {
                       <div className="flex">
                         <div
                           className={`w-10 h-10 rounded-full ${
-                            theme === 'dark' ? 'bg-[#37474F]' : 'bg-blue-50'
+                            theme === 'dark' ? 'bg-[var(--clay-text)]' : 'bg-[var(--clay-primary-light)]'
                           } flex items-center justify-center mr-3 flex-shrink-0`}
                         >
-                          <CheckCircle className="h-5 w-5 text-[#0288D1]" />
+                          <CheckCircle className="h-5 w-5 text-[var(--clay-primary)]" />
                         </div>
                         <div>
                           <h4 className="font-medium mb-1">Thiết lập cuộc bầu cử công bằng</h4>
@@ -726,10 +726,10 @@ const DieuKhoanSuDungPage = () => {
                       <div className="flex">
                         <div
                           className={`w-10 h-10 rounded-full ${
-                            theme === 'dark' ? 'bg-[#37474F]' : 'bg-blue-50'
+                            theme === 'dark' ? 'bg-[var(--clay-text)]' : 'bg-[var(--clay-primary-light)]'
                           } flex items-center justify-center mr-3 flex-shrink-0`}
                         >
-                          <CheckCircle className="h-5 w-5 text-[#0288D1]" />
+                          <CheckCircle className="h-5 w-5 text-[var(--clay-primary)]" />
                         </div>
                         <div>
                           <h4 className="font-medium mb-1">Xác minh danh tính người bỏ phiếu</h4>
@@ -742,10 +742,10 @@ const DieuKhoanSuDungPage = () => {
                       <div className="flex">
                         <div
                           className={`w-10 h-10 rounded-full ${
-                            theme === 'dark' ? 'bg-[#37474F]' : 'bg-blue-50'
+                            theme === 'dark' ? 'bg-[var(--clay-text)]' : 'bg-[var(--clay-primary-light)]'
                           } flex items-center justify-center mr-3 flex-shrink-0`}
                         >
-                          <CheckCircle className="h-5 w-5 text-[#0288D1]" />
+                          <CheckCircle className="h-5 w-5 text-[var(--clay-primary)]" />
                         </div>
                         <div>
                           <h4 className="font-medium mb-1">Công bố kết quả chính xác</h4>
@@ -778,8 +778,8 @@ const DieuKhoanSuDungPage = () => {
                     <div
                       className={`p-4 rounded-lg border ${
                         theme === 'dark'
-                          ? 'border-[#455A64] bg-[#1E272C]'
-                          : 'border-gray-200 bg-white'
+                          ? 'border-[var(--clay-muted)] bg-[var(--clay-surface)]'
+                          : 'border-[var(--clay-border)] bg-white'
                       }`}
                     >
                       <h3 className="font-semibold mb-2">Quyền Đình Chỉ Hoặc Chấm Dứt Truy Cập</h3>
@@ -792,8 +792,8 @@ const DieuKhoanSuDungPage = () => {
                     <div
                       className={`p-4 rounded-lg border ${
                         theme === 'dark'
-                          ? 'border-[#455A64] bg-[#1E272C]'
-                          : 'border-gray-200 bg-white'
+                          ? 'border-[var(--clay-muted)] bg-[var(--clay-surface)]'
+                          : 'border-[var(--clay-border)] bg-white'
                       }`}
                     >
                       <h3 className="font-semibold mb-2">Quyền Sửa Đổi Điều Khoản</h3>
@@ -807,8 +807,8 @@ const DieuKhoanSuDungPage = () => {
                     <div
                       className={`p-4 rounded-lg border ${
                         theme === 'dark'
-                          ? 'border-[#455A64] bg-[#1E272C]'
-                          : 'border-gray-200 bg-white'
+                          ? 'border-[var(--clay-muted)] bg-[var(--clay-surface)]'
+                          : 'border-[var(--clay-border)] bg-white'
                       }`}
                     >
                       <h3 className="font-semibold mb-2">Quyền Sửa Đổi Nền Tảng</h3>
@@ -822,8 +822,8 @@ const DieuKhoanSuDungPage = () => {
                     <div
                       className={`p-4 rounded-lg border ${
                         theme === 'dark'
-                          ? 'border-[#455A64] bg-[#1E272C]'
-                          : 'border-gray-200 bg-white'
+                          ? 'border-[var(--clay-muted)] bg-[var(--clay-surface)]'
+                          : 'border-[var(--clay-border)] bg-white'
                       }`}
                     >
                       <h3 className="font-semibold mb-2">Quyền Giám Sát</h3>
@@ -836,12 +836,12 @@ const DieuKhoanSuDungPage = () => {
 
                   <div
                     className={`p-4 rounded-lg ${
-                      theme === 'dark' ? 'bg-[#37474F]' : 'bg-blue-50'
-                    } border-l-4 border-[#0288D1] mb-4`}
+                      theme === 'dark' ? 'bg-[var(--clay-text)]' : 'bg-[var(--clay-primary-light)]'
+                    } border-l-4 border-[var(--clay-primary)] mb-4`}
                   >
                     <h4 className="font-semibold mb-2">Lưu ý quan trọng</h4>
                     <p
-                      className={`text-sm ${theme === 'dark' ? 'text-[#B0BEC5]' : 'text-gray-700'}`}
+                      className={`text-sm ${theme === 'dark' ? 'text-[var(--clay-muted-soft)]' : 'text-[var(--clay-muted)]'}`}
                     >
                       Mặc dù chúng tôi có các quyền nêu trên, chúng tôi không thể và sẽ không can
                       thiệp vào dữ liệu đã được ghi vào blockchain. Tính bất biến của blockchain đảm
@@ -871,8 +871,8 @@ const DieuKhoanSuDungPage = () => {
                     <div
                       className={`p-4 rounded-lg border ${
                         theme === 'dark'
-                          ? 'border-[#455A64] bg-[#1E272C]'
-                          : 'border-gray-200 bg-white'
+                          ? 'border-[var(--clay-muted)] bg-[var(--clay-surface)]'
+                          : 'border-[var(--clay-border)] bg-white'
                       }`}
                     >
                       <h3 className="font-semibold mb-2">Mã Hóa Dữ Liệu</h3>
@@ -884,8 +884,8 @@ const DieuKhoanSuDungPage = () => {
                     <div
                       className={`p-4 rounded-lg border ${
                         theme === 'dark'
-                          ? 'border-[#455A64] bg-[#1E272C]'
-                          : 'border-gray-200 bg-white'
+                          ? 'border-[var(--clay-muted)] bg-[var(--clay-surface)]'
+                          : 'border-[var(--clay-border)] bg-white'
                       }`}
                     >
                       <h3 className="font-semibold mb-2">Xác Thực Đa Yếu Tố</h3>
@@ -897,8 +897,8 @@ const DieuKhoanSuDungPage = () => {
                     <div
                       className={`p-4 rounded-lg border ${
                         theme === 'dark'
-                          ? 'border-[#455A64] bg-[#1E272C]'
-                          : 'border-gray-200 bg-white'
+                          ? 'border-[var(--clay-muted)] bg-[var(--clay-surface)]'
+                          : 'border-[var(--clay-border)] bg-white'
                       }`}
                     >
                       <h3 className="font-semibold mb-2">Kiểm Toán Bảo Mật</h3>
@@ -910,8 +910,8 @@ const DieuKhoanSuDungPage = () => {
                     <div
                       className={`p-4 rounded-lg border ${
                         theme === 'dark'
-                          ? 'border-[#455A64] bg-[#1E272C]'
-                          : 'border-gray-200 bg-white'
+                          ? 'border-[var(--clay-muted)] bg-[var(--clay-surface)]'
+                          : 'border-[var(--clay-border)] bg-white'
                       }`}
                     >
                       <h3 className="font-semibold mb-2">Bảo Vệ Danh Tính</h3>
@@ -924,7 +924,7 @@ const DieuKhoanSuDungPage = () => {
                   <p className={`${secondaryTextColor} mb-4 leading-relaxed`}>
                     Để biết thêm chi tiết về cách chúng tôi thu thập, sử dụng và bảo vệ thông tin cá
                     nhân của bạn, vui lòng tham khảo{' '}
-                    <Link to="/chinh-sach-bao-mat" className={`${highlightColor} hover:underline`}>
+                    <Link to="/privacy" className={`${highlightColor} hover:underline`}>
                       Chính Sách Bảo Mật
                     </Link>{' '}
                     của chúng tôi.
@@ -950,9 +950,9 @@ const DieuKhoanSuDungPage = () => {
                     <div className="absolute inset-0 bg-gradient-to-r from-blue-500 to-purple-600 opacity-10"></div>
                     <div
                       className={`relative p-6 ${
-                        theme === 'dark' ? 'bg-[#1E272C]/80' : 'bg-white/80'
+                        theme === 'dark' ? 'bg-[var(--clay-surface)]/80' : 'bg-white/80'
                       } backdrop-blur-sm border ${
-                        theme === 'dark' ? 'border-[#455A64]' : 'border-gray-200'
+                        theme === 'dark' ? 'border-[var(--clay-muted)]' : 'border-[var(--clay-border)]'
                       }`}
                     >
                       <h3 className="text-xl font-semibold mb-4">
@@ -963,10 +963,10 @@ const DieuKhoanSuDungPage = () => {
                         <div className="flex">
                           <div
                             className={`w-10 h-10 rounded-full ${
-                              theme === 'dark' ? 'bg-[#37474F]' : 'bg-blue-50'
+                              theme === 'dark' ? 'bg-[var(--clay-text)]' : 'bg-[var(--clay-primary-light)]'
                             } flex items-center justify-center mr-3 flex-shrink-0`}
                           >
-                            <span className="font-bold text-[#0288D1]">1</span>
+                            <span className="font-bold text-[var(--clay-primary)]">1</span>
                           </div>
                           <div>
                             <h4 className="font-medium mb-1">Tính Bất Biến</h4>
@@ -980,10 +980,10 @@ const DieuKhoanSuDungPage = () => {
                         <div className="flex">
                           <div
                             className={`w-10 h-10 rounded-full ${
-                              theme === 'dark' ? 'bg-[#37474F]' : 'bg-blue-50'
+                              theme === 'dark' ? 'bg-[var(--clay-text)]' : 'bg-[var(--clay-primary-light)]'
                             } flex items-center justify-center mr-3 flex-shrink-0`}
                           >
-                            <span className="font-bold text-[#0288D1]">2</span>
+                            <span className="font-bold text-[var(--clay-primary)]">2</span>
                           </div>
                           <div>
                             <h4 className="font-medium mb-1">Phân Tán</h4>
@@ -998,10 +998,10 @@ const DieuKhoanSuDungPage = () => {
                         <div className="flex">
                           <div
                             className={`w-10 h-10 rounded-full ${
-                              theme === 'dark' ? 'bg-[#37474F]' : 'bg-blue-50'
+                              theme === 'dark' ? 'bg-[var(--clay-text)]' : 'bg-[var(--clay-primary-light)]'
                             } flex items-center justify-center mr-3 flex-shrink-0`}
                           >
-                            <span className="font-bold text-[#0288D1]">3</span>
+                            <span className="font-bold text-[var(--clay-primary)]">3</span>
                           </div>
                           <div>
                             <h4 className="font-medium mb-1">Mã Hóa</h4>
@@ -1015,10 +1015,10 @@ const DieuKhoanSuDungPage = () => {
                         <div className="flex">
                           <div
                             className={`w-10 h-10 rounded-full ${
-                              theme === 'dark' ? 'bg-[#37474F]' : 'bg-blue-50'
+                              theme === 'dark' ? 'bg-[var(--clay-text)]' : 'bg-[var(--clay-primary-light)]'
                             } flex items-center justify-center mr-3 flex-shrink-0`}
                           >
-                            <span className="font-bold text-[#0288D1]">4</span>
+                            <span className="font-bold text-[var(--clay-primary)]">4</span>
                           </div>
                           <div>
                             <h4 className="font-medium mb-1">Minh Bạch</h4>
@@ -1034,15 +1034,15 @@ const DieuKhoanSuDungPage = () => {
 
                   <div
                     className={`p-4 rounded-lg ${
-                      theme === 'dark' ? 'bg-[#37474F]' : 'bg-amber-50'
-                    } border-l-4 border-amber-500 mb-4`}
+                      theme === 'dark' ? 'bg-[var(--clay-text)]' : 'bg-[var(--state-warning-soft)]'
+                    } border-l-4 border-[var(--state-warning)] mb-4`}
                   >
                     <h4 className="font-semibold mb-2 flex items-center">
-                      <AlertTriangle className="h-5 w-5 mr-2 text-amber-500" />
+                      <AlertTriangle className="h-5 w-5 mr-2 text-[var(--state-warning)]" />
                       Lưu ý quan trọng
                     </h4>
                     <p
-                      className={`text-sm ${theme === 'dark' ? 'text-[#B0BEC5]' : 'text-gray-700'}`}
+                      className={`text-sm ${theme === 'dark' ? 'text-[var(--clay-muted-soft)]' : 'text-[var(--clay-muted)]'}`}
                     >
                       Mặc dù blockchain cung cấp mức độ bảo mật cao, nhưng không có hệ thống nào là
                       hoàn toàn không thể bị tấn công. Chúng tôi liên tục cập nhật và cải tiến các
@@ -1072,8 +1072,8 @@ const DieuKhoanSuDungPage = () => {
                     <div
                       className={`p-4 rounded-lg border ${
                         theme === 'dark'
-                          ? 'border-[#455A64] bg-[#1E272C]'
-                          : 'border-gray-200 bg-white'
+                          ? 'border-[var(--clay-muted)] bg-[var(--clay-surface)]'
+                          : 'border-[var(--clay-border)] bg-white'
                       }`}
                     >
                       <h3 className="font-semibold mb-2">Giấy Phép Sử Dụng</h3>
@@ -1088,8 +1088,8 @@ const DieuKhoanSuDungPage = () => {
                     <div
                       className={`p-4 rounded-lg border ${
                         theme === 'dark'
-                          ? 'border-[#455A64] bg-[#1E272C]'
-                          : 'border-gray-200 bg-white'
+                          ? 'border-[var(--clay-muted)] bg-[var(--clay-surface)]'
+                          : 'border-[var(--clay-border)] bg-white'
                       }`}
                     >
                       <h3 className="font-semibold mb-2">Hạn Chế</h3>
@@ -1104,8 +1104,8 @@ const DieuKhoanSuDungPage = () => {
                     <div
                       className={`p-4 rounded-lg border ${
                         theme === 'dark'
-                          ? 'border-[#455A64] bg-[#1E272C]'
-                          : 'border-gray-200 bg-white'
+                          ? 'border-[var(--clay-muted)] bg-[var(--clay-surface)]'
+                          : 'border-[var(--clay-border)] bg-white'
                       }`}
                     >
                       <h3 className="font-semibold mb-2">Phản Hồi</h3>
@@ -1119,12 +1119,12 @@ const DieuKhoanSuDungPage = () => {
 
                   <div
                     className={`p-4 rounded-lg ${
-                      theme === 'dark' ? 'bg-[#37474F]' : 'bg-blue-50'
-                    } border-l-4 border-[#0288D1] mb-4`}
+                      theme === 'dark' ? 'bg-[var(--clay-text)]' : 'bg-[var(--clay-primary-light)]'
+                    } border-l-4 border-[var(--clay-primary)] mb-4`}
                   >
                     <h4 className="font-semibold mb-2">Lưu ý về phần mềm mã nguồn mở</h4>
                     <p
-                      className={`text-sm ${theme === 'dark' ? 'text-[#B0BEC5]' : 'text-gray-700'}`}
+                      className={`text-sm ${theme === 'dark' ? 'text-[var(--clay-muted-soft)]' : 'text-[var(--clay-muted)]'}`}
                     >
                       Nền Tảng của chúng tôi có thể sử dụng một số phần mềm mã nguồn mở. Các thành
                       phần mã nguồn mở này được cấp phép theo các điều khoản riêng của chúng, và
@@ -1173,8 +1173,8 @@ const DieuKhoanSuDungPage = () => {
 
                   <div
                     className={`p-5 rounded-lg ${
-                      theme === 'dark' ? 'bg-[#1E272C]' : 'bg-white'
-                    } border ${theme === 'dark' ? 'border-[#455A64]' : 'border-gray-200'} mb-6`}
+                      theme === 'dark' ? 'bg-[var(--clay-surface)]' : 'bg-white'
+                    } border ${theme === 'dark' ? 'border-[var(--clay-muted)]' : 'border-[var(--clay-border)]'} mb-6`}
                   >
                     <h3 className="text-xl font-semibold mb-4">Luật Áp Dụng</h3>
                     <p className={`${secondaryTextColor} mb-4`}>
@@ -1201,15 +1201,15 @@ const DieuKhoanSuDungPage = () => {
                 <div className="ml-16">
                   <div
                     className={`p-4 rounded-lg ${
-                      theme === 'dark' ? 'bg-[#37474F]' : 'bg-amber-50'
-                    } border-l-4 border-amber-500 mb-6`}
+                      theme === 'dark' ? 'bg-[var(--clay-text)]' : 'bg-[var(--state-warning-soft)]'
+                    } border-l-4 border-[var(--state-warning)] mb-6`}
                   >
                     <h4 className="font-semibold mb-2 flex items-center">
-                      <AlertTriangle className="h-5 w-5 mr-2 text-amber-500" />
+                      <AlertTriangle className="h-5 w-5 mr-2 text-[var(--state-warning)]" />
                       Lưu ý quan trọng
                     </h4>
                     <p
-                      className={`text-sm ${theme === 'dark' ? 'text-[#B0BEC5]' : 'text-gray-700'}`}
+                      className={`text-sm ${theme === 'dark' ? 'text-[var(--clay-muted-soft)]' : 'text-[var(--clay-muted)]'}`}
                     >
                       NỀN TẢNG ĐƯỢC CUNG CẤP "NGUYÊN TRẠNG" VÀ "NHƯ CÓ SẴN" MÀ KHÔNG CÓ BẤT KỲ BẢO
                       ĐẢM NÀO, DÙ RÕ RÀNG HAY NGỤ Ý.
@@ -1246,8 +1246,8 @@ const DieuKhoanSuDungPage = () => {
 
                   <div
                     className={`p-4 rounded-lg ${
-                      theme === 'dark' ? 'bg-[#1E272C]' : 'bg-gray-50'
-                    } border ${theme === 'dark' ? 'border-[#455A64]' : 'border-gray-200'} mb-4`}
+                      theme === 'dark' ? 'bg-[var(--clay-surface)]' : 'bg-[var(--clay-surface-soft)]'
+                    } border ${theme === 'dark' ? 'border-[var(--clay-muted)]' : 'border-[var(--clay-border)]'} mb-4`}
                   >
                     <h4 className="font-semibold mb-2">Rủi Ro Công Nghệ Blockchain</h4>
                     <p className={`text-sm ${secondaryTextColor}`}>
@@ -1278,8 +1278,8 @@ const DieuKhoanSuDungPage = () => {
                     <div
                       className={`p-4 rounded-lg border ${
                         theme === 'dark'
-                          ? 'border-[#455A64] bg-[#1E272C]'
-                          : 'border-gray-200 bg-white'
+                          ? 'border-[var(--clay-muted)] bg-[var(--clay-surface)]'
+                          : 'border-[var(--clay-border)] bg-white'
                       }`}
                     >
                       <h3 className="font-semibold mb-2">Thông Báo Thay Đổi</h3>
@@ -1294,8 +1294,8 @@ const DieuKhoanSuDungPage = () => {
                     <div
                       className={`p-4 rounded-lg border ${
                         theme === 'dark'
-                          ? 'border-[#455A64] bg-[#1E272C]'
-                          : 'border-gray-200 bg-white'
+                          ? 'border-[var(--clay-muted)] bg-[var(--clay-surface)]'
+                          : 'border-[var(--clay-border)] bg-white'
                       }`}
                     >
                       <h3 className="font-semibold mb-2">Chấp Nhận Thay Đổi</h3>
@@ -1309,20 +1309,20 @@ const DieuKhoanSuDungPage = () => {
 
                   <div
                     className={`p-4 rounded-lg ${
-                      theme === 'dark' ? 'bg-[#37474F]' : 'bg-blue-50'
-                    } border-l-4 border-[#0288D1] mb-4`}
+                      theme === 'dark' ? 'bg-[var(--clay-text)]' : 'bg-[var(--clay-primary-light)]'
+                    } border-l-4 border-[var(--clay-primary)] mb-4`}
                   >
                     <h4 className="font-semibold mb-2">Lịch sử thay đổi</h4>
                     <ul className="space-y-2 text-sm">
-                      <li className={theme === 'dark' ? 'text-[#B0BEC5]' : 'text-gray-700'}>
+                      <li className={theme === 'dark' ? 'text-[var(--clay-muted-soft)]' : 'text-[var(--clay-muted)]'}>
                         <span className="font-medium">Phiên bản 2.1.0 (15/03/2025):</span> Cập nhật
                         các điều khoản về bảo mật blockchain và quyền sở hữu trí tuệ.
                       </li>
-                      <li className={theme === 'dark' ? 'text-[#B0BEC5]' : 'text-gray-700'}>
+                      <li className={theme === 'dark' ? 'text-[var(--clay-muted-soft)]' : 'text-[var(--clay-muted)]'}>
                         <span className="font-medium">Phiên bản 2.0.0 (10/01/2025):</span> Cập nhật
                         toàn diện các điều khoản để phản ánh các tính năng mới của Nền Tảng.
                       </li>
-                      <li className={theme === 'dark' ? 'text-[#B0BEC5]' : 'text-gray-700'}>
+                      <li className={theme === 'dark' ? 'text-[var(--clay-muted-soft)]' : 'text-[var(--clay-muted)]'}>
                         <span className="font-medium">Phiên bản 1.0.0 (01/06/2024):</span> Phiên bản
                         ban đầu.
                       </li>
@@ -1349,17 +1349,17 @@ const DieuKhoanSuDungPage = () => {
                     <div
                       className={`p-4 rounded-lg border ${
                         theme === 'dark'
-                          ? 'border-[#455A64] bg-[#1E272C]'
-                          : 'border-gray-200 bg-white'
+                          ? 'border-[var(--clay-muted)] bg-[var(--clay-surface)]'
+                          : 'border-[var(--clay-border)] bg-white'
                       } flex items-start space-x-3`}
                     >
                       <div
                         className={`p-2 rounded-full ${
-                          theme === 'dark' ? 'bg-[#37474F]' : 'bg-blue-50'
+                          theme === 'dark' ? 'bg-[var(--clay-text)]' : 'bg-[var(--clay-primary-light)]'
                         }`}
                       >
                         <svg
-                          className="h-5 w-5 text-[#0288D1]"
+                          className="h-5 w-5 text-[var(--clay-primary)]"
                           fill="none"
                           viewBox="0 0 24 24"
                           stroke="currentColor"
@@ -1385,17 +1385,17 @@ const DieuKhoanSuDungPage = () => {
                     <div
                       className={`p-4 rounded-lg border ${
                         theme === 'dark'
-                          ? 'border-[#455A64] bg-[#1E272C]'
-                          : 'border-gray-200 bg-white'
+                          ? 'border-[var(--clay-muted)] bg-[var(--clay-surface)]'
+                          : 'border-[var(--clay-border)] bg-white'
                       } flex items-start space-x-3`}
                     >
                       <div
                         className={`p-2 rounded-full ${
-                          theme === 'dark' ? 'bg-[#37474F]' : 'bg-blue-50'
+                          theme === 'dark' ? 'bg-[var(--clay-text)]' : 'bg-[var(--clay-primary-light)]'
                         }`}
                       >
                         <svg
-                          className="h-5 w-5 text-[#0288D1]"
+                          className="h-5 w-5 text-[var(--clay-primary)]"
                           fill="none"
                           viewBox="0 0 24 24"
                           stroke="currentColor"
@@ -1418,17 +1418,17 @@ const DieuKhoanSuDungPage = () => {
                     <div
                       className={`p-4 rounded-lg border ${
                         theme === 'dark'
-                          ? 'border-[#455A64] bg-[#1E272C]'
-                          : 'border-gray-200 bg-white'
+                          ? 'border-[var(--clay-muted)] bg-[var(--clay-surface)]'
+                          : 'border-[var(--clay-border)] bg-white'
                       } flex items-start space-x-3`}
                     >
                       <div
                         className={`p-2 rounded-full ${
-                          theme === 'dark' ? 'bg-[#37474F]' : 'bg-blue-50'
+                          theme === 'dark' ? 'bg-[var(--clay-text)]' : 'bg-[var(--clay-primary-light)]'
                         }`}
                       >
                         <svg
-                          className="h-5 w-5 text-[#0288D1]"
+                          className="h-5 w-5 text-[var(--clay-primary)]"
                           fill="none"
                           viewBox="0 0 24 24"
                           stroke="currentColor"
@@ -1457,17 +1457,17 @@ const DieuKhoanSuDungPage = () => {
                     <div
                       className={`p-4 rounded-lg border ${
                         theme === 'dark'
-                          ? 'border-[#455A64] bg-[#1E272C]'
-                          : 'border-gray-200 bg-white'
+                          ? 'border-[var(--clay-muted)] bg-[var(--clay-surface)]'
+                          : 'border-[var(--clay-border)] bg-white'
                       } flex items-start space-x-3`}
                     >
                       <div
                         className={`p-2 rounded-full ${
-                          theme === 'dark' ? 'bg-[#37474F]' : 'bg-blue-50'
+                          theme === 'dark' ? 'bg-[var(--clay-text)]' : 'bg-[var(--clay-primary-light)]'
                         }`}
                       >
                         <svg
-                          className="h-5 w-5 text-[#0288D1]"
+                          className="h-5 w-5 text-[var(--clay-primary)]"
                           fill="none"
                           viewBox="0 0 24 24"
                           stroke="currentColor"
@@ -1482,7 +1482,7 @@ const DieuKhoanSuDungPage = () => {
                       </div>
                       <div>
                         <h3 className="font-semibold mb-1">Hỗ Trợ</h3>
-                        <Link to="/lien-he" className={`${highlightColor} hover:underline`}>
+                        <Link to="/contact" className={`${highlightColor} hover:underline`}>
                           Gửi yêu cầu hỗ trợ
                         </Link>
                       </div>
@@ -1497,8 +1497,8 @@ const DieuKhoanSuDungPage = () => {
                       </p>
                     </div>
                     <Link
-                      to="/lien-he"
-                      className="px-6 py-3 bg-white text-blue-600 rounded-lg font-medium hover:bg-blue-50 transition-colors shadow-lg"
+                      to="/contact"
+                      className="px-6 py-3 bg-white text-[var(--clay-primary)] rounded-lg font-medium hover:bg-[var(--clay-primary-light)] transition-colors shadow-lg"
                     >
                       Liên Hệ Ngay
                     </Link>
@@ -1516,11 +1516,11 @@ const DieuKhoanSuDungPage = () => {
                 Trang Chủ
               </Link>
               <span className={secondaryTextColor}>•</span>
-              <Link to="/chinh-sach-bao-mat" className={`${highlightColor} hover:underline`}>
+              <Link to="/privacy" className={`${highlightColor} hover:underline`}>
                 Chính Sách Bảo Mật
               </Link>
               <span className={secondaryTextColor}>•</span>
-              <Link to="/lien-he" className={`${highlightColor} hover:underline`}>
+              <Link to="/contact" className={`${highlightColor} hover:underline`}>
                 Liên Hệ
               </Link>
             </div>
@@ -1534,8 +1534,8 @@ const DieuKhoanSuDungPage = () => {
           onClick={scrollToTop}
           className={`fixed bottom-6 right-6 p-3 rounded-full shadow-lg z-50 transition-all duration-300 ${
             theme === 'dark'
-              ? 'bg-[#0288D1] hover:bg-[#01579B] text-white'
-              : 'bg-blue-600 hover:bg-blue-700 text-white'
+              ? 'bg-[var(--clay-primary)] hover:bg-[var(--clay-primary-dark)] text-white'
+              : 'bg-[var(--clay-primary)] hover:bg-[var(--clay-primary-dark)] text-white'
           }`}
           aria-label="Lên đầu trang"
         >

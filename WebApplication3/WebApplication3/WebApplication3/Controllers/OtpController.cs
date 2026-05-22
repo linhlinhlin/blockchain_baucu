@@ -166,7 +166,8 @@ namespace WebApplication3.Controllers
 
             // Render và gửi email 
             var emailContent = await _razorViewToStringRenderer.RenderViewToStringAsync("/Views/Email/VoterVerificationEmail.cshtml", otpModel, viewData);
-            await _emailService.SendEmailAsync(request.Email, viewData["EmailTitle"].ToString(), emailContent);
+            var emailTitle = viewData["EmailTitle"]?.ToString() ?? "Xác thực cử tri cho phiên bầu cử";
+            await _emailService.SendEmailAsync(request.Email, emailTitle, emailContent);
 
             return Ok(new
             {
@@ -286,7 +287,8 @@ namespace WebApplication3.Controllers
                 ["LyDo"] = lyDoText
             };
             var supportEmailContent = await _razorViewToStringRenderer.RenderViewToStringAsync("/Views/Email/ContactEmail.cshtml", request, supportViewData);
-            await _emailService.SendEmailAsync("hungkhp888@gmail.com", supportViewData["EmailTitle"].ToString(), supportEmailContent);
+            var supportEmailTitle = supportViewData["EmailTitle"]?.ToString() ?? "Yêu cầu liên hệ mới từ khách hàng";
+            await _emailService.SendEmailAsync("hungkhp888@gmail.com", supportEmailTitle, supportEmailContent);
 
             // 2. Gửi email xác nhận đến người dùng
             var userViewData = new ViewDataDictionary(new EmptyModelMetadataProvider(), new ModelStateDictionary())
@@ -297,7 +299,8 @@ namespace WebApplication3.Controllers
                 ["LyDo"] = lyDoText
             };
             var userEmailContent = await _razorViewToStringRenderer.RenderViewToStringAsync("/Views/Email/ConfirmationEmail.cshtml", request, userViewData);
-            await _emailService.SendEmailAsync(request.Email, userViewData["EmailTitle"].ToString(), userEmailContent);
+            var userEmailTitle = userViewData["EmailTitle"]?.ToString() ?? "Xác nhận yêu cầu hỗ trợ của bạn";
+            await _emailService.SendEmailAsync(request.Email, userEmailTitle, userEmailContent);
 
             return Ok(new { success = true, message = "Yêu cầu liên hệ đã được gửi thành công và email xác nhận đã được gửi đến bạn." });
         }
@@ -328,28 +331,24 @@ namespace WebApplication3.Controllers
             };
 
             var emailContent = await _razorViewToStringRenderer.RenderViewToStringAsync("/Views/Email/WelcomeEmail.cshtml", request, viewData);
-            await _emailService.SendEmailAsync(request.Email, viewData["EmailTitle"].ToString(), emailContent);
+            var emailTitle = viewData["EmailTitle"]?.ToString() ?? "Chào mừng bạn đến với Bầu cử Blockchain Holihu";
+            await _emailService.SendEmailAsync(request.Email, emailTitle, emailContent);
 
             return Ok(new { success = true, message = "Đăng ký thành công! Vui lòng kiểm tra email để xem thông tin chào mừng." });
         }
 
         private string GenerateOtp()
         {
-            var random = new Random();
-            return random.Next(100000, 999999).ToString();
+            return RandomNumberGenerator.GetInt32(100000, 1000000).ToString();
         }
 
         private string GenerateVerificationToken()
         {
-            using (var cryptoProvider = new RNGCryptoServiceProvider())
-            {
-                var tokenData = new byte[32]; // 32 bytes = 256 bits
-                cryptoProvider.GetBytes(tokenData);
-                return Convert.ToBase64String(tokenData)
-                    .Replace("+", "-")
-                    .Replace("/", "_")
-                    .Replace("=", "");
-            }
+            var tokenData = RandomNumberGenerator.GetBytes(32); // 32 bytes = 256 bits
+            return Convert.ToBase64String(tokenData)
+                .Replace("+", "-")
+                .Replace("/", "_")
+                .Replace("=", "");
         }
     }
 

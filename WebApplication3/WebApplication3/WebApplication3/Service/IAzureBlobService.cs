@@ -15,7 +15,7 @@ namespace WebApplication3.Services
         Task<bool> BlobExistsAsync(string fileName);
         // Thêm phương thức GenerateSasToken vào interface
         string GenerateSasToken(string fileName, int expiryMinutes = 30);
-        Task<string> GenerateBlobUrl(string fileName);
+        string GenerateBlobUrl(string fileName);
 
     }
 }

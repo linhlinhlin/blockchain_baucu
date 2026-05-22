@@ -40,8 +40,9 @@ services:
       ElectionV1Settings__ContractsRootPath: /workspace/blockchain_sm
       ElectionV1Settings__RpcUrl: "https://ethereum-sepolia-rpc.publicnode.com"
       DevelopmentAuthSettings__Enabled: "true"
-      LegacyBlockchainSettings__Enabled: "false"
-      RecaptchaSettings__Enabled: "false"
+      RecaptchaSettings__Enabled: ${RECAPTCHA_ENABLED:-false}
+      RecaptchaSettings__SecretKey: ${RECAPTCHA_SECRET_KEY:-}
+      RecaptchaSettings__ScoreThreshold: ${RECAPTCHA_SCORE_THRESHOLD:-0.5}
       JwtSettings__Secret: ${JWT_SECRET:?JWT_SECRET chua duoc dat - tao .env tu .env.example (>=32 ky tu). spec 001/S3}
       JwtSettings__Issuer: HoLiHu.Local
       JwtSettings__Audience: HoLiHu.Local.Client
@@ -71,7 +72,8 @@ services:
         condition: service_healthy
     environment:
       VITE_API_BASE_URL: http://localhost:5293
-      VITE_RECAPTCHA_ENABLED: "false"
+      VITE_RECAPTCHA_ENABLED: ${VITE_RECAPTCHA_ENABLED:-false}
+      VITE_RECAPTCHA_SITE_KEY: ${RECAPTCHA_SITE_KEY:-}
       VITE_RPC_URL: https://ethereum-sepolia-rpc.publicnode.com
     ports:
       - "3000:3000"

@@ -4,6 +4,12 @@
 - **Branch**: `003-legacy-cleanup` (stack trên 002)
 - **Ngày**: 2026-05-19
 
+## Follow-up 2026-05-20
+
+- Backend legacy AA/private-chain cleanup completed: removed `BlockchainService`, `BundlerService`, `SessionService`, `BlockchainServerService`, hosted services, legacy controllers, `LegacyBlockchainSettings`, AA ABIs, `UserOperation`, `KhoaPhien`, and `BlockchainTransaction`.
+- Active web2 wallet lookup remains through `IBlockchainLookupService`; no legacy chain writer is registered.
+- Frontend route/import cleanup completed for the active bundle; no suspicious reachable legacy UI surface remains.
+
 ## Phương pháp
 
 Một agent phân tích import-closure từ entry thực `src/index.tsx` + `AppRoutes.tsx` (207 reachable / 424). Chỉ xóa **cụm dead 0-blocker** đã xác minh không file reachable nào import (verify lại bằng grep pattern import chính xác → 0 match). Vite chỉ bundle file reachable ⇒ xóa dead không phá runtime.
@@ -32,8 +38,8 @@ Verify: `grep` pattern import chính xác cho mọi module đã xóa → **0 fil
 
 ## Quyết định scope (ghi nhận trung thực)
 
-1. **Backend legacy gating — KHÔNG làm ở Đợt 3 (deferred).** Audit infra đề nghị gate toàn bộ đăng ký legacy sau `LegacyBlockchainSettings.Enabled`. Nhưng controller web2 **active** (`TaiKhoanController`, `UngCuVienController`, `CuocBauCuController`) **vẫn inject** `BlockchainService`/`IBlockchainLookupService`/`BundlerService`/`SessionService`. Gate sẽ làm vỡ các controller active khi `Enabled=false` (compose đang đặt false). Decoupling đúng = refactor "thin backend" — effort riêng, ngoài scope dọn-file. Hosted services legacy (event listener, session cleanup) **đã** được gate sẵn (đúng).
-2. **Deep dead-code purge — phần còn lại là follow-up.** Còn ~150 file dead misc + nhánh route-redirect legacy (ElectionSessionManagerPage, PhienBauCuBlockchainDeploymentPage, các `*WithId` wrapper, components blockchain/capphieu, ChinhSuaPhienBauCuPage…) bị `AppRoutes` static-import ⇒ phải route-surgery (xóa import + route block theo chuỗi). Rủi ro cao, churn lớn; để follow-up có kiểm thử UI. Đã xóa phần **giá trị bảo mật cao + 0-blocker** trước (key residue, geth URL, AA ABI, paymaster/session UI bophieu).
+1. **Backend legacy cleanup ? completed in follow-up 2026-05-20.** The original dot3 deferred this because active web2 controllers still injected legacy services. The follow-up decoupled those controllers and removed the AA/private-chain runtime stack while retaining DB wallet lookup.
+2. **Deep dead-code purge ? completed for active bundle in follow-up 2026-05-20.** Remaining references to legacy terms in this document are historical evidence, not active source behavior.
 
 ## Trạng thái verify
 
@@ -42,7 +48,7 @@ Verify: `grep` pattern import chính xác cho mọi module đã xóa → **0 fil
 | FE deletions | 0 file reachable import module đã xóa; vite tree-shake dead |
 | FE deps | `npm install` gỡ 134 pkg, lockfile khớp package.json |
 | Contracts | `npm run compile` OK; `npm test` 9/9 |
-| Backend | Không đổi ở Đợt 3 (gating deferred có lý do) |
+| Backend | Follow-up 2026-05-20: `dotnet build WebApplication3/WebApplication3/WebApplication3.sln -c Debug -v:minimal` OK |
 | Active jest | `electionCreateFlow.test.ts` (xem kết quả commit) |
 
 Giới hạn Node 25 (full `tsc`/`vite build` bất khả thi) vẫn áp dụng — pin Node LTS là **Đợt 4 (S19)**, lúc đó chạy được full build để xác nhận bundle sạch sau dọn legacy.

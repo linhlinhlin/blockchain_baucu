@@ -6,6 +6,7 @@ import { fetchCacCuocBauCu } from '../store/slice/cuocBauCuSlice';
 import ElectionCard from '../features/CardCuocBauCu';
 import SEO from '../components/SEO';
 import ThongBaoKhongCoCuocBauCu from '../components/ThongBaoKhongCoCuocBauCu';
+import { Loader } from '../components/ui/clay';
 
 const CacCuocBauCuPage: React.FC = () => {
   const [searchParams] = useSearchParams();
@@ -48,15 +49,19 @@ const CacCuocBauCuPage: React.FC = () => {
         url={window.location.href}
         image={`${window.location.origin}/logo.png`}
       />
-      <div className="min-h-screen p-5 bg-gray-100">
-        <div className="container mx-auto">
-          <h1 className="text-4xl font-bold text-center text-slate-600 mb-5">Các Cuộc Bầu Cử</h1>
+      <div className="min-h-screen bg-[var(--clay-bg)] p-5 text-[var(--clay-text)] sm:p-6 lg:p-8">
+        <div className="mx-auto max-w-[1440px]">
+          <h1 className="mb-6 text-[1.75rem] font-semibold tracking-[-0.015em] text-[var(--clay-text)]">
+            Các cuộc bầu cử
+          </h1>
           {dangTai ? (
-            <p className="text-center">Đang tải...</p>
+            <div className="flex justify-center py-16">
+              <Loader label="Đang tải danh sách…" />
+            </div>
           ) : filteredElections.length === 0 ? (
             <ThongBaoKhongCoCuocBauCu />
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
               {filteredElections.map((cuocBauCu) => (
                 <ElectionCard key={cuocBauCu.id} election={cuocBauCu} />
               ))}

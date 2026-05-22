@@ -1,29 +1,18 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
-import { nodePolyfills } from 'vite-plugin-node-polyfills';
 import fs from 'fs';
 import path from 'path';
 
 export default defineConfig({
-  plugins: [
-    react(),
-    nodePolyfills({
-      include: ['buffer', 'process', 'util', 'stream', 'events'],
-    }),
-  ],
-  define: {
-    'process.env': {},
-    global: 'globalThis',
-  },
+  plugins: [react()],
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),
-      three: path.resolve('node_modules/three'),
     },
   },
   build: {
     outDir: 'build',
-    chunkSizeWarningLimit: 6000, // Tăng giới hạn cảnh báo
+    chunkSizeWarningLimit: 1200,
     commonjsOptions: {
       transformMixedEsModules: true,
     },
@@ -31,18 +20,9 @@ export default defineConfig({
       output: {
         manualChunks: {
           vendor: ['react', 'react-dom', 'react-router-dom'],
-          ui: ['framer-motion', '@headlessui/react'],
+          ui: ['framer-motion'],
           web3: ['ethers'],
-          three: ['three', '@react-three/fiber', '@react-three/drei'],
         },
-      },
-    },
-  },
-  optimizeDeps: {
-    include: ['three'],
-    esbuildOptions: {
-      define: {
-        global: 'globalThis',
       },
     },
   },

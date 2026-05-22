@@ -144,7 +144,7 @@ namespace WebApplication3.Controllers
         public async Task<ActionResult<IEnumerable<CuTriDTO>>> GetCuTrisByTenPhienBauCu(string tenPhienBauCu)
         {
             return await _context.CuTris
-                .Where(c => c.PhienBauCu.TenPhienBauCu == tenPhienBauCu)
+                .Where(c => c.PhienBauCu != null && c.PhienBauCu.TenPhienBauCu == tenPhienBauCu)
                 .Select(c => new CuTriDTO
                 {
                     Id = c.Id,
@@ -296,6 +296,11 @@ namespace WebApplication3.Controllers
                 return BadRequest(new { success = false, message = "Cử tri không có địa chỉ email để gửi xác thực" });
             }
 
+            if (!cuTri.PhienBauCuId.HasValue)
+            {
+                return BadRequest(new { success = false, message = "Cử tri chưa thuộc phiên bầu cử nào để gửi xác thực" });
+            }
+
             try
             {
                 // Gửi email xác thực
@@ -398,6 +403,18 @@ namespace WebApplication3.Controllers
                     continue;
                 }
 
+                if (!cuTri.PhienBauCuId.HasValue)
+                {
+                    ketQua.Add(new
+                    {
+                        id,
+                        thanhCong = false,
+                        message = "Cử tri chưa thuộc phiên bầu cử nào để gửi xác thực",
+                        status = "no_session"
+                    });
+                    continue;
+                }
+
                 try
                 {
                     // Gửi email xác thực
@@ -459,8 +476,8 @@ namespace WebApplication3.Controllers
 
             var cuTri = new CuTri
             {
-                Sdt = cuTriDTO.Sdt,
-                Email = cuTriDTO.Email,
+                Sdt = cuTriDTO.Sdt ?? string.Empty,
+                Email = cuTriDTO.Email ?? string.Empty,
                 XacMinh = false, // Mặc định là chưa xác thực khi thêm mới
                 BoPhieu = cuTriDTO.BoPhieu ?? false,
                 SoLanGuiOtp = cuTriDTO.SoLanGuiOtp,
@@ -494,12 +511,15 @@ namespace WebApplication3.Controllers
                     // Có tài khoản nhưng chưa có ví -> gửi email xác thực
                     if (!string.IsNullOrEmpty(cuTri.Email))
                     {
-                        await _otpController.SendVoterVerification(new VoterVerificationRequest
+                        if (cuTri.PhienBauCuId.HasValue)
                         {
-                            Email = cuTri.Email,
-                            PhienBauCuId = cuTri.PhienBauCuId.Value,
-                            CuocBauCuId = cuTri.CuocBauCuId
-                        });
+                            await _otpController.SendVoterVerification(new VoterVerificationRequest
+                            {
+                                Email = cuTri.Email,
+                                PhienBauCuId = cuTri.PhienBauCuId.Value,
+                                CuocBauCuId = cuTri.CuocBauCuId
+                            });
+                        }
                     }
                 }
             }
@@ -508,12 +528,15 @@ namespace WebApplication3.Controllers
                 // Chưa có tài khoản -> gửi email xác thực
                 if (!string.IsNullOrEmpty(cuTri.Email))
                 {
-                    await _otpController.SendVoterVerification(new VoterVerificationRequest
+                    if (cuTri.PhienBauCuId.HasValue)
                     {
-                        Email = cuTri.Email,
-                        PhienBauCuId = cuTri.PhienBauCuId.Value,
-                        CuocBauCuId = cuTri.CuocBauCuId
-                    });
+                        await _otpController.SendVoterVerification(new VoterVerificationRequest
+                        {
+                            Email = cuTri.Email,
+                            PhienBauCuId = cuTri.PhienBauCuId.Value,
+                            CuocBauCuId = cuTri.CuocBauCuId
+                        });
+                    }
                 }
             }
 
@@ -549,7 +572,7 @@ namespace WebApplication3.Controllers
             // Lấy tất cả phiên bầu cử trong danh sách cử tri
             var phienBauCuIds = cuTriDTOs
                 .Where(c => c.PhienBauCuId.HasValue)
-                .Select(c => c.PhienBauCuId.Value)
+                .Select(c => c.PhienBauCuId.GetValueOrDefault())
                 .Distinct()
                 .ToList();
 
@@ -712,7 +735,7 @@ namespace WebApplication3.Controllers
 
             // Gửi email xác thực sau khi lưu thành công
             var cuTrisCanGuiEmail = cuTrisSaved
-                .Where(c => !c.XacMinh && !string.IsNullOrEmpty(c.Email))
+                .Where(c => !c.XacMinh && !string.IsNullOrEmpty(c.Email) && c.PhienBauCuId.HasValue)
                 .ToList();
 
             if (cuTrisCanGuiEmail.Any())
@@ -721,10 +744,11 @@ namespace WebApplication3.Controllers
                 {
                     try
                     {
+                        var phienBauCuId = cuTri.PhienBauCuId.GetValueOrDefault();
                         await _otpController.SendVoterVerification(new VoterVerificationRequest
                         {
                             Email = cuTri.Email,
-                            PhienBauCuId = cuTri.PhienBauCuId.Value,
+                            PhienBauCuId = phienBauCuId,
                             CuocBauCuId = cuTri.CuocBauCuId
                         });
 
@@ -787,8 +811,8 @@ namespace WebApplication3.Controllers
                 }
             }
 
-            cuTri.Sdt = cuTriDTO.Sdt;
-            cuTri.Email = cuTriDTO.Email;
+            cuTri.Sdt = cuTriDTO.Sdt ?? string.Empty;
+            cuTri.Email = cuTriDTO.Email ?? string.Empty;
             cuTri.XacMinh = cuTriDTO.XacMinh;
             cuTri.BoPhieu = cuTriDTO.BoPhieu ?? false;
             cuTri.SoLanGuiOtp = cuTriDTO.SoLanGuiOtp;
@@ -891,7 +915,7 @@ namespace WebApplication3.Controllers
             // Kiểm tra tài khoản và ví blockchain
             bool hasTaiKhoan = cuTri.TaiKhoanId.HasValue && cuTri.TaiKhoanId > 0;
             bool hasBlockchainWallet = false;
-            string blockchainAddress = null; // Thêm biến này để lưu địa chỉ ví
+            string? blockchainAddress = null; // Thêm biến này để lưu địa chỉ ví
 
             if (hasTaiKhoan)
             {

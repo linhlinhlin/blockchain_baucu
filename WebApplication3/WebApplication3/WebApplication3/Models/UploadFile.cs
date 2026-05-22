@@ -8,7 +8,7 @@ namespace WebApplication3.Models
     {
         // Chỉ nhận file từ request
         [Required]
-        public IFormFile File { get; set; }
+        public IFormFile File { get; set; } = null!;
 
         [Required]
         public int TaiKhoanUploadId { get; set; }
@@ -19,14 +19,14 @@ namespace WebApplication3.Models
         [Required]
         public int CuocBauCuUploadId { get; set; }
 
-        // 🔥 Đảm bảo ASP.NET Core bỏ qua các trường này trong binding
-        public string TenFileDuocTao { get; set; }
-        public string TenFileGoc { get; set; }
-        public string FileUrl { get; set; }
-        public string NoiDungType { get; set; }
+        // Đảm bảo ASP.NET Core bỏ qua các trường này trong binding
+        public string TenFileDuocTao { get; set; } = string.Empty;
+        public string TenFileGoc { get; set; } = string.Empty;
+        public string FileUrl { get; set; } = string.Empty;
+        public string NoiDungType { get; set; } = string.Empty;
         public long KichThuoc { get; set; }
-        public string KichThuocHienThi { get; set; } // Updated to store display size
-        public string NgayHienThi { get; set; } // Updated to store display upload date
+        public string KichThuocHienThi { get; set; } = string.Empty; // Updated to store display size
+        public string NgayHienThi { get; set; } = string.Empty; // Updated to store display upload date
         public DateTime NgayUpload { get; set; }
     }
 }

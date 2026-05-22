@@ -15,7 +15,7 @@ const quickLinks = [
   { href: '/elections', label: 'Cuộc bầu cử' },
   { href: 'https://sepolia.etherscan.io', label: 'Sepolia Explorer', external: true },
   { href: '/faq', label: 'Câu hỏi thường gặp' },
-  { href: '/lien-he', label: 'Liên hệ' },
+  { href: '/contact', label: 'Liên hệ' },
 ];
 
 const socialLinks = [
@@ -158,7 +158,7 @@ export function Footer() {
           )}
 
           {(error || emailError) && (
-            <div className="mt-4 flex items-center gap-2 rounded-[18px] border border-[rgba(191,72,0,0.24)] bg-[#fff4ed] px-3 py-2 text-sm text-[var(--clay-pomegranate)]">
+            <div className="mt-4 flex items-center gap-2 rounded-[14px] border border-[var(--state-danger)] bg-[var(--state-danger-soft)] px-3 py-2 text-sm text-[var(--state-danger)]">
               <AlertCircle className="h-4 w-4" />
               <span>{error || emailError}</span>
             </div>
@@ -194,10 +194,10 @@ export function Footer() {
         <div className="mx-auto flex max-w-[1440px] flex-col gap-3 px-4 py-5 text-sm text-[var(--clay-muted)] sm:flex-row sm:items-center sm:justify-between sm:px-6 lg:px-8">
           <p>&copy; {currentYear} HoLiHu BlockVote. All rights reserved.</p>
           <div className="flex flex-wrap gap-4">
-            <a href="/chinh-sach-bao-mat" className="hover:text-[var(--clay-primary)] hover:underline">
+            <a href="/privacy" className="hover:text-[var(--clay-primary)] hover:underline">
               Chính sách bảo mật
             </a>
-            <a href="/dieu-khoan-su-dung" className="hover:text-[var(--clay-primary)] hover:underline">
+            <a href="/terms" className="hover:text-[var(--clay-primary)] hover:underline">
               Điều khoản sử dụng
             </a>
           </div>

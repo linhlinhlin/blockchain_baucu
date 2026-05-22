@@ -22,7 +22,6 @@ public partial class TaiKhoan
 
     public virtual ICollection<PhienDangNhap> PhienDangNhaps { get; set; } = new List<PhienDangNhap>();
     public virtual ICollection<CuocBauCu> CuocBauCus { get; set; } = new List<CuocBauCu>();
-    public virtual ICollection<PhieuMoiPhienBauCu> PhieuMoiPhienBauCus { get; set; }
-    public virtual ICollection<UploadFile> UploadFiles { get; set; }
-    public List<KhoaPhien> KhoaPhiens { get; set; }
+    public virtual ICollection<PhieuMoiPhienBauCu> PhieuMoiPhienBauCus { get; set; } = new List<PhieuMoiPhienBauCu>();
+    public virtual ICollection<UploadFile> UploadFiles { get; set; } = new List<UploadFile>();
 }

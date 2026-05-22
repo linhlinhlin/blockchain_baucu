@@ -1,3 +1,4 @@
+import type { RefObject } from 'react';
 import type { PhoneInputRefType } from 'react-international-phone';
 
 export type CuTri = {
@@ -543,9 +544,10 @@ export type TaoTaiKhoanTamThoi = {
   ten?: string;
   xacNhanMatKhau?: string;
   sdt?: string;
+  apiError?: string;
   vaiTro?: VaiTro;
   agreeTerms?: boolean;
-  phoneInputRef?: React.RefObject<PhoneInputRefType>; // Add this for the phone input ref
+  phoneInputRef?: RefObject<PhoneInputRefType>; // Add this for the phone input ref
   diaChiVi?: string;
   isMetaMask?: boolean;
 };
@@ -644,7 +646,6 @@ export type BlockchainStatusResponse = {
   blockchainAddress?: string;
   errorMessage?: string;
   transactionHash?: string;
-  paymasterUsed?: boolean;
 };
 
 // Thêm vào types.tsx

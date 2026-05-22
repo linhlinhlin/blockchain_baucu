@@ -7,7 +7,7 @@ namespace WebApplication3.Models
     /// </summary>
     public class VoterVerificationRequest
     {
-        public string Email { get; set; }
+        public string Email { get; set; } = string.Empty;
         public int PhienBauCuId { get; set; }
         public int CuocBauCuId { get; set; }
     }
@@ -17,8 +17,8 @@ namespace WebApplication3.Models
     /// </summary>
     public class VerificationModel
     {
-        public string Email { get; set; }
-        public string Token { get; set; }
+        public string Email { get; set; } = string.Empty;
+        public string Token { get; set; } = string.Empty;
         public int PhienBauCuId { get; set; }
         public int CuocBauCuId { get; set; }
         public DateTime ExpiryTime { get; set; }
@@ -30,7 +30,7 @@ namespace WebApplication3.Models
     public class VoterVerificationResponse
     {
         public bool Success { get; set; }
-        public string Message { get; set; }
+        public string Message { get; set; } = string.Empty;
         public bool HasAccount { get; set; }
         public bool HasWallet { get; set; }
         public int? AccountId { get; set; }

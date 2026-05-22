@@ -125,17 +125,17 @@ const ChinhSachBaoMat = () => {
   };
 
   // Light/dark mode styles
-  const bgColor = theme === 'dark' ? 'bg-[#0A1416]' : 'bg-gray-50';
-  const textColor = theme === 'dark' ? 'text-white' : 'text-gray-800';
-  const textSecondary = theme === 'dark' ? 'text-[#B0BEC5]' : 'text-gray-600';
-  const cardBg = theme === 'dark' ? 'bg-[#263238]' : 'bg-white';
-  const cardBorder = theme === 'dark' ? 'border-[#455A64]' : 'border-gray-200';
-  const highlightBg = theme === 'dark' ? 'bg-[#37474F]' : 'bg-blue-50';
-  const highlightBorder = theme === 'dark' ? 'border-[#0288D1]' : 'border-blue-200';
+  const bgColor = theme === 'dark' ? 'bg-[var(--clay-bg)]' : 'bg-[var(--clay-surface-soft)]';
+  const textColor = theme === 'dark' ? 'text-white' : 'text-[var(--clay-text)]';
+  const textSecondary = theme === 'dark' ? 'text-[var(--clay-muted-soft)]' : 'text-[var(--clay-muted)]';
+  const cardBg = theme === 'dark' ? 'bg-[var(--clay-surface-soft)]' : 'bg-white';
+  const cardBorder = theme === 'dark' ? 'border-[var(--clay-muted)]' : 'border-[var(--clay-border)]';
+  const highlightBg = theme === 'dark' ? 'bg-[var(--clay-text)]' : 'bg-[var(--clay-primary-light)]';
+  const highlightBorder = theme === 'dark' ? 'border-[var(--clay-primary)]' : 'border-[var(--clay-border)]';
   const linkColor =
     theme === 'dark'
-      ? 'text-[#0288D1] hover:text-[#6A1B9A]'
-      : 'text-blue-600 hover:text-purple-700';
+      ? 'text-[var(--clay-primary)] hover:text-[var(--clay-primary-dark)]'
+      : 'text-[var(--clay-primary)] hover:text-[var(--clay-primary-dark)]';
 
   return (
     <div className={`min-h-screen ${bgColor} ${textColor} relative overflow-hidden`}>
@@ -152,7 +152,7 @@ const ChinhSachBaoMat = () => {
           <div
             className={`absolute inset-0 ${
               theme === 'dark'
-                ? 'bg-gradient-to-b from-[#0A1416]/80 to-[#0A1416]'
+                ? 'bg-gradient-to-b from-[var(--clay-bg)]/80 to-[var(--clay-bg)]'
                 : 'bg-gradient-to-b from-gray-50/80 to-gray-50'
             }`}
           ></div>
@@ -166,13 +166,13 @@ const ChinhSachBaoMat = () => {
             className="mb-6 inline-block"
           >
             <div className="relative">
-              <div className="absolute inset-0 rounded-full bg-gradient-to-r from-[#0288D1] to-[#6A1B9A] blur-xl opacity-30"></div>
+              <div className="absolute inset-0 rounded-full bg-gradient-to-r from-[var(--clay-primary)] to-[var(--clay-primary-dark)] blur-xl opacity-30"></div>
               <div
                 className={`relative w-24 h-24 mx-auto rounded-full ${
-                  theme === 'dark' ? 'bg-[#263238]' : 'bg-white'
-                } flex items-center justify-center border border-[#0288D1]/30`}
+                  theme === 'dark' ? 'bg-[var(--clay-surface-soft)]' : 'bg-white'
+                } flex items-center justify-center border border-[var(--clay-primary)]/30`}
               >
-                <Shield className="w-12 h-12 text-[#0288D1]" />
+                <Shield className="w-12 h-12 text-[var(--clay-primary)]" />
               </div>
             </div>
           </motion.div>
@@ -184,7 +184,7 @@ const ChinhSachBaoMat = () => {
             className="text-4xl md:text-5xl lg:text-6xl font-bold mb-4 relative"
           >
             Chính Sách Bảo Mật
-            <div className="absolute inset-0 blur-xl bg-gradient-to-r from-[#6A1B9A] to-[#0288D1] opacity-20 -z-10 scale-110"></div>
+            <div className="absolute inset-0 blur-xl bg-gradient-to-r from-[var(--clay-primary-dark)] to-[var(--clay-primary)] opacity-20 -z-10 scale-110"></div>
           </motion.h1>
 
           <motion.p
@@ -204,7 +204,7 @@ const ChinhSachBaoMat = () => {
           >
             <button
               onClick={() => scrollToSection('gioi-thieu')}
-              className="px-6 py-3 bg-gradient-to-r from-[#0288D1] to-[#6A1B9A] text-white rounded-full font-medium hover:shadow-lg hover:shadow-[#0288D1]/20 transition-all duration-300 transform hover:scale-105"
+              className="px-6 py-3 bg-gradient-to-r from-[var(--clay-primary)] to-[var(--clay-primary-dark)] text-white rounded-full font-medium hover:shadow-lg hover:shadow-[var(--clay-primary)]/20 transition-all duration-300 transform hover:scale-105"
             >
               Tìm Hiểu Thêm
             </button>
@@ -218,15 +218,15 @@ const ChinhSachBaoMat = () => {
           {/* Sidebar - Table of Contents */}
           <aside className="w-full lg:w-1/4 lg:sticky lg:top-24 lg:self-start mb-8 lg:mb-0">
             <div className={`${cardBg} border ${cardBorder} rounded-xl shadow-lg overflow-hidden`}>
-              <div className="p-4 border-b border-gray-200 flex justify-between items-center">
+              <div className="p-4 border-b border-[var(--clay-border)] flex justify-between items-center">
                 <h2 className="text-xl font-bold flex items-center">
-                  <FileText className="w-5 h-5 mr-2 text-[#0288D1]" />
+                  <FileText className="w-5 h-5 mr-2 text-[var(--clay-primary)]" />
                   Mục Lục
                 </h2>
                 <button
                   onClick={() => setIsTocVisible(!isTocVisible)}
                   className={`p-2 rounded-full ${
-                    theme === 'dark' ? 'hover:bg-[#37474F]' : 'hover:bg-gray-100'
+                    theme === 'dark' ? 'hover:bg-[var(--clay-text)]' : 'hover:bg-[var(--clay-surface-soft)]'
                   } transition-colors`}
                   aria-label="Toggle table of contents"
                 >
@@ -249,17 +249,17 @@ const ChinhSachBaoMat = () => {
                             activeSection === section.id
                               ? `${
                                   theme === 'dark'
-                                    ? 'bg-[#37474F] text-white'
-                                    : 'bg-blue-50 text-blue-700'
+                                    ? 'bg-[var(--clay-text)] text-white'
+                                    : 'bg-[var(--clay-primary-light)] text-[var(--clay-primary)]'
                                 }`
                               : `${
-                                  theme === 'dark' ? 'hover:bg-[#37474F]/50' : 'hover:bg-gray-100'
+                                  theme === 'dark' ? 'hover:bg-[var(--clay-text)]/50' : 'hover:bg-[var(--clay-surface-soft)]'
                                 }`
                           }`}
                         >
                           <span
                             className={`mr-3 ${
-                              activeSection === section.id ? 'text-[#0288D1]' : ''
+                              activeSection === section.id ? 'text-[var(--clay-primary)]' : ''
                             }`}
                           >
                             {section.icon}
@@ -283,7 +283,7 @@ const ChinhSachBaoMat = () => {
             {/* Last Updated Info */}
             <div className={`mt-6 ${cardBg} border ${cardBorder} rounded-xl p-4 shadow-lg`}>
               <div className="flex items-center text-sm">
-                <Clock className="w-4 h-4 mr-2 text-[#0288D1]" />
+                <Clock className="w-4 h-4 mr-2 text-[var(--clay-primary)]" />
                 <span className={textSecondary}>Cập nhật lần cuối: 01/03/2025</span>
               </div>
             </div>
@@ -291,15 +291,15 @@ const ChinhSachBaoMat = () => {
             {/* Help Box */}
             <div className={`mt-6 ${cardBg} border ${cardBorder} rounded-xl p-4 shadow-lg`}>
               <h3 className="font-medium flex items-center mb-2">
-                <HelpCircle className="w-4 h-4 mr-2 text-[#0288D1]" />
+                <HelpCircle className="w-4 h-4 mr-2 text-[var(--clay-primary)]" />
                 Cần hỗ trợ?
               </h3>
               <p className={`text-sm ${textSecondary} mb-3`}>
                 Nếu bạn có thắc mắc về chính sách bảo mật, hãy liên hệ với chúng tôi.
               </p>
               <Link
-                to="/lien-he"
-                className="text-sm px-4 py-2 bg-gradient-to-r from-[#0288D1] to-[#6A1B9A] text-white rounded-full inline-flex items-center hover:shadow-lg transition-all duration-300"
+                to="/contact"
+                className="text-sm px-4 py-2 bg-gradient-to-r from-[var(--clay-primary)] to-[var(--clay-primary-dark)] text-white rounded-full inline-flex items-center hover:shadow-lg transition-all duration-300"
               >
                 <Mail className="w-3 h-3 mr-2" />
                 Liên Hệ Ngay
@@ -316,8 +316,8 @@ const ChinhSachBaoMat = () => {
               className={`${cardBg} border ${cardBorder} rounded-xl p-6 md:p-8 shadow-lg`}
             >
               <div className="flex items-center mb-6">
-                <div className="w-10 h-10 rounded-full bg-[#0288D1] bg-opacity-20 flex items-center justify-center mr-4">
-                  <FileText className="w-5 h-5 text-[#0288D1]" />
+                <div className="w-10 h-10 rounded-full bg-[var(--clay-primary)] bg-opacity-20 flex items-center justify-center mr-4">
+                  <FileText className="w-5 h-5 text-[var(--clay-primary)]" />
                 </div>
                 <h2 className="text-2xl md:text-3xl font-bold">Giới Thiệu</h2>
               </div>
@@ -332,7 +332,7 @@ const ChinhSachBaoMat = () => {
 
                 <div className={`${highlightBg} border-l-4 ${highlightBorder} p-4 rounded-r-lg`}>
                   <p className="font-medium flex items-center">
-                    <AlertTriangle className="w-5 h-5 mr-2 text-[#0288D1]" />
+                    <AlertTriangle className="w-5 h-5 mr-2 text-[var(--clay-primary)]" />
                     Quan trọng:
                   </p>
                   <p className={`mt-1 ${textSecondary}`}>
@@ -350,8 +350,8 @@ const ChinhSachBaoMat = () => {
                 </p>
 
                 <div className="flex items-center mt-6">
-                  <div className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center mr-3">
-                    <CheckCircle className="w-4 h-4 text-green-600" />
+                  <div className="w-8 h-8 rounded-full bg-[var(--state-success-soft)] flex items-center justify-center mr-3">
+                    <CheckCircle className="w-4 h-4 text-[var(--state-success)]" />
                   </div>
                   <p className="italic">Ngày có hiệu lực: 01/03/2025</p>
                 </div>
@@ -365,8 +365,8 @@ const ChinhSachBaoMat = () => {
               className={`${cardBg} border ${cardBorder} rounded-xl p-6 md:p-8 shadow-lg`}
             >
               <div className="flex items-center mb-6">
-                <div className="w-10 h-10 rounded-full bg-[#0288D1] bg-opacity-20 flex items-center justify-center mr-4">
-                  <Database className="w-5 h-5 text-[#0288D1]" />
+                <div className="w-10 h-10 rounded-full bg-[var(--clay-primary)] bg-opacity-20 flex items-center justify-center mr-4">
+                  <Database className="w-5 h-5 text-[var(--clay-primary)]" />
                 </div>
                 <h2 className="text-2xl md:text-3xl font-bold">Thông Tin Thu Thập</h2>
               </div>
@@ -381,12 +381,12 @@ const ChinhSachBaoMat = () => {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div
                       className={`p-4 rounded-lg border ${cardBorder} ${
-                        theme === 'dark' ? 'bg-[#37474F]/50' : 'bg-gray-50'
+                        theme === 'dark' ? 'bg-[var(--clay-text)]/50' : 'bg-[var(--clay-surface-soft)]'
                       }`}
                     >
                       <div className="flex items-start">
-                        <div className="w-8 h-8 rounded-full bg-[#0288D1] bg-opacity-20 flex items-center justify-center mr-3 mt-1">
-                          <UserCheck className="w-4 h-4 text-[#0288D1]" />
+                        <div className="w-8 h-8 rounded-full bg-[var(--clay-primary)] bg-opacity-20 flex items-center justify-center mr-3 mt-1">
+                          <UserCheck className="w-4 h-4 text-[var(--clay-primary)]" />
                         </div>
                         <div>
                           <h4 className="font-medium">Thông Tin Nhận Dạng</h4>
@@ -402,12 +402,12 @@ const ChinhSachBaoMat = () => {
 
                     <div
                       className={`p-4 rounded-lg border ${cardBorder} ${
-                        theme === 'dark' ? 'bg-[#37474F]/50' : 'bg-gray-50'
+                        theme === 'dark' ? 'bg-[var(--clay-text)]/50' : 'bg-[var(--clay-surface-soft)]'
                       }`}
                     >
                       <div className="flex items-start">
-                        <div className="w-8 h-8 rounded-full bg-[#0288D1] bg-opacity-20 flex items-center justify-center mr-3 mt-1">
-                          <Mail className="w-4 h-4 text-[#0288D1]" />
+                        <div className="w-8 h-8 rounded-full bg-[var(--clay-primary)] bg-opacity-20 flex items-center justify-center mr-3 mt-1">
+                          <Mail className="w-4 h-4 text-[var(--clay-primary)]" />
                         </div>
                         <div>
                           <h4 className="font-medium">Thông Tin Liên Hệ</h4>
@@ -422,12 +422,12 @@ const ChinhSachBaoMat = () => {
 
                     <div
                       className={`p-4 rounded-lg border ${cardBorder} ${
-                        theme === 'dark' ? 'bg-[#37474F]/50' : 'bg-gray-50'
+                        theme === 'dark' ? 'bg-[var(--clay-text)]/50' : 'bg-[var(--clay-surface-soft)]'
                       }`}
                     >
                       <div className="flex items-start">
-                        <div className="w-8 h-8 rounded-full bg-[#0288D1] bg-opacity-20 flex items-center justify-center mr-3 mt-1">
-                          <Key className="w-4 h-4 text-[#0288D1]" />
+                        <div className="w-8 h-8 rounded-full bg-[var(--clay-primary)] bg-opacity-20 flex items-center justify-center mr-3 mt-1">
+                          <Key className="w-4 h-4 text-[var(--clay-primary)]" />
                         </div>
                         <div>
                           <h4 className="font-medium">Thông Tin Tài Khoản</h4>
@@ -443,12 +443,12 @@ const ChinhSachBaoMat = () => {
 
                     <div
                       className={`p-4 rounded-lg border ${cardBorder} ${
-                        theme === 'dark' ? 'bg-[#37474F]/50' : 'bg-gray-50'
+                        theme === 'dark' ? 'bg-[var(--clay-text)]/50' : 'bg-[var(--clay-surface-soft)]'
                       }`}
                     >
                       <div className="flex items-start">
-                        <div className="w-8 h-8 rounded-full bg-[#0288D1] bg-opacity-20 flex items-center justify-center mr-3 mt-1">
-                          <Globe className="w-4 h-4 text-[#0288D1]" />
+                        <div className="w-8 h-8 rounded-full bg-[var(--clay-primary)] bg-opacity-20 flex items-center justify-center mr-3 mt-1">
+                          <Globe className="w-4 h-4 text-[var(--clay-primary)]" />
                         </div>
                         <div>
                           <h4 className="font-medium">Dữ Liệu Kỹ Thuật</h4>
@@ -473,22 +473,22 @@ const ChinhSachBaoMat = () => {
 
                   <ul className="space-y-2">
                     <li className="flex items-start">
-                      <div className="w-6 h-6 rounded-full bg-[#0288D1] bg-opacity-20 flex items-center justify-center mr-3 mt-1">
-                        <CheckCircle className="w-3 h-3 text-[#0288D1]" />
+                      <div className="w-6 h-6 rounded-full bg-[var(--clay-primary)] bg-opacity-20 flex items-center justify-center mr-3 mt-1">
+                        <CheckCircle className="w-3 h-3 text-[var(--clay-primary)]" />
                       </div>
                       <span>Thời gian và ngày bỏ phiếu</span>
                     </li>
                     <li className="flex items-start">
-                      <div className="w-6 h-6 rounded-full bg-[#0288D1] bg-opacity-20 flex items-center justify-center mr-3 mt-1">
-                        <CheckCircle className="w-3 h-3 text-[#0288D1]" />
+                      <div className="w-6 h-6 rounded-full bg-[var(--clay-primary)] bg-opacity-20 flex items-center justify-center mr-3 mt-1">
+                        <CheckCircle className="w-3 h-3 text-[var(--clay-primary)]" />
                       </div>
                       <span>
                         Mã hash của phiếu bầu (không chứa thông tin về lựa chọn cụ thể của bạn)
                       </span>
                     </li>
                     <li className="flex items-start">
-                      <div className="w-6 h-6 rounded-full bg-[#0288D1] bg-opacity-20 flex items-center justify-center mr-3 mt-1">
-                        <CheckCircle className="w-3 h-3 text-[#0288D1]" />
+                      <div className="w-6 h-6 rounded-full bg-[var(--clay-primary)] bg-opacity-20 flex items-center justify-center mr-3 mt-1">
+                        <CheckCircle className="w-3 h-3 text-[var(--clay-primary)]" />
                       </div>
                       <span>Xác nhận tham gia bầu cử (không tiết lộ bạn đã bỏ phiếu cho ai)</span>
                     </li>
@@ -496,7 +496,7 @@ const ChinhSachBaoMat = () => {
 
                   <div className={`mt-4 ${highlightBg} border ${highlightBorder} p-4 rounded-lg`}>
                     <p className="font-medium flex items-center">
-                      <Lock className="w-5 h-5 mr-2 text-[#0288D1]" />
+                      <Lock className="w-5 h-5 mr-2 text-[var(--clay-primary)]" />
                       Bảo mật phiếu bầu:
                     </p>
                     <p className={`mt-1 ${textSecondary}`}>
@@ -516,8 +516,8 @@ const ChinhSachBaoMat = () => {
               className={`${cardBg} border ${cardBorder} rounded-xl p-6 md:p-8 shadow-lg`}
             >
               <div className="flex items-center mb-6">
-                <div className="w-10 h-10 rounded-full bg-[#0288D1] bg-opacity-20 flex items-center justify-center mr-4">
-                  <Eye className="w-5 h-5 text-[#0288D1]" />
+                <div className="w-10 h-10 rounded-full bg-[var(--clay-primary)] bg-opacity-20 flex items-center justify-center mr-4">
+                  <Eye className="w-5 h-5 text-[var(--clay-primary)]" />
                 </div>
                 <h2 className="text-2xl md:text-3xl font-bold">Sử Dụng Thông Tin</h2>
               </div>
@@ -528,32 +528,32 @@ const ChinhSachBaoMat = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4">
                   <div
                     className={`p-5 rounded-xl border ${cardBorder} ${
-                      theme === 'dark' ? 'bg-[#37474F]/30' : 'bg-white'
+                      theme === 'dark' ? 'bg-[var(--clay-text)]/30' : 'bg-white'
                     } shadow-sm`}
                   >
                     <h3 className="text-lg font-semibold mb-3 flex items-center">
                       <h3 className="text-lg font-semibold mb-3 flex items-center">
                         Xác Thực Danh Tính
                       </h3>
-                      <UserCheck className="w-5 h-5 mr-2 text-[#0288D1]" />
+                      <UserCheck className="w-5 h-5 mr-2 text-[var(--clay-primary)]" />
                       Xác Thực Danh Tính
                     </h3>
                     <ul className="space-y-2 text-sm">
                       <li className="flex items-start">
-                        <div className="w-5 h-5 rounded-full bg-[#0288D1] bg-opacity-20 flex items-center justify-center mr-2 mt-0.5">
-                          <CheckCircle className="w-3 h-3 text-[#0288D1]" />
+                        <div className="w-5 h-5 rounded-full bg-[var(--clay-primary)] bg-opacity-20 flex items-center justify-center mr-2 mt-0.5">
+                          <CheckCircle className="w-3 h-3 text-[var(--clay-primary)]" />
                         </div>
                         <span>Xác minh tư cách cử tri hợp lệ</span>
                       </li>
                       <li className="flex items-start">
-                        <div className="w-5 h-5 rounded-full bg-[#0288D1] bg-opacity-20 flex items-center justify-center mr-2 mt-0.5">
-                          <CheckCircle className="w-3 h-3 text-[#0288D1]" />
+                        <div className="w-5 h-5 rounded-full bg-[var(--clay-primary)] bg-opacity-20 flex items-center justify-center mr-2 mt-0.5">
+                          <CheckCircle className="w-3 h-3 text-[var(--clay-primary)]" />
                         </div>
                         <span>Ngăn chặn gian lận và bỏ phiếu trùng lặp</span>
                       </li>
                       <li className="flex items-start">
-                        <div className="w-5 h-5 rounded-full bg-[#0288D1] bg-opacity-20 flex items-center justify-center mr-2 mt-0.5">
-                          <CheckCircle className="w-3 h-3 text-[#0288D1]" />
+                        <div className="w-5 h-5 rounded-full bg-[var(--clay-primary)] bg-opacity-20 flex items-center justify-center mr-2 mt-0.5">
+                          <CheckCircle className="w-3 h-3 text-[var(--clay-primary)]" />
                         </div>
                         <span>Bảo vệ tài khoản người dùng</span>
                       </li>
@@ -562,29 +562,29 @@ const ChinhSachBaoMat = () => {
 
                   <div
                     className={`p-5 rounded-xl border ${cardBorder} ${
-                      theme === 'dark' ? 'bg-[#37474F]/30' : 'bg-white'
+                      theme === 'dark' ? 'bg-[var(--clay-text)]/30' : 'bg-white'
                     } shadow-sm`}
                   >
                     <h3 className="text-lg font-semibold mb-3 flex items-center">
-                      <Server className="w-5 h-5 mr-2 text-[#0288D1]" />
+                      <Server className="w-5 h-5 mr-2 text-[var(--clay-primary)]" />
                       Vận Hành Hệ Thống
                     </h3>
                     <ul className="space-y-2 text-sm">
                       <li className="flex items-start">
-                        <div className="w-5 h-5 rounded-full bg-[#0288D1] bg-opacity-20 flex items-center justify-center mr-2 mt-0.5">
-                          <CheckCircle className="w-3 h-3 text-[#0288D1]" />
+                        <div className="w-5 h-5 rounded-full bg-[var(--clay-primary)] bg-opacity-20 flex items-center justify-center mr-2 mt-0.5">
+                          <CheckCircle className="w-3 h-3 text-[var(--clay-primary)]" />
                         </div>
                         <span>Quản lý tài khoản người dùng</span>
                       </li>
                       <li className="flex items-start">
-                        <div className="w-5 h-5 rounded-full bg-[#0288D1] bg-opacity-20 flex items-center justify-center mr-2 mt-0.5">
-                          <CheckCircle className="w-3 h-3 text-[#0288D1]" />
+                        <div className="w-5 h-5 rounded-full bg-[var(--clay-primary)] bg-opacity-20 flex items-center justify-center mr-2 mt-0.5">
+                          <CheckCircle className="w-3 h-3 text-[var(--clay-primary)]" />
                         </div>
                         <span>Xử lý và xác nhận phiếu bầu</span>
                       </li>
                       <li className="flex items-start">
-                        <div className="w-5 h-5 rounded-full bg-[#0288D1] bg-opacity-20 flex items-center justify-center mr-2 mt-0.5">
-                          <CheckCircle className="w-3 h-3 text-[#0288D1]" />
+                        <div className="w-5 h-5 rounded-full bg-[var(--clay-primary)] bg-opacity-20 flex items-center justify-center mr-2 mt-0.5">
+                          <CheckCircle className="w-3 h-3 text-[var(--clay-primary)]" />
                         </div>
                         <span>Duy trì tính bảo mật và hiệu suất</span>
                       </li>
@@ -593,29 +593,29 @@ const ChinhSachBaoMat = () => {
 
                   <div
                     className={`p-5 rounded-xl border ${cardBorder} ${
-                      theme === 'dark' ? 'bg-[#37474F]/30' : 'bg-white'
+                      theme === 'dark' ? 'bg-[var(--clay-text)]/30' : 'bg-white'
                     } shadow-sm`}
                   >
                     <h3 className="text-lg font-semibold mb-3 flex items-center">
-                      <Mail className="w-5 h-5 mr-2 text-[#0288D1]" />
+                      <Mail className="w-5 h-5 mr-2 text-[var(--clay-primary)]" />
                       Liên Lạc
                     </h3>
                     <ul className="space-y-2 text-sm">
                       <li className="flex items-start">
-                        <div className="w-5 h-5 rounded-full bg-[#0288D1] bg-opacity-20 flex items-center justify-center mr-2 mt-0.5">
-                          <CheckCircle className="w-3 h-3 text-[#0288D1]" />
+                        <div className="w-5 h-5 rounded-full bg-[var(--clay-primary)] bg-opacity-20 flex items-center justify-center mr-2 mt-0.5">
+                          <CheckCircle className="w-3 h-3 text-[var(--clay-primary)]" />
                         </div>
                         <span>Gửi thông báo về cuộc bầu cử</span>
                       </li>
                       <li className="flex items-start">
-                        <div className="w-5 h-5 rounded-full bg-[#0288D1] bg-opacity-20 flex items-center justify-center mr-2 mt-0.5">
-                          <CheckCircle className="w-3 h-3 text-[#0288D1]" />
+                        <div className="w-5 h-5 rounded-full bg-[var(--clay-primary)] bg-opacity-20 flex items-center justify-center mr-2 mt-0.5">
+                          <CheckCircle className="w-3 h-3 text-[var(--clay-primary)]" />
                         </div>
                         <span>Cung cấp hỗ trợ kỹ thuật</span>
                       </li>
                       <li className="flex items-start">
-                        <div className="w-5 h-5 rounded-full bg-[#0288D1] bg-opacity-20 flex items-center justify-center mr-2 mt-0.5">
-                          <CheckCircle className="w-3 h-3 text-[#0288D1]" />
+                        <div className="w-5 h-5 rounded-full bg-[var(--clay-primary)] bg-opacity-20 flex items-center justify-center mr-2 mt-0.5">
+                          <CheckCircle className="w-3 h-3 text-[var(--clay-primary)]" />
                         </div>
                         <span>Phản hồi yêu cầu và thắc mắc</span>
                       </li>
@@ -624,29 +624,29 @@ const ChinhSachBaoMat = () => {
 
                   <div
                     className={`p-5 rounded-xl border ${cardBorder} ${
-                      theme === 'dark' ? 'bg-[#37474F]/30' : 'bg-white'
+                      theme === 'dark' ? 'bg-[var(--clay-text)]/30' : 'bg-white'
                     } shadow-sm`}
                   >
                     <h3 className="text-lg font-semibold mb-3 flex items-center">
-                      <RefreshCw className="w-5 h-5 mr-2 text-[#0288D1]" />
+                      <RefreshCw className="w-5 h-5 mr-2 text-[var(--clay-primary)]" />
                       Cải Thiện Dịch Vụ
                     </h3>
                     <ul className="space-y-2 text-sm">
                       <li className="flex items-start">
-                        <div className="w-5 h-5 rounded-full bg-[#0288D1] bg-opacity-20 flex items-center justify-center mr-2 mt-0.5">
-                          <CheckCircle className="w-3 h-3 text-[#0288D1]" />
+                        <div className="w-5 h-5 rounded-full bg-[var(--clay-primary)] bg-opacity-20 flex items-center justify-center mr-2 mt-0.5">
+                          <CheckCircle className="w-3 h-3 text-[var(--clay-primary)]" />
                         </div>
                         <span>Phân tích dữ liệu sử dụng</span>
                       </li>
                       <li className="flex items-start">
-                        <div className="w-5 h-5 rounded-full bg-[#0288D1] bg-opacity-20 flex items-center justify-center mr-2 mt-0.5">
-                          <CheckCircle className="w-3 h-3 text-[#0288D1]" />
+                        <div className="w-5 h-5 rounded-full bg-[var(--clay-primary)] bg-opacity-20 flex items-center justify-center mr-2 mt-0.5">
+                          <CheckCircle className="w-3 h-3 text-[var(--clay-primary)]" />
                         </div>
                         <span>Nghiên cứu và phát triển tính năng mới</span>
                       </li>
                       <li className="flex items-start">
-                        <div className="w-5 h-5 rounded-full bg-[#0288D1] bg-opacity-20 flex items-center justify-center mr-2 mt-0.5">
-                          <CheckCircle className="w-3 h-3 text-[#0288D1]" />
+                        <div className="w-5 h-5 rounded-full bg-[var(--clay-primary)] bg-opacity-20 flex items-center justify-center mr-2 mt-0.5">
+                          <CheckCircle className="w-3 h-3 text-[var(--clay-primary)]" />
                         </div>
                         <span>Khắc phục lỗi và tối ưu hóa hiệu suất</span>
                       </li>
@@ -656,7 +656,7 @@ const ChinhSachBaoMat = () => {
 
                 <div className={`mt-6 ${highlightBg} border ${highlightBorder} p-4 rounded-lg`}>
                   <p className="font-medium flex items-center">
-                    <AlertTriangle className="w-5 h-5 mr-2 text-[#0288D1]" />
+                    <AlertTriangle className="w-5 h-5 mr-2 text-[var(--clay-primary)]" />
                     Lưu ý quan trọng:
                   </p>
                   <p className={`mt-1 ${textSecondary}`}>
@@ -675,8 +675,8 @@ const ChinhSachBaoMat = () => {
               className={`${cardBg} border ${cardBorder} rounded-xl p-6 md:p-8 shadow-lg`}
             >
               <div className="flex items-center mb-6">
-                <div className="w-10 h-10 rounded-full bg-[#0288D1] bg-opacity-20 flex items-center justify-center mr-4">
-                  <Globe className="w-5 h-5 text-[#0288D1]" />
+                <div className="w-10 h-10 rounded-full bg-[var(--clay-primary)] bg-opacity-20 flex items-center justify-center mr-4">
+                  <Globe className="w-5 h-5 text-[var(--clay-primary)]" />
                 </div>
                 <h2 className="text-2xl md:text-3xl font-bold">Chia Sẻ Thông Tin</h2>
               </div>
@@ -690,7 +690,7 @@ const ChinhSachBaoMat = () => {
                 <div className="space-y-4 mt-4">
                   <div
                     className={`p-4 rounded-lg border ${cardBorder} ${
-                      theme === 'dark' ? 'bg-[#37474F]/50' : 'bg-gray-50'
+                      theme === 'dark' ? 'bg-[var(--clay-text)]/50' : 'bg-[var(--clay-surface-soft)]'
                     }`}
                   >
                     <h3 className="font-semibold mb-2">Nhà Cung Cấp Dịch Vụ</h3>
@@ -705,7 +705,7 @@ const ChinhSachBaoMat = () => {
 
                   <div
                     className={`p-4 rounded-lg border ${cardBorder} ${
-                      theme === 'dark' ? 'bg-[#37474F]/50' : 'bg-gray-50'
+                      theme === 'dark' ? 'bg-[var(--clay-text)]/50' : 'bg-[var(--clay-surface-soft)]'
                     }`}
                   >
                     <h3 className="font-semibold mb-2">Yêu Cầu Pháp Lý</h3>
@@ -719,7 +719,7 @@ const ChinhSachBaoMat = () => {
 
                   <div
                     className={`p-4 rounded-lg border ${cardBorder} ${
-                      theme === 'dark' ? 'bg-[#37474F]/50' : 'bg-gray-50'
+                      theme === 'dark' ? 'bg-[var(--clay-text)]/50' : 'bg-[var(--clay-surface-soft)]'
                     }`}
                   >
                     <h3 className="font-semibold mb-2">Dữ Liệu Blockchain Công Khai</h3>
@@ -733,7 +733,7 @@ const ChinhSachBaoMat = () => {
 
                   <div
                     className={`p-4 rounded-lg border ${cardBorder} ${
-                      theme === 'dark' ? 'bg-[#37474F]/50' : 'bg-gray-50'
+                      theme === 'dark' ? 'bg-[var(--clay-text)]/50' : 'bg-[var(--clay-surface-soft)]'
                     }`}
                   >
                     <h3 className="font-semibold mb-2">Với Sự Đồng Ý Của Bạn</h3>
@@ -746,7 +746,7 @@ const ChinhSachBaoMat = () => {
 
                 <div className={`mt-6 ${highlightBg} border ${highlightBorder} p-4 rounded-lg`}>
                   <p className="font-medium flex items-center">
-                    <Lock className="w-5 h-5 mr-2 text-[#0288D1]" />
+                    <Lock className="w-5 h-5 mr-2 text-[var(--clay-primary)]" />
                     Cam kết của chúng tôi:
                   </p>
                   <p className={`mt-1 ${textSecondary}`}>
@@ -766,8 +766,8 @@ const ChinhSachBaoMat = () => {
               className={`${cardBg} border ${cardBorder} rounded-xl p-6 md:p-8 shadow-lg`}
             >
               <div className="flex items-center mb-6">
-                <div className="w-10 h-10 rounded-full bg-[#0288D1] bg-opacity-20 flex items-center justify-center mr-4">
-                  <Shield className="w-5 h-5 text-[#0288D1]" />
+                <div className="w-10 h-10 rounded-full bg-[var(--clay-primary)] bg-opacity-20 flex items-center justify-center mr-4">
+                  <Shield className="w-5 h-5 text-[var(--clay-primary)]" />
                 </div>
                 <h2 className="text-2xl md:text-3xl font-bold">Bảo Mật Dữ Liệu</h2>
               </div>
@@ -781,11 +781,11 @@ const ChinhSachBaoMat = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4">
                   <div
                     className={`p-5 rounded-xl border ${cardBorder} ${
-                      theme === 'dark' ? 'bg-[#37474F]/30' : 'bg-white'
+                      theme === 'dark' ? 'bg-[var(--clay-text)]/30' : 'bg-white'
                     } shadow-sm`}
                   >
                     <h3 className="text-lg font-semibold mb-3 flex items-center">
-                      <Lock className="w-5 h-5 mr-2 text-[#0288D1]" />
+                      <Lock className="w-5 h-5 mr-2 text-[var(--clay-primary)]" />
                       Mã Hóa Dữ Liệu
                     </h3>
                     <p className={`${textSecondary} text-sm mb-3`}>
@@ -793,20 +793,20 @@ const ChinhSachBaoMat = () => {
                     </p>
                     <ul className="space-y-2 text-sm">
                       <li className="flex items-start">
-                        <div className="w-5 h-5 rounded-full bg-[#0288D1] bg-opacity-20 flex items-center justify-center mr-2 mt-0.5">
-                          <CheckCircle className="w-3 h-3 text-[#0288D1]" />
+                        <div className="w-5 h-5 rounded-full bg-[var(--clay-primary)] bg-opacity-20 flex items-center justify-center mr-2 mt-0.5">
+                          <CheckCircle className="w-3 h-3 text-[var(--clay-primary)]" />
                         </div>
                         <span>Mã hóa SSL/TLS cho dữ liệu đang truyền</span>
                       </li>
                       <li className="flex items-start">
-                        <div className="w-5 h-5 rounded-full bg-[#0288D1] bg-opacity-20 flex items-center justify-center mr-2 mt-0.5">
-                          <CheckCircle className="w-3 h-3 text-[#0288D1]" />
+                        <div className="w-5 h-5 rounded-full bg-[var(--clay-primary)] bg-opacity-20 flex items-center justify-center mr-2 mt-0.5">
+                          <CheckCircle className="w-3 h-3 text-[var(--clay-primary)]" />
                         </div>
                         <span>Mã hóa AES-256 cho dữ liệu lưu trữ</span>
                       </li>
                       <li className="flex items-start">
-                        <div className="w-5 h-5 rounded-full bg-[#0288D1] bg-opacity-20 flex items-center justify-center mr-2 mt-0.5">
-                          <CheckCircle className="w-3 h-3 text-[#0288D1]" />
+                        <div className="w-5 h-5 rounded-full bg-[var(--clay-primary)] bg-opacity-20 flex items-center justify-center mr-2 mt-0.5">
+                          <CheckCircle className="w-3 h-3 text-[var(--clay-primary)]" />
                         </div>
                         <span>Mã hóa đầu cuối cho phiếu bầu</span>
                       </li>
@@ -815,11 +815,11 @@ const ChinhSachBaoMat = () => {
 
                   <div
                     className={`p-5 rounded-xl border ${cardBorder} ${
-                      theme === 'dark' ? 'bg-[#37474F]/30' : 'bg-white'
+                      theme === 'dark' ? 'bg-[var(--clay-text)]/30' : 'bg-white'
                     } shadow-sm`}
                   >
                     <h3 className="text-lg font-semibold mb-3 flex items-center">
-                      <Shield className="w-5 h-5 mr-2 text-[#0288D1]" />
+                      <Shield className="w-5 h-5 mr-2 text-[var(--clay-primary)]" />
                       Bảo Mật Blockchain
                     </h3>
                     <p className={`${textSecondary} text-sm mb-3`}>
@@ -827,20 +827,20 @@ const ChinhSachBaoMat = () => {
                     </p>
                     <ul className="space-y-2 text-sm">
                       <li className="flex items-start">
-                        <div className="w-5 h-5 rounded-full bg-[#0288D1] bg-opacity-20 flex items-center justify-center mr-2 mt-0.5">
-                          <CheckCircle className="w-3 h-3 text-[#0288D1]" />
+                        <div className="w-5 h-5 rounded-full bg-[var(--clay-primary)] bg-opacity-20 flex items-center justify-center mr-2 mt-0.5">
+                          <CheckCircle className="w-3 h-3 text-[var(--clay-primary)]" />
                         </div>
                         <span>Bất biến - dữ liệu không thể bị thay đổi</span>
                       </li>
                       <li className="flex items-start">
-                        <div className="w-5 h-5 rounded-full bg-[#0288D1] bg-opacity-20 flex items-center justify-center mr-2 mt-0.5">
-                          <CheckCircle className="w-3 h-3 text-[#0288D1]" />
+                        <div className="w-5 h-5 rounded-full bg-[var(--clay-primary)] bg-opacity-20 flex items-center justify-center mr-2 mt-0.5">
+                          <CheckCircle className="w-3 h-3 text-[var(--clay-primary)]" />
                         </div>
                         <span>Mật mã khóa công khai/riêng tư</span>
                       </li>
                       <li className="flex items-start">
-                        <div className="w-5 h-5 rounded-full bg-[#0288D1] bg-opacity-20 flex items-center justify-center mr-2 mt-0.5">
-                          <CheckCircle className="w-3 h-3 text-[#0288D1]" />
+                        <div className="w-5 h-5 rounded-full bg-[var(--clay-primary)] bg-opacity-20 flex items-center justify-center mr-2 mt-0.5">
+                          <CheckCircle className="w-3 h-3 text-[var(--clay-primary)]" />
                         </div>
                         <span>Phân tán - không có điểm lỗi đơn lẻ</span>
                       </li>
@@ -849,11 +849,11 @@ const ChinhSachBaoMat = () => {
 
                   <div
                     className={`p-5 rounded-xl border ${cardBorder} ${
-                      theme === 'dark' ? 'bg-[#37474F]/30' : 'bg-white'
+                      theme === 'dark' ? 'bg-[var(--clay-text)]/30' : 'bg-white'
                     } shadow-sm`}
                   >
                     <h3 className="text-lg font-semibold mb-3 flex items-center">
-                      <Server className="w-5 h-5 mr-2 text-[#0288D1]" />
+                      <Server className="w-5 h-5 mr-2 text-[var(--clay-primary)]" />
                       Bảo Mật Cơ Sở Hạ Tầng
                     </h3>
                     <p className={`${textSecondary} text-sm mb-3`}>
@@ -861,20 +861,20 @@ const ChinhSachBaoMat = () => {
                     </p>
                     <ul className="space-y-2 text-sm">
                       <li className="flex items-start">
-                        <div className="w-5 h-5 rounded-full bg-[#0288D1] bg-opacity-20 flex items-center justify-center mr-2 mt-0.5">
-                          <CheckCircle className="w-3 h-3 text-[#0288D1]" />
+                        <div className="w-5 h-5 rounded-full bg-[var(--clay-primary)] bg-opacity-20 flex items-center justify-center mr-2 mt-0.5">
+                          <CheckCircle className="w-3 h-3 text-[var(--clay-primary)]" />
                         </div>
                         <span>Tường lửa và hệ thống phát hiện xâm nhập</span>
                       </li>
                       <li className="flex items-start">
-                        <div className="w-5 h-5 rounded-full bg-[#0288D1] bg-opacity-20 flex items-center justify-center mr-2 mt-0.5">
-                          <CheckCircle className="w-3 h-3 text-[#0288D1]" />
+                        <div className="w-5 h-5 rounded-full bg-[var(--clay-primary)] bg-opacity-20 flex items-center justify-center mr-2 mt-0.5">
+                          <CheckCircle className="w-3 h-3 text-[var(--clay-primary)]" />
                         </div>
                         <span>Kiểm tra bảo mật và đánh giá lỗ hổng thường xuyên</span>
                       </li>
                       <li className="flex items-start">
-                        <div className="w-5 h-5 rounded-full bg-[#0288D1] bg-opacity-20 flex items-center justify-center mr-2 mt-0.5">
-                          <CheckCircle className="w-3 h-3 text-[#0288D1]" />
+                        <div className="w-5 h-5 rounded-full bg-[var(--clay-primary)] bg-opacity-20 flex items-center justify-center mr-2 mt-0.5">
+                          <CheckCircle className="w-3 h-3 text-[var(--clay-primary)]" />
                         </div>
                         <span>Giám sát bảo mật 24/7</span>
                       </li>
@@ -883,11 +883,11 @@ const ChinhSachBaoMat = () => {
 
                   <div
                     className={`p-5 rounded-xl border ${cardBorder} ${
-                      theme === 'dark' ? 'bg-[#37474F]/30' : 'bg-white'
+                      theme === 'dark' ? 'bg-[var(--clay-text)]/30' : 'bg-white'
                     } shadow-sm`}
                   >
                     <h3 className="text-lg font-semibold mb-3 flex items-center">
-                      <UserCheck className="w-5 h-5 mr-2 text-[#0288D1]" />
+                      <UserCheck className="w-5 h-5 mr-2 text-[var(--clay-primary)]" />
                       Kiểm Soát Truy Cập
                     </h3>
                     <p className={`${textSecondary} text-sm mb-3`}>
@@ -895,20 +895,20 @@ const ChinhSachBaoMat = () => {
                     </p>
                     <ul className="space-y-2 text-sm">
                       <li className="flex items-start">
-                        <div className="w-5 h-5 rounded-full bg-[#0288D1] bg-opacity-20 flex items-center justify-center mr-2 mt-0.5">
-                          <CheckCircle className="w-3 h-3 text-[#0288D1]" />
+                        <div className="w-5 h-5 rounded-full bg-[var(--clay-primary)] bg-opacity-20 flex items-center justify-center mr-2 mt-0.5">
+                          <CheckCircle className="w-3 h-3 text-[var(--clay-primary)]" />
                         </div>
                         <span>Xác thực đa yếu tố (MFA)</span>
                       </li>
                       <li className="flex items-start">
-                        <div className="w-5 h-5 rounded-full bg-[#0288D1] bg-opacity-20 flex items-center justify-center mr-2 mt-0.5">
-                          <CheckCircle className="w-3 h-3 text-[#0288D1]" />
+                        <div className="w-5 h-5 rounded-full bg-[var(--clay-primary)] bg-opacity-20 flex items-center justify-center mr-2 mt-0.5">
+                          <CheckCircle className="w-3 h-3 text-[var(--clay-primary)]" />
                         </div>
                         <span>Kiểm soát truy cập dựa trên vai trò</span>
                       </li>
                       <li className="flex items-start">
-                        <div className="w-5 h-5 rounded-full bg-[#0288D1] bg-opacity-20 flex items-center justify-center mr-2 mt-0.5">
-                          <CheckCircle className="w-3 h-3 text-[#0288D1]" />
+                        <div className="w-5 h-5 rounded-full bg-[var(--clay-primary)] bg-opacity-20 flex items-center justify-center mr-2 mt-0.5">
+                          <CheckCircle className="w-3 h-3 text-[var(--clay-primary)]" />
                         </div>
                         <span>Ghi nhật ký và giám sát truy cập</span>
                       </li>
@@ -918,7 +918,7 @@ const ChinhSachBaoMat = () => {
 
                 <div className={`mt-6 ${highlightBg} border ${highlightBorder} p-4 rounded-lg`}>
                   <p className="font-medium flex items-center">
-                    <AlertTriangle className="w-5 h-5 mr-2 text-[#0288D1]" />
+                    <AlertTriangle className="w-5 h-5 mr-2 text-[var(--clay-primary)]" />
                     Lưu ý về bảo mật:
                   </p>
                   <p className={`mt-1 ${textSecondary}`}>
@@ -938,8 +938,8 @@ const ChinhSachBaoMat = () => {
               className={`${cardBg} border ${cardBorder} rounded-xl p-6 md:p-8 shadow-lg`}
             >
               <div className="flex items-center mb-6">
-                <div className="w-10 h-10 rounded-full bg-[#0288D1] bg-opacity-20 flex items-center justify-center mr-4">
-                  <UserCheck className="w-5 h-5 text-[#0288D1]" />
+                <div className="w-10 h-10 rounded-full bg-[var(--clay-primary)] bg-opacity-20 flex items-center justify-center mr-4">
+                  <UserCheck className="w-5 h-5 text-[var(--clay-primary)]" />
                 </div>
                 <h2 className="text-2xl md:text-3xl font-bold">Quyền Của Bạn</h2>
               </div>
@@ -952,12 +952,12 @@ const ChinhSachBaoMat = () => {
                 <div className="space-y-4 mt-4">
                   <div
                     className={`p-4 rounded-lg border ${cardBorder} ${
-                      theme === 'dark' ? 'bg-[#37474F]/50' : 'bg-gray-50'
+                      theme === 'dark' ? 'bg-[var(--clay-text)]/50' : 'bg-[var(--clay-surface-soft)]'
                     }`}
                   >
                     <div className="flex items-center mb-2">
-                      <div className="w-8 h-8 rounded-full bg-[#0288D1] bg-opacity-20 flex items-center justify-center mr-3">
-                        <Eye className="w-4 h-4 text-[#0288D1]" />
+                      <div className="w-8 h-8 rounded-full bg-[var(--clay-primary)] bg-opacity-20 flex items-center justify-center mr-3">
+                        <Eye className="w-4 h-4 text-[var(--clay-primary)]" />
                       </div>
                       <h3 className="font-semibold">Quyền Truy Cập</h3>
                     </div>
@@ -970,12 +970,12 @@ const ChinhSachBaoMat = () => {
 
                   <div
                     className={`p-4 rounded-lg border ${cardBorder} ${
-                      theme === 'dark' ? 'bg-[#37474F]/50' : 'bg-gray-50'
+                      theme === 'dark' ? 'bg-[var(--clay-text)]/50' : 'bg-[var(--clay-surface-soft)]'
                     }`}
                   >
                     <div className="flex items-center mb-2">
-                      <div className="w-8 h-8 rounded-full bg-[#0288D1] bg-opacity-20 flex items-center justify-center mr-3">
-                        <RefreshCw className="w-4 h-4 text-[#0288D1]" />
+                      <div className="w-8 h-8 rounded-full bg-[var(--clay-primary)] bg-opacity-20 flex items-center justify-center mr-3">
+                        <RefreshCw className="w-4 h-4 text-[var(--clay-primary)]" />
                       </div>
                       <h3 className="font-semibold">Quyền Chỉnh Sửa</h3>
                     </div>
@@ -988,12 +988,12 @@ const ChinhSachBaoMat = () => {
 
                   <div
                     className={`p-4 rounded-lg border ${cardBorder} ${
-                      theme === 'dark' ? 'bg-[#37474F]/50' : 'bg-gray-50'
+                      theme === 'dark' ? 'bg-[var(--clay-text)]/50' : 'bg-[var(--clay-surface-soft)]'
                     }`}
                   >
                     <div className="flex items-center mb-2">
-                      <div className="w-8 h-8 rounded-full bg-[#0288D1] bg-opacity-20 flex items-center justify-center mr-3">
-                        <AlertTriangle className="w-4 h-4 text-[#0288D1]" />
+                      <div className="w-8 h-8 rounded-full bg-[var(--clay-primary)] bg-opacity-20 flex items-center justify-center mr-3">
+                        <AlertTriangle className="w-4 h-4 text-[var(--clay-primary)]" />
                       </div>
                       <h3 className="font-semibold">Quyền Xóa</h3>
                     </div>
@@ -1006,12 +1006,12 @@ const ChinhSachBaoMat = () => {
 
                   <div
                     className={`p-4 rounded-lg border ${cardBorder} ${
-                      theme === 'dark' ? 'bg-[#37474F]/50' : 'bg-gray-50'
+                      theme === 'dark' ? 'bg-[var(--clay-text)]/50' : 'bg-[var(--clay-surface-soft)]'
                     }`}
                   >
                     <div className="flex items-center mb-2">
-                      <div className="w-8 h-8 rounded-full bg-[#0288D1] bg-opacity-20 flex items-center justify-center mr-3">
-                        <Globe className="w-4 h-4 text-[#0288D1]" />
+                      <div className="w-8 h-8 rounded-full bg-[var(--clay-primary)] bg-opacity-20 flex items-center justify-center mr-3">
+                        <Globe className="w-4 h-4 text-[var(--clay-primary)]" />
                       </div>
                       <h3 className="font-semibold">Quyền Chuyển Giao Dữ Liệu</h3>
                     </div>
@@ -1024,12 +1024,12 @@ const ChinhSachBaoMat = () => {
 
                   <div
                     className={`p-4 rounded-lg border ${cardBorder} ${
-                      theme === 'dark' ? 'bg-[#37474F]/50' : 'bg-gray-50'
+                      theme === 'dark' ? 'bg-[var(--clay-text)]/50' : 'bg-[var(--clay-surface-soft)]'
                     }`}
                   >
                     <div className="flex items-center mb-2">
-                      <div className="w-8 h-8 rounded-full bg-[#0288D1] bg-opacity-20 flex items-center justify-center mr-3">
-                        <AlertTriangle className="w-4 h-4 text-[#0288D1]" />
+                      <div className="w-8 h-8 rounded-full bg-[var(--clay-primary)] bg-opacity-20 flex items-center justify-center mr-3">
+                        <AlertTriangle className="w-4 h-4 text-[var(--clay-primary)]" />
                       </div>
                       <h3 className="font-semibold">Quyền Phản Đối</h3>
                     </div>
@@ -1048,14 +1048,14 @@ const ChinhSachBaoMat = () => {
                   </p>
                   <ul className="space-y-2">
                     <li className="flex items-center">
-                      <Mail className="w-5 h-5 mr-2 text-[#0288D1]" />
+                      <Mail className="w-5 h-5 mr-2 text-[var(--clay-primary)]" />
                       <span>Email: privacy@blockchain-election.vn</span>
                     </li>
                     <li className="flex items-center">
-                      <Globe className="w-5 h-5 mr-2 text-[#0288D1]" />
+                      <Globe className="w-5 h-5 mr-2 text-[var(--clay-primary)]" />
                       <span>
                         Mẫu yêu cầu trực tuyến:{' '}
-                        <Link to="/lien-he" className={linkColor}>
+                        <Link to="/contact" className={linkColor}>
                           Liên hệ
                         </Link>
                       </span>
@@ -1077,8 +1077,8 @@ const ChinhSachBaoMat = () => {
               className={`${cardBg} border ${cardBorder} rounded-xl p-6 md:p-8 shadow-lg`}
             >
               <div className="flex items-center mb-6">
-                <div className="w-10 h-10 rounded-full bg-[#0288D1] bg-opacity-20 flex items-center justify-center mr-4">
-                  <Cookie className="w-5 h-5 text-[#0288D1]" />
+                <div className="w-10 h-10 rounded-full bg-[var(--clay-primary)] bg-opacity-20 flex items-center justify-center mr-4">
+                  <Cookie className="w-5 h-5 text-[var(--clay-primary)]" />
                 </div>
                 <h2 className="text-2xl md:text-3xl font-bold">Cookie & Công Nghệ</h2>
               </div>
@@ -1092,11 +1092,11 @@ const ChinhSachBaoMat = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4">
                   <div
                     className={`p-5 rounded-xl border ${cardBorder} ${
-                      theme === 'dark' ? 'bg-[#37474F]/30' : 'bg-white'
+                      theme === 'dark' ? 'bg-[var(--clay-text)]/30' : 'bg-white'
                     } shadow-sm`}
                   >
                     <h3 className="text-lg font-semibold mb-3 flex items-center">
-                      <Cookie className="w-5 h-5 mr-2 text-[#0288D1]" />
+                      <Cookie className="w-5 h-5 mr-2 text-[var(--clay-primary)]" />
                       Cookie Thiết Yếu
                     </h3>
                     <p className={`${textSecondary} text-sm mb-3`}>
@@ -1104,20 +1104,20 @@ const ChinhSachBaoMat = () => {
                     </p>
                     <ul className="space-y-2 text-sm">
                       <li className="flex items-start">
-                        <div className="w-5 h-5 rounded-full bg-[#0288D1] bg-opacity-20 flex items-center justify-center mr-2 mt-0.5">
-                          <CheckCircle className="w-3 h-3 text-[#0288D1]" />
+                        <div className="w-5 h-5 rounded-full bg-[var(--clay-primary)] bg-opacity-20 flex items-center justify-center mr-2 mt-0.5">
+                          <CheckCircle className="w-3 h-3 text-[var(--clay-primary)]" />
                         </div>
                         <span>Duy trì phiên đăng nhập</span>
                       </li>
                       <li className="flex items-start">
-                        <div className="w-5 h-5 rounded-full bg-[#0288D1] bg-opacity-20 flex items-center justify-center mr-2 mt-0.5">
-                          <CheckCircle className="w-3 h-3 text-[#0288D1]" />
+                        <div className="w-5 h-5 rounded-full bg-[var(--clay-primary)] bg-opacity-20 flex items-center justify-center mr-2 mt-0.5">
+                          <CheckCircle className="w-3 h-3 text-[var(--clay-primary)]" />
                         </div>
                         <span>Ghi nhớ tùy chọn bảo mật</span>
                       </li>
                       <li className="flex items-start">
-                        <div className="w-5 h-5 rounded-full bg-[#0288D1] bg-opacity-20 flex items-center justify-center mr-2 mt-0.5">
-                          <CheckCircle className="w-3 h-3 text-[#0288D1]" />
+                        <div className="w-5 h-5 rounded-full bg-[var(--clay-primary)] bg-opacity-20 flex items-center justify-center mr-2 mt-0.5">
+                          <CheckCircle className="w-3 h-3 text-[var(--clay-primary)]" />
                         </div>
                         <span>Cân bằng tải và bảo mật</span>
                       </li>
@@ -1126,11 +1126,11 @@ const ChinhSachBaoMat = () => {
 
                   <div
                     className={`p-5 rounded-xl border ${cardBorder} ${
-                      theme === 'dark' ? 'bg-[#37474F]/30' : 'bg-white'
+                      theme === 'dark' ? 'bg-[var(--clay-text)]/30' : 'bg-white'
                     } shadow-sm`}
                   >
                     <h3 className="text-lg font-semibold mb-3 flex items-center">
-                      <Cookie className="w-5 h-5 mr-2 text-[#0288D1]" />
+                      <Cookie className="w-5 h-5 mr-2 text-[var(--clay-primary)]" />
                       Cookie Phân Tích
                     </h3>
                     <p className={`${textSecondary} text-sm mb-3`}>
@@ -1138,20 +1138,20 @@ const ChinhSachBaoMat = () => {
                     </p>
                     <ul className="space-y-2 text-sm">
                       <li className="flex items-start">
-                        <div className="w-5 h-5 rounded-full bg-[#0288D1] bg-opacity-20 flex items-center justify-center mr-2 mt-0.5">
-                          <CheckCircle className="w-3 h-3 text-[#0288D1]" />
+                        <div className="w-5 h-5 rounded-full bg-[var(--clay-primary)] bg-opacity-20 flex items-center justify-center mr-2 mt-0.5">
+                          <CheckCircle className="w-3 h-3 text-[var(--clay-primary)]" />
                         </div>
                         <span>Phân tích lưu lượng truy cập</span>
                       </li>
                       <li className="flex items-start">
-                        <div className="w-5 h-5 rounded-full bg-[#0288D1] bg-opacity-20 flex items-center justify-center mr-2 mt-0.5">
-                          <CheckCircle className="w-3 h-3 text-[#0288D1]" />
+                        <div className="w-5 h-5 rounded-full bg-[var(--clay-primary)] bg-opacity-20 flex items-center justify-center mr-2 mt-0.5">
+                          <CheckCircle className="w-3 h-3 text-[var(--clay-primary)]" />
                         </div>
                         <span>Theo dõi hiệu suất trang</span>
                       </li>
                       <li className="flex items-start">
-                        <div className="w-5 h-5 rounded-full bg-[#0288D1] bg-opacity-20 flex items-center justify-center mr-2 mt-0.5">
-                          <CheckCircle className="w-3 h-3 text-[#0288D1]" />
+                        <div className="w-5 h-5 rounded-full bg-[var(--clay-primary)] bg-opacity-20 flex items-center justify-center mr-2 mt-0.5">
+                          <CheckCircle className="w-3 h-3 text-[var(--clay-primary)]" />
                         </div>
                         <span>Hiểu cách người dùng tương tác</span>
                       </li>
@@ -1164,8 +1164,8 @@ const ChinhSachBaoMat = () => {
                   <p className="mb-4">Bạn có thể kiểm soát và quản lý cookie theo nhiều cách:</p>
                   <ul className="space-y-2">
                     <li className="flex items-start">
-                      <div className="w-6 h-6 rounded-full bg-[#0288D1] bg-opacity-20 flex items-center justify-center mr-3 mt-0.5">
-                        <CheckCircle className="w-3 h-3 text-[#0288D1]" />
+                      <div className="w-6 h-6 rounded-full bg-[var(--clay-primary)] bg-opacity-20 flex items-center justify-center mr-3 mt-0.5">
+                        <CheckCircle className="w-3 h-3 text-[var(--clay-primary)]" />
                       </div>
                       <span>
                         Cài đặt trình duyệt: Hầu hết các trình duyệt cho phép bạn kiểm soát cookie
@@ -1173,8 +1173,8 @@ const ChinhSachBaoMat = () => {
                       </span>
                     </li>
                     <li className="flex items-start">
-                      <div className="w-6 h-6 rounded-full bg-[#0288D1] bg-opacity-20 flex items-center justify-center mr-3 mt-0.5">
-                        <CheckCircle className="w-3 h-3 text-[#0288D1]" />
+                      <div className="w-6 h-6 rounded-full bg-[var(--clay-primary)] bg-opacity-20 flex items-center justify-center mr-3 mt-0.5">
+                        <CheckCircle className="w-3 h-3 text-[var(--clay-primary)]" />
                       </div>
                       <span>
                         Tùy chọn cookie: Chúng tôi cung cấp bảng điều khiển tùy chọn cookie trên nền
@@ -1182,8 +1182,8 @@ const ChinhSachBaoMat = () => {
                       </span>
                     </li>
                     <li className="flex items-start">
-                      <div className="w-6 h-6 rounded-full bg-[#0288D1] bg-opacity-20 flex items-center justify-center mr-3 mt-0.5">
-                        <CheckCircle className="w-3 h-3 text-[#0288D1]" />
+                      <div className="w-6 h-6 rounded-full bg-[var(--clay-primary)] bg-opacity-20 flex items-center justify-center mr-3 mt-0.5">
+                        <CheckCircle className="w-3 h-3 text-[var(--clay-primary)]" />
                       </div>
                       <span>
                         Công cụ của bên thứ ba: Có nhiều công cụ và tiện ích mở rộng trình duyệt để
@@ -1194,7 +1194,7 @@ const ChinhSachBaoMat = () => {
 
                   <div className={`mt-4 ${highlightBg} border ${highlightBorder} p-4 rounded-lg`}>
                     <p className="font-medium flex items-center">
-                      <AlertTriangle className="w-5 h-5 mr-2 text-[#0288D1]" />
+                      <AlertTriangle className="w-5 h-5 mr-2 text-[var(--clay-primary)]" />
                       Lưu ý:
                     </p>
                     <p className={`mt-1 ${textSecondary}`}>
@@ -1214,8 +1214,8 @@ const ChinhSachBaoMat = () => {
               className={`${cardBg} border ${cardBorder} rounded-xl p-6 md:p-8 shadow-lg`}
             >
               <div className="flex items-center mb-6">
-                <div className="w-10 h-10 rounded-full bg-[#0288D1] bg-opacity-20 flex items-center justify-center mr-4">
-                  <RefreshCw className="w-5 h-5 text-[#0288D1]" />
+                <div className="w-10 h-10 rounded-full bg-[var(--clay-primary)] bg-opacity-20 flex items-center justify-center mr-4">
+                  <RefreshCw className="w-5 h-5 text-[var(--clay-primary)]" />
                 </div>
                 <h2 className="text-2xl md:text-3xl font-bold">Cập Nhật Chính Sách</h2>
               </div>
@@ -1229,20 +1229,20 @@ const ChinhSachBaoMat = () => {
 
                 <ul className="space-y-2 mt-4">
                   <li className="flex items-start">
-                    <div className="w-6 h-6 rounded-full bg-[#0288D1] bg-opacity-20 flex items-center justify-center mr-3 mt-0.5">
-                      <CheckCircle className="w-3 h-3 text-[#0288D1]" />
+                    <div className="w-6 h-6 rounded-full bg-[var(--clay-primary)] bg-opacity-20 flex items-center justify-center mr-3 mt-0.5">
+                      <CheckCircle className="w-3 h-3 text-[var(--clay-primary)]" />
                     </div>
                     <span>Đăng thông báo nổi bật trên nền tảng của chúng tôi</span>
                   </li>
                   <li className="flex items-start">
-                    <div className="w-6 h-6 rounded-full bg-[#0288D1] bg-opacity-20 flex items-center justify-center mr-3 mt-0.5">
-                      <CheckCircle className="w-3 h-3 text-[#0288D1]" />
+                    <div className="w-6 h-6 rounded-full bg-[var(--clay-primary)] bg-opacity-20 flex items-center justify-center mr-3 mt-0.5">
+                      <CheckCircle className="w-3 h-3 text-[var(--clay-primary)]" />
                     </div>
                     <span>Gửi email thông báo đến địa chỉ email đã đăng ký của bạn</span>
                   </li>
                   <li className="flex items-start">
-                    <div className="w-6 h-6 rounded-full bg-[#0288D1] bg-opacity-20 flex items-center justify-center mr-3 mt-0.5">
-                      <CheckCircle className="w-3 h-3 text-[#0288D1]" />
+                    <div className="w-6 h-6 rounded-full bg-[var(--clay-primary)] bg-opacity-20 flex items-center justify-center mr-3 mt-0.5">
+                      <CheckCircle className="w-3 h-3 text-[var(--clay-primary)]" />
                     </div>
                     <span>Cập nhật "Ngày có hiệu lực" ở đầu Chính sách Bảo mật này</span>
                   </li>
@@ -1259,7 +1259,7 @@ const ChinhSachBaoMat = () => {
                   <h3 className="text-xl font-semibold mb-3">Lịch Sử Thay Đổi</h3>
                   <div className={`border ${cardBorder} rounded-lg overflow-hidden`}>
                     <table className="min-w-full divide-y divide-gray-200">
-                      <thead className={theme === 'dark' ? 'bg-[#37474F]' : 'bg-gray-50'}>
+                      <thead className={theme === 'dark' ? 'bg-[var(--clay-text)]' : 'bg-[var(--clay-surface-soft)]'}>
                         <tr>
                           <th
                             scope="col"
@@ -1301,8 +1301,8 @@ const ChinhSachBaoMat = () => {
               className={`${cardBg} border ${cardBorder} rounded-xl p-6 md:p-8 shadow-lg`}
             >
               <div className="flex items-center mb-6">
-                <div className="w-10 h-10 rounded-full bg-[#0288D1] bg-opacity-20 flex items-center justify-center mr-4">
-                  <Mail className="w-5 h-5 text-[#0288D1]" />
+                <div className="w-10 h-10 rounded-full bg-[var(--clay-primary)] bg-opacity-20 flex items-center justify-center mr-4">
+                  <Mail className="w-5 h-5 text-[var(--clay-primary)]" />
                 </div>
                 <h2 className="text-2xl md:text-3xl font-bold">Liên Hệ</h2>
               </div>
@@ -1317,11 +1317,11 @@ const ChinhSachBaoMat = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
                   <div
                     className={`p-5 rounded-xl border ${cardBorder} ${
-                      theme === 'dark' ? 'bg-[#37474F]/30' : 'bg-white'
+                      theme === 'dark' ? 'bg-[var(--clay-text)]/30' : 'bg-white'
                     } shadow-sm`}
                   >
                     <h3 className="text-lg font-semibold mb-4 flex items-center">
-                      <Mail className="w-5 h-5 mr-2 text-[#0288D1]" />
+                      <Mail className="w-5 h-5 mr-2 text-[var(--clay-primary)]" />
                       Email
                     </h3>
                     <p className="mb-2">
@@ -1346,11 +1346,11 @@ const ChinhSachBaoMat = () => {
 
                   <div
                     className={`p-5 rounded-xl border ${cardBorder} ${
-                      theme === 'dark' ? 'bg-[#37474F]/30' : 'bg-white'
+                      theme === 'dark' ? 'bg-[var(--clay-text)]/30' : 'bg-white'
                     } shadow-sm`}
                   >
                     <h3 className="text-lg font-semibold mb-4 flex items-center">
-                      <Globe className="w-5 h-5 mr-2 text-[#0288D1]" />
+                      <Globe className="w-5 h-5 mr-2 text-[var(--clay-primary)]" />
                       Địa Chỉ
                     </h3>
                     <p className="mb-2">
@@ -1365,8 +1365,8 @@ const ChinhSachBaoMat = () => {
 
                 <div className="mt-6 flex flex-col sm:flex-row gap-4">
                   <Link
-                    to="/lien-he"
-                    className="px-6 py-3 bg-gradient-to-r from-[#0288D1] to-[#6A1B9A] text-white rounded-full font-medium hover:shadow-lg hover:shadow-[#0288D1]/20 transition-all duration-300 transform hover:scale-105 flex items-center justify-center"
+                    to="/contact"
+                    className="px-6 py-3 bg-gradient-to-r from-[var(--clay-primary)] to-[var(--clay-primary-dark)] text-white rounded-full font-medium hover:shadow-lg hover:shadow-[var(--clay-primary)]/20 transition-all duration-300 transform hover:scale-105 flex items-center justify-center"
                   >
                     <Mail className="w-4 h-4 mr-2" />
                     Liên Hệ Ngay
@@ -1374,7 +1374,7 @@ const ChinhSachBaoMat = () => {
 
                   <Link
                     to="/faq"
-                    className={`px-6 py-3 border ${cardBorder} rounded-full font-medium hover:bg-[#0288D1]/10 transition-all duration-300 flex items-center justify-center`}
+                    className={`px-6 py-3 border ${cardBorder} rounded-full font-medium hover:bg-[var(--clay-primary)]/10 transition-all duration-300 flex items-center justify-center`}
                   >
                     <HelpCircle className="w-4 h-4 mr-2" />
                     Câu Hỏi Thường Gặp
@@ -1394,7 +1394,7 @@ const ChinhSachBaoMat = () => {
             ? 'opacity-100 translate-y-0'
             : 'opacity-0 translate-y-10 pointer-events-none'
         } ${
-          theme === 'dark' ? 'bg-[#0288D1] hover:bg-[#01579B]' : 'bg-[#0288D1] hover:bg-[#01579B]'
+          theme === 'dark' ? 'bg-[var(--clay-primary)] hover:bg-[var(--clay-primary-dark)]' : 'bg-[var(--clay-primary)] hover:bg-[var(--clay-primary-dark)]'
         } text-white`}
         aria-label="Lên đầu trang"
       >
@@ -1404,7 +1404,7 @@ const ChinhSachBaoMat = () => {
       {/* Footer */}
       <footer
         className={`mt-16 py-8 border-t ${cardBorder} ${
-          theme === 'dark' ? 'bg-[#263238]' : 'bg-gray-50'
+          theme === 'dark' ? 'bg-[var(--clay-surface-soft)]' : 'bg-[var(--clay-surface-soft)]'
         }`}
       >
         <div className="container mx-auto px-4 text-center">
@@ -1415,10 +1415,10 @@ const ChinhSachBaoMat = () => {
             <Link to="/" className={linkColor}>
               Trang Chủ
             </Link>
-            <Link to="/dieu-khoan-su-dung" className={linkColor}>
+            <Link to="/terms" className={linkColor}>
               Điều Khoản Sử Dụng
             </Link>
-            <Link to="/lien-he" className={linkColor}>
+            <Link to="/contact" className={linkColor}>
               Liên Hệ
             </Link>
           </div>

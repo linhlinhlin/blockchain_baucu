@@ -222,6 +222,6 @@ namespace WebApplication3.Controllers
     /// </summary>
     public class BatchCheckRequest
     {
-        public int[] ElectionIds { get; set; }
+        public int[] ElectionIds { get; set; } = Array.Empty<int>();
     }
 }

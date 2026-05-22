@@ -68,7 +68,9 @@ const nguoiDungSlice = createSlice({
   initialState: trangThaiBanDau,
   reducers: {
     datNguoiDung: (state, action: PayloadAction<TaoTaiKhoanTamThoi>) => {
-      state.nguoiDung = action.payload ?? null;
+      state.nguoiDung = action.payload
+        ? (action.payload as unknown as typeof state.nguoiDung)
+        : null;
     },
     capNhatCaiDatNguoiDung: (
       state,
@@ -88,7 +90,9 @@ const nguoiDungSlice = createSlice({
       state.dangTai = true;
     },
     hanhDongDaXacThuc: (state, action: PayloadAction<TaoTaiKhoanTamThoi | undefined>) => {
-      state.nguoiDung = action.payload ?? null;
+      state.nguoiDung = action.payload
+        ? (action.payload as unknown as typeof state.nguoiDung)
+        : null;
       state.quyen = Array.isArray(action.payload?.vaiTro)
         ? action.payload?.vaiTro.map((vaiTro: VaiTro) => vaiTro.tenVaiTro)
         : [];
@@ -113,7 +117,7 @@ const nguoiDungSlice = createSlice({
         state.dangTai = true;
       })
       .addCase(fetchCacTaiKhoan.fulfilled, (state, action: PayloadAction<TaoTaiKhoanTamThoi[]>) => {
-        state.nguoiDungHienTai = action.payload;
+        state.nguoiDungHienTai = action.payload as unknown as typeof state.nguoiDungHienTai;
         state.dangTai = false;
       })
       .addCase(fetchCacTaiKhoan.rejected, (state, action) => {
@@ -121,25 +125,29 @@ const nguoiDungSlice = createSlice({
         state.dangTai = false;
       })
       .addCase(addTaiKhoan.fulfilled, (state, action: PayloadAction<TaoTaiKhoanTamThoi>) => {
-        state.nguoiDungHienTai.push(action.payload);
+        state.nguoiDungHienTai.push(
+          action.payload as unknown as (typeof state.nguoiDungHienTai)[number],
+        );
       })
       .addCase(editTaiKhoan.fulfilled, (state, action: PayloadAction<TaoTaiKhoanTamThoi>) => {
         const index = state.nguoiDungHienTai.findIndex(
-          (taiKhoan: TaoTaiKhoanTamThoi) => taiKhoan.id === action.payload.id,
+          (taiKhoan) => taiKhoan.id === action.payload.id,
         );
         if (index !== -1) {
-          state.nguoiDungHienTai[index] = action.payload;
+          state.nguoiDungHienTai[index] =
+            action.payload as unknown as (typeof state.nguoiDungHienTai)[number];
         }
       })
       .addCase(removeTaiKhoan.fulfilled, (state, action: PayloadAction<number>) => {
         state.nguoiDungHienTai = state.nguoiDungHienTai.filter(
-          (taiKhoan: TaoTaiKhoanTamThoi) => taiKhoan.id !== action.payload.toString(),
+          (taiKhoan) => taiKhoan.id !== action.payload.toString(),
         );
       })
       .addCase(
         searchTaiKhoans.fulfilled,
         (state, action: PayloadAction<SearchTaiKhoanResponse>) => {
-          state.nguoiDungHienTai = action.payload.data;
+          state.nguoiDungHienTai =
+            action.payload.data as unknown as typeof state.nguoiDungHienTai;
         },
       );
   },

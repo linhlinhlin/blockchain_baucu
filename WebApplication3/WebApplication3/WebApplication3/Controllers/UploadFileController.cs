@@ -113,12 +113,18 @@ namespace WebApplication3.Controllers
             // Với mỗi file, tạo URL có SAS Token và định dạng các thông tin cần trả về
             foreach (var file in filesFromDb)
             {
+                var storedFileName = file.TenFileDuocTao;
+                if (string.IsNullOrWhiteSpace(storedFileName))
+                {
+                    continue;
+                }
+
                 // Tạo URL có SAS Token cho file (sử dụng hàm GenerateSasToken)
-                string sasUrl = _azureBlobService.GenerateSasToken(file.TenFileDuocTao, 30);
+                string sasUrl = _azureBlobService.GenerateSasToken(storedFileName, 30);
                 filesWithSas.Add(new
                 {
                     FileUrl = sasUrl,
-                    TenFileDuocTao = file.TenFileDuocTao ?? string.Empty,
+                    TenFileDuocTao = storedFileName,
                     NoiDungType = file.NoiDungType ?? string.Empty,
                     // Định dạng Ngày hiển thị dựa trên NgayUpload
                     NgayHienThi = file.NgayHienThi ?? string.Empty,

@@ -43,6 +43,23 @@
   --display-font: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   --body-font: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   --sidebar-w: 264px;
+
+  /* ============================================================
+     Đợt 10 (spec 010) — semantic STATUS tokens.
+     Chỉ dùng cho badge/toast/phase-chip/validation (CHỨC NĂNG),
+     KHÔNG trang trí. Trang trí vẫn single-blue (design.md / Đợt 7).
+     Justification: plan.md Complexity Tracking + research §D2.
+     ============================================================ */
+  --state-success: #1a7f37;
+  --state-success-soft: #e6f4ea;
+  --state-warning: #9a6700;
+  --state-warning-soft: #fdf3e3;
+  --state-danger: #b3261e;
+  --state-danger-soft: #fbeae9;
+  --state-info: var(--clay-primary);
+  --state-info-soft: var(--clay-primary-light);
+  --state-neutral: var(--clay-muted);
+  --state-neutral-soft: var(--clay-surface-soft);
 }
 
 html {

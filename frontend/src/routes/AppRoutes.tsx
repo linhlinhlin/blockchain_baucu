@@ -1,73 +1,73 @@
 import type React from 'react';
-import { createBrowserRouter, Navigate, RouterProvider } from 'react-router-dom';
+import { createBrowserRouter, Navigate, RouterProvider, useParams } from 'react-router-dom';
 import { lazy, Suspense } from 'react';
+
+// Đợt 14: redirect giữ params cho luồng forgot-password (legacy VN → EN canonical).
+const ForgotOptionsRedirect = () => {
+  const { username, randomCode } = useParams<{ username: string; randomCode: string }>();
+  return <Navigate to={`/forgot-password/account/${username}/${randomCode}/options`} replace />;
+};
+const ForgotSendOtpRedirect = () => {
+  const { username, randomCode } = useParams<{ username: string; randomCode: string }>();
+  return <Navigate to={`/forgot-password/account/${username}/${randomCode}/send-otp`} replace />;
+};
+const ForgotResetRedirect = () => {
+  const { username, randomCode } = useParams<{ username: string; randomCode: string }>();
+  return <Navigate to={`/forgot-password/account/${username}/${randomCode}/reset`} replace />;
+};
+const RulesRedirect = () => {
+  const { id } = useParams<{ id: string }>();
+  return <Navigate to={`/app/elections/${id}/rules`} replace />;
+};
 import { GoogleReCaptchaProvider } from 'react-google-recaptcha-v3';
 
+// Đợt 13 (hiệu năng): route-level code-splitting. Shell/ErrorPage/HOC/provider
+// giữ static (cần ngay/độ tin cậy); mọi trang ../pages/* → lazy() ⇒ tách chunk
+// theo route, giảm mạnh bundle index ban đầu. Routing/guard/redirect KHÔNG đổi.
 import AppBeforeLogin from '../AppBeforeLogin';
 import AppAfterLogin from '../AppAfterLogin';
-import CacPhienBauCuPage from '../pages/CacCuocBauCuPage';
-import XemChiTietCuocBauCuPage from '../pages/XemChiTietCuocBauCuPage';
 import ErrorPage from '../pages/ErrorPage';
-import HomePage from '../pages/HomePage';
-import LoginPage from '../pages/LoginPage';
-import RoleManagementPage from '../pages/QuanLyVaiTroAdminPage';
-import RoleAssignmentPage from '../pages/PhanQuyenAdminPage';
-import AccountInfoPage from '../pages/ThongTinTaiKhoanPage';
-import WelcomePage from '../pages/ChaoMungPage';
-import ThankYouPage from '../pages/CamOnPage';
-import FindAccountPage from '../pages/TimTaiKhoanPage';
-import AccountOptionsPage from '../pages/TuyChonTaiKhoanPage';
-import RegisterPage from '../pages/DangKyTaiKhoanPage';
-import SettingsPage from '../pages/CaiDatPage';
-import UserElectionsPage from '../pages/CuocBauCuCuaNguoiDungPage';
-import TaoPhienBauCuPage from '../pages/TaoCuocBauCuPage';
-import UpcomingElectionsPage from '../pages/ThongBaoCuocBauCuPage';
-import withElectionId from '../components/withElectionId';
-import ElectionTienHanh from '../pages/ThongTinChiTietCuocBauCu';
-// import TienHanhBauCu from '../pages/TienHanhPhienBauCuPage';
 import ThongBaoKhongCoPhien from '../components/ThongBaoKhongCoCuocBauCu';
-import ChinhSachBaoMat from '../pages/ChinhSachBaoMatPage';
-import DieuKhoanSuDung from '../pages/DieuKhoanSuDungPage';
-import LienHePage from '../pages/LienHe';
-import UnauthorizedPage from '../pages/UnauthoriedPage';
 import ProtectedRoute from '../routes/ProtectedRoute';
-import GuiOTPPage from '../pages/GuiOTPPage';
-import DatLaiMatKhauPage from '../pages/DatLaiMatKhauPage';
-import withPhienBauCuId from '../components/withPhienBauCuId';
-import QuanLyFilePage from '../pages/QuanLyFilePage'; // Import QuanLyFilePage
-import QuetMaQRPage from '../pages/QuetMaQRPage';
-import QuanLySmartContractPage from '../pages/QuanLySmartContractPage'; // Import QuanLySmartContractPage
-//import ThongTinBlockchainRealTimePage from '../pages/ThongTinBlockchainRealTimePage'; // Import ThongTinBlockchainRealTimePage
-import FAQ from '../pages/FaqPage';
-import BlockchainSetupPage from '../pages/BlockchainSetupPage';
-import DieuLePage from '../pages/DieuLePage';
-//import PhienBauCuBlockchainPage from '../pages/PhienBauCuBlockchainPage';
-
-// Import component VuaChua với tên mới
-import PhienBauCuBlockchainDeploymentPage from '../pages/PhienBauCuBlockchainDeploymentPage'; // Đổi tên từ VuaChua.tsx
-import ChinhSuaPhienBauCuPage from '../pages/ChinhSuaPhienBauCuPage';
-
-// Thêm import cho trang xác thực cử tri
-import VoterVerificationPage from '../pages/VoterVerificationPage';
-
-// Thêm import cho trang ElectionSessionManagerPage
-import ElectionSessionManagerPage from '../pages/ElectionSessionManagerPage';
-import XemChiTietPhienBauCuPage from '../pages/XemChiTietPhienBauCuPage';
-
-// Thêm withPhienBauCuId cho ChinhSuaPhienBauCuPage
 import { Web3Provider } from '../context/Web3Context';
 import { ThemeProvider } from '../context/ThemeContext';
 import { ToastProvider } from '../components/ui/Use-toast';
 import { ReCaptchaProvider } from '../components/ui/Use-recaptcha';
 import { isRecaptchaEnabled } from '../config/runtimeFlags';
 
+const CacPhienBauCuPage = lazy(() => import('../pages/CacCuocBauCuPage'));
+const LoginPage = lazy(() => import('../pages/LoginPage'));
+const RoleManagementPage = lazy(() => import('../pages/QuanLyVaiTroAdminPage'));
+const RoleAssignmentPage = lazy(() => import('../pages/PhanQuyenAdminPage'));
+const AccountInfoPage = lazy(() => import('../pages/ThongTinTaiKhoanPage'));
+const WelcomePage = lazy(() => import('../pages/ChaoMungPage'));
+const ThankYouPage = lazy(() => import('../pages/CamOnPage'));
+const FindAccountPage = lazy(() => import('../pages/TimTaiKhoanPage'));
+const AccountOptionsPage = lazy(() => import('../pages/TuyChonTaiKhoanPage'));
+const RegisterPage = lazy(() => import('../pages/DangKyTaiKhoanPage'));
+const SettingsPage = lazy(() => import('../pages/CaiDatPage'));
+const UserElectionsPage = lazy(() => import('../pages/CuocBauCuCuaNguoiDungPage'));
+const TaoPhienBauCuPage = lazy(() => import('../pages/TaoCuocBauCuPage'));
+const UpcomingElectionsPage = lazy(() => import('../pages/ThongBaoCuocBauCuPage'));
+const ElectionTienHanh = lazy(() => import('../pages/ThongTinChiTietCuocBauCu'));
+const ChinhSachBaoMat = lazy(() => import('../pages/ChinhSachBaoMatPage'));
+const DieuKhoanSuDung = lazy(() => import('../pages/DieuKhoanSuDungPage'));
+const LienHePage = lazy(() => import('../pages/LienHe'));
+const UnauthorizedPage = lazy(() => import('../pages/UnauthoriedPage'));
+const GuiOTPPage = lazy(() => import('../pages/GuiOTPPage'));
+const DatLaiMatKhauPage = lazy(() => import('../pages/DatLaiMatKhauPage'));
+const QuanLyFilePage = lazy(() => import('../pages/QuanLyFilePage'));
+const QuetMaQRPage = lazy(() => import('../pages/QuetMaQRPage'));
+const QuanLySmartContractPage = lazy(() => import('../pages/QuanLySmartContractPage'));
+const FAQ = lazy(() => import('../pages/FaqPage'));
+const BlockchainSetupPage = lazy(() => import('../pages/BlockchainSetupPage'));
+const DieuLePage = lazy(() => import('../pages/DieuLePage'));
+const VoterVerificationPage = lazy(() => import('../pages/VoterVerificationPage'));
+
 const AdminPage = lazy(() => import('../pages/AdminPage'));
 
-const XemChiTietCuocBauCuPageWithId = withElectionId(XemChiTietCuocBauCuPage);
-// Using type assertion to resolve the type incompatibility
-const XemChiTietPhienBauCuPageWithId = withPhienBauCuId(
-  XemChiTietPhienBauCuPage as React.ComponentType<any>,
-);
+// Đợt 13.2: RouteFallback dedupe sang components/RouteFallback (dùng ở 3 nơi).
+import { RouteFallback } from '../components/RouteFallback';
 
 // Bọc toàn bộ ứng dụng trong các providers cần thiết
 const AppWithProviders = ({
@@ -81,7 +81,7 @@ const AppWithProviders = ({
     <ToastProvider>
       {useRecaptcha && isRecaptchaEnabled ? (
         <GoogleReCaptchaProvider
-          reCaptchaKey="6LdKGRYrAAAAAARohWQGLhHKWuVQE_PnjDbfA_Wb"
+          reCaptchaKey={import.meta.env.VITE_RECAPTCHA_SITE_KEY ?? ''}
           scriptProps={{
             async: false,
             defer: true,
@@ -95,7 +95,9 @@ const AppWithProviders = ({
           }}
         >
           <ReCaptchaProvider>
-            <Web3Provider>{children}</Web3Provider>
+            <Web3Provider>
+              <Suspense fallback={<RouteFallback />}>{children}</Suspense>
+            </Web3Provider>
           </ReCaptchaProvider>
         </GoogleReCaptchaProvider>
       ) : (
@@ -136,26 +138,42 @@ const router = createBrowserRouter([
         path: 'elections',
         element: <CacPhienBauCuPage />,
       },
+      // === Forgot password flow (canonical EN, Đợt 14) ===
       {
-        path: 'tim-tai-khoan',
+        path: 'forgot-password',
         element: <FindAccountPage />,
       },
       {
-        path: 'tim-tai-khoan/:username/:randomCode/tuy-chon',
+        path: 'forgot-password/account/:username/:randomCode/options',
         element: <AccountOptionsPage />,
       },
       {
-        path: 'tim-tai-khoan/:username/:randomCode/tuy-chon/gui-otp',
+        path: 'forgot-password/account/:username/:randomCode/send-otp',
         element: <GuiOTPPage />,
       },
       {
-        path: 'tim-tai-khoan/:username/:randomCode/tuy-chon/gui-otp/dat-lai-mat-khau',
+        path: 'forgot-password/account/:username/:randomCode/reset',
         element: <DatLaiMatKhauPage />,
       },
+      // Legacy VN redirect (backward compat)
+      { path: 'tim-tai-khoan', element: <Navigate to="/forgot-password" replace /> },
       {
-        path: 'chua-xac-thuc',
+        path: 'tim-tai-khoan/:username/:randomCode/tuy-chon',
+        element: <ForgotOptionsRedirect />,
+      },
+      {
+        path: 'tim-tai-khoan/:username/:randomCode/tuy-chon/gui-otp',
+        element: <ForgotSendOtpRedirect />,
+      },
+      {
+        path: 'tim-tai-khoan/:username/:randomCode/tuy-chon/gui-otp/dat-lai-mat-khau',
+        element: <ForgotResetRedirect />,
+      },
+      {
+        path: 'unauthorized',
         element: <UnauthorizedPage />,
       },
+      { path: 'chua-xac-thuc', element: <Navigate to="/unauthorized" replace /> },
       {
         path: 'register',
         element: (
@@ -194,7 +212,7 @@ const router = createBrowserRouter([
     ),
   },
   {
-    path: 'chinh-sach-bao-mat',
+    path: 'privacy',
     element: (
       <AppWithProviders>
         <ChinhSachBaoMat />
@@ -206,8 +224,9 @@ const router = createBrowserRouter([
       </AppWithProviders>
     ),
   },
+  { path: 'chinh-sach-bao-mat', element: <Navigate to="/privacy" replace /> },
   {
-    path: 'dieu-khoan-su-dung',
+    path: 'terms',
     element: (
       <AppWithProviders>
         <DieuKhoanSuDung />
@@ -219,6 +238,7 @@ const router = createBrowserRouter([
       </AppWithProviders>
     ),
   },
+  { path: 'dieu-khoan-su-dung', element: <Navigate to="/terms" replace /> },
   {
     path: 'faq',
     element: (
@@ -233,7 +253,7 @@ const router = createBrowserRouter([
     ),
   },
   {
-    path: 'lien-he',
+    path: 'contact',
     element: (
       <AppWithProviders>
         <LienHePage />
@@ -245,6 +265,7 @@ const router = createBrowserRouter([
       </AppWithProviders>
     ),
   },
+  { path: 'lien-he', element: <Navigate to="/contact" replace /> },
   {
     path: 'blockchain-setup',
     element: (
@@ -272,7 +293,7 @@ const router = createBrowserRouter([
     ),
   },
   {
-    path: 'thank-you',
+    path: 'thanks',
     element: (
       <AppWithProviders>
         <ThankYouPage />
@@ -284,11 +305,12 @@ const router = createBrowserRouter([
       </AppWithProviders>
     ),
   },
+  { path: 'thank-you', element: <Navigate to="/thanks" replace /> },
   {
     path: '/invite',
     element: (
       <AppWithProviders>
-        <Navigate to="/app/quet-ma-qr" replace />
+        <Navigate to="/app/scan" replace />
       </AppWithProviders>
     ),
   },
@@ -296,7 +318,7 @@ const router = createBrowserRouter([
     path: 'bat-dau-cuoc-bau-cu',
     element: (
       <AppWithProviders>
-        <Navigate to="/app/tao-phien-bau-cu" replace />
+        <Navigate to="/app/elections/new" replace />
       </AppWithProviders>
     ),
   },
@@ -304,7 +326,7 @@ const router = createBrowserRouter([
     path: 'cap-phieu-bau',
     element: (
       <AppWithProviders>
-        <Navigate to="/app/quet-ma-qr" replace />
+        <Navigate to="/app/scan" replace />
       </AppWithProviders>
     ),
   },
@@ -325,24 +347,23 @@ const router = createBrowserRouter([
     children: [
       {
         index: true,
-        element: <HomePage />,
+        element: <Navigate to="/app/dashboard" replace />,
       },
-      {
-        path: 'elections',
-        element: <Navigate to="/app/user-elections" replace />,
-      },
+      // Đợt 14: 'elections' canonical = UserElectionsPage (định nghĩa bên dưới).
+      // 'elections/new' canonical = TaoCuocBauCuPage. Sub-path redirect cũ:
       {
         path: 'elections/:id',
-        element: <Navigate to="/app/user-elections" replace />,
+        element: <Navigate to="/app/elections" replace />,
       },
       {
         path: 'elections/:id/session/:idPhien',
-        element: <Navigate to="/app/quan-ly-smart-contract" replace />,
+        element: <Navigate to="/app/dashboard" replace />,
       },
       {
-        path: 'tao-phien-bau-cu',
+        path: 'elections/new',
         element: <TaoPhienBauCuPage />,
       },
+      { path: 'tao-phien-bau-cu', element: <Navigate to="/app/elections/new" replace /> },
       {
         path: 'elections/:id/elections-tienhanh',
         element: (
@@ -355,13 +376,15 @@ const router = createBrowserRouter([
         ),
       },
       {
-        path: 'account-info',
+        path: 'account',
         element: <AccountInfoPage />,
       },
+      { path: 'account-info', element: <Navigate to="/app/account" replace /> },
       {
-        path: 'upcoming-elections',
+        path: 'notifications',
         element: <UpcomingElectionsPage />,
       },
+      { path: 'upcoming-elections', element: <Navigate to="/app/notifications" replace /> },
       {
         path: 'admin',
         element: (
@@ -373,94 +396,100 @@ const router = createBrowserRouter([
         ),
       },
       {
-        path: 'role-management',
+        path: 'admin/roles',
         element: (
           <ProtectedRoute requiredPermissions={['Quan Tri Vien', 'Quản Lý Vai Trò']}>
             <RoleManagementPage />
           </ProtectedRoute>
         ),
       },
+      { path: 'role-management', element: <Navigate to="/app/admin/roles" replace /> },
       {
-        path: 'role-assignment',
+        path: 'admin/permissions',
         element: (
           <ProtectedRoute requiredPermissions={['Quan Tri Vien', 'Quản Lý Vai Trò']}>
             <RoleAssignmentPage />
           </ProtectedRoute>
         ),
       },
+      { path: 'role-assignment', element: <Navigate to="/app/admin/permissions" replace /> },
       {
         path: 'settings',
         element: <SettingsPage />,
       },
       {
-        path: 'quan-ly-file',
+        path: 'files',
         element: <QuanLyFilePage />,
       },
+      { path: 'quan-ly-file', element: <Navigate to="/app/files" replace /> },
       {
-        path: 'quet-ma-qr',
-        element: <QuetMaQRPage />, // Thêm đường dẫn cho QuetMaQRPage
+        path: 'scan',
+        element: <QuetMaQRPage />,
       },
+      { path: 'quet-ma-qr', element: <Navigate to="/app/scan" replace /> },
       {
-        path: 'user-elections',
+        path: 'elections',
         element: <UserElectionsPage />,
       },
+      { path: 'user-elections', element: <Navigate to="/app/elections" replace /> },
       // Thêm route trực tiếp cho trang quản lý phiên bầu cử blockchain
       {
         path: 'election-session-manager',
-        element: <Navigate to="/app/quan-ly-smart-contract" replace />,
+        element: <Navigate to="/app/dashboard" replace />,
       },
       // Thêm route cho trang quản lý phiên bầu cử blockchain với tham số ID
       {
         path: 'election-session-manager/:id',
-        element: <Navigate to="/app/quan-ly-smart-contract" replace />,
+        element: <Navigate to="/app/dashboard" replace />,
       },
       {
         path: 'user-elections/elections/:id/election-management',
-        element: <Navigate to="/app/quan-ly-smart-contract" replace />,
+        element: <Navigate to="/app/dashboard" replace />,
       },
       {
         path: 'user-elections/elections/:id/election-management/:idPhien/phien-bau-cu',
-        element: <Navigate to="/app/quan-ly-smart-contract" replace />,
+        element: <Navigate to="/app/dashboard" replace />,
       },
       // Thêm route mới cho trang triển khai phiên bầu cử lên blockchain
       {
         path: 'user-elections/elections/:id/session/:sessionId/deploy',
-        element: <Navigate to="/app/quan-ly-smart-contract" replace />,
+        element: <Navigate to="/app/dashboard" replace />,
       },
       {
         path: 'user-elections/elections/:id/edit',
-        element: <Navigate to="/app/tao-phien-bau-cu" replace />,
+        element: <Navigate to="/app/elections/new" replace />,
       },
       {
         path: 'user-elections/elections/:id/election-management/candidate-management',
-        element: <Navigate to="/app/tao-phien-bau-cu" replace />,
+        element: <Navigate to="/app/elections/new" replace />,
       },
       {
         path: 'user-elections/elections/:id/election-management/voter-management',
-        element: <Navigate to="/app/tao-phien-bau-cu" replace />,
+        element: <Navigate to="/app/elections/new" replace />,
       },
       {
         path: 'invite',
-        element: <Navigate to="/app/quet-ma-qr" replace />,
+        element: <Navigate to="/app/scan" replace />,
       },
       {
         path: 'quan-ly-thanh-tuu',
-        element: <Navigate to="/app/user-elections" replace />,
+        element: <Navigate to="/app/elections" replace />,
       },
       {
         path: 'ket-qua-bau-cu',
-        element: <Navigate to="/app/user-elections" replace />,
+        element: <Navigate to="/app/elections" replace />,
       },
       {
-        path: 'quan-ly-smart-contract',
+        path: 'dashboard',
         element: <QuanLySmartContractPage />,
       },
+      { path: 'quan-ly-smart-contract', element: <Navigate to="/app/dashboard" replace /> },
       {
         path: 'user-elections/elections/:id/blockchain-deployment',
-        element: <Navigate to="/app/quan-ly-smart-contract" replace />,
+        element: <Navigate to="/app/dashboard" replace />,
       },
       {
-        path: 'user-elections/elections/:id/rules',
+        path: 'elections/:id/rules',
         element: (
           <ProtectedRoute
             requiredPermissions={['Quan Tri Vien', 'Nguoi Dung']}
@@ -469,6 +498,11 @@ const router = createBrowserRouter([
             <DieuLePage />
           </ProtectedRoute>
         ),
+      },
+      // Legacy redirect (giữ :id qua params).
+      {
+        path: 'user-elections/elections/:id/rules',
+        element: <RulesRedirect />,
       },
       // Thêm route cho trang ThamGiaBauCu
       {
@@ -481,7 +515,7 @@ const router = createBrowserRouter([
       },
       {
         path: 'user-elections/elections/:id/session/:idPhien/edit',
-        element: <Navigate to="/app/tao-phien-bau-cu" replace />,
+        element: <Navigate to="/app/elections/new" replace />,
       },
     ],
   },

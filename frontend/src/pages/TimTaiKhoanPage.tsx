@@ -5,6 +5,7 @@ import { fetchTimTaiKhoan } from '../store/slice/timTaiKhoanSlice';
 import { RootState, AppDispatch } from '../store/store';
 import SEO from '../components/SEO';
 import PaginationPhu from '../components/PaginationPhu';
+import { Button, Panel, fieldControlClass } from '../components/ui/clay';
 
 const TimTaiKhoanPage: React.FC = () => {
   const [input, setInput] = useState('');
@@ -21,7 +22,7 @@ const TimTaiKhoanPage: React.FC = () => {
 
   const handleSelectAccount = (user: any) => {
     const randomCode = Math.random().toString(36).substring(2, 15);
-    navigate(`/tim-tai-khoan/${user.tenDangNhap}/${randomCode}/tuy-chon`, {
+    navigate(`/forgot-password/account/${user.tenDangNhap}/${randomCode}/options`, {
       state: { user },
     });
   };
@@ -43,7 +44,7 @@ const TimTaiKhoanPage: React.FC = () => {
   const currentUsers = foundUsers.data.slice(indexOfFirstUser, indexOfLastUser);
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-white p-4">
+    <div className="flex min-h-[70vh] flex-col items-center justify-center bg-[var(--clay-bg)] p-4 text-[var(--clay-text)]">
       <SEO
         title="Tìm Tài Khoản | Nền Tảng Bầu Cử Blockchain"
         description="Tìm tài khoản của bạn bằng cách nhập tên hoặc email."
@@ -52,50 +53,62 @@ const TimTaiKhoanPage: React.FC = () => {
         url={window.location.href}
         image={`${window.location.origin}/logo.png`}
       />
-      <div className="w-full max-w-md p-6 bg-white border border-gray-200 rounded-lg shadow-md space-y-6">
-        <h3 className="text-xl md:text-2xl font-semibold text-gray-800">Tìm tài khoản của bạn</h3>
-        <p className="text-gray-600">Vui lòng nhập tên hoặc email để tìm kiếm tài khoản của bạn.</p>
-        {status === 'failed' && <p className="text-red-500">{error}</p>}
+      <Panel className="w-full max-w-md space-y-5">
+        <div>
+          <h1 className="text-xl font-semibold tracking-[-0.015em] text-[var(--clay-text)] md:text-2xl">
+            Tìm tài khoản của bạn
+          </h1>
+          <p className="mt-1 text-sm text-[var(--clay-muted)]">
+            Nhập tên hoặc email để tìm kiếm tài khoản của bạn.
+          </p>
+        </div>
+        {status === 'failed' && (
+          <p role="alert" className="text-sm text-[var(--state-danger)]">
+            {error}
+          </p>
+        )}
         <input
           type="text"
           placeholder="Tên hoặc email"
           value={input}
           onChange={(e) => setInput(e.target.value)}
-          className="w-full p-2 md:p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
+          aria-label="Tên hoặc email"
+          className={fieldControlClass}
         />
-        <div className="flex justify-between items-center">
-          <button
-            onClick={() => navigate('/login')}
-            className="bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600 transition-colors duration-300"
-          >
+        <div className="flex items-center justify-between gap-3">
+          <Button type="button" variant="ghost" onClick={() => navigate('/login')}>
             Hủy
-          </button>
-          <button
-            onClick={handleFindAccount}
-            className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors duration-300"
-          >
+          </Button>
+          <Button type="button" variant="primary" onClick={handleFindAccount}>
             Tìm kiếm
-          </button>
+          </Button>
         </div>
-        {status === 'loading' && <p className="text-blue-500">Đang tìm kiếm...</p>}
+        {status === 'loading' && (
+          <p className="text-sm text-[var(--clay-primary)]">Đang tìm kiếm...</p>
+        )}
         {status === 'succeeded' && currentUsers.length === 0 && (
-          <p className="text-red-600">Không tìm thấy tài khoản.</p>
+          <p className="text-sm text-[var(--state-danger)]">Không tìm thấy tài khoản.</p>
         )}
         {currentUsers.length > 0 && (
-          <div className="mt-6 space-y-4">
+          <div className="space-y-3">
             {currentUsers.map((user) => (
-              <div
+              <button
                 key={user.id}
-                className="p-4 bg-gray-100 border border-gray-300 rounded-lg flex items-center space-x-4 cursor-pointer"
+                type="button"
                 onClick={() => handleSelectAccount(user)}
+                className="flex w-full items-center gap-4 rounded-[14px] border border-[var(--clay-border)] bg-[var(--clay-surface-soft)] p-4 text-left hover:bg-[var(--clay-surface)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[var(--clay-primary-focus)]"
               >
-                <img src={user.avatar} alt={user.tenDangNhap} className="w-16 h-16 rounded-full" />
-                <div>
-                  <h4 className="text-lg font-semibold">{user.tenDangNhap}</h4>
-                  <p className="text-gray-600">{maskEmail(user.email)}</p>
-                  <p className="text-gray-600">{maskPhoneNumber(user.sdt)}</p>
+                <img
+                  src={user.avatar}
+                  alt={user.tenDangNhap}
+                  className="h-14 w-14 rounded-full object-cover"
+                />
+                <div className="min-w-0">
+                  <h4 className="font-semibold text-[var(--clay-text)]">{user.tenDangNhap}</h4>
+                  <p className="text-sm text-[var(--clay-muted)]">{maskEmail(user.email)}</p>
+                  <p className="text-sm text-[var(--clay-muted)]">{maskPhoneNumber(user.sdt)}</p>
                 </div>
-              </div>
+              </button>
             ))}
           </div>
         )}
@@ -106,7 +119,7 @@ const TimTaiKhoanPage: React.FC = () => {
             onPageChange={setCurrentPage}
           />
         )}
-      </div>
+      </Panel>
     </div>
   );
 };

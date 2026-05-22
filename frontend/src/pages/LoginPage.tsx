@@ -367,10 +367,7 @@ export default function LoginPage() {
       />
 
       <div className="mx-auto grid max-w-6xl overflow-hidden rounded-[18px] border border-[var(--clay-border)] bg-white lg:grid-cols-[0.9fr_1.1fr]">
-        <aside className="relative hidden min-h-[680px] overflow-hidden bg-black p-8 text-white lg:flex lg:flex-col lg:justify-between">
-          <div className="ux-orb -left-10 top-16 h-40 w-40 bg-[rgba(59,211,253,0.34)]" />
-          <div className="ux-orb bottom-24 right-0 h-56 w-56 bg-[rgba(248,204,101,0.26)]" />
-
+        <aside className="relative hidden min-h-[680px] overflow-hidden bg-[var(--surface-black)] p-8 text-white lg:flex lg:flex-col lg:justify-between">
           <div className="relative z-10">
             <div className="inline-flex items-center gap-2 rounded-full border border-white/20 px-3 py-1 text-xs font-bold uppercase tracking-[0.16em] text-white/70">
               <ShieldCheck className="h-3.5 w-3.5" aria-hidden="true" />
@@ -388,7 +385,7 @@ export default function LoginPage() {
           <div className="relative z-10 grid gap-3">
             {trustNotes.map((note) => (
               <div key={note} className="flex items-start gap-3 rounded-[18px] border border-white/10 bg-white/[0.04] p-4">
-                <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[var(--clay-matcha)]" />
+                <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[var(--state-success)]" />
                 <p className="text-sm leading-6 text-white/70">{note}</p>
               </div>
             ))}
@@ -515,7 +512,7 @@ export default function LoginPage() {
                       />
                       Ghi nhớ tên đăng nhập
                     </label>
-                    <Link to="/tim-tai-khoan" className="clay-link text-sm">
+                    <Link to="/forgot-password" className="clay-link text-sm">
                       Quên mật khẩu?
                     </Link>
                   </div>
@@ -650,9 +647,9 @@ function InlineError({ message }: { message: string }) {
     <div
       role="alert"
       aria-live="polite"
-      className="flex items-start gap-3 rounded-[20px] border border-[rgba(252,121,129,0.35)] bg-[rgba(252,121,129,0.12)] px-4 py-3 text-sm text-[var(--clay-text)]"
+      className="flex items-start gap-3 rounded-[14px] border border-[var(--state-danger)] bg-[var(--state-danger-soft)] px-4 py-3 text-sm text-[var(--state-danger)]"
     >
-      <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-[var(--clay-pomegranate)]" />
+      <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-[var(--state-danger)]" />
       <p>{message}</p>
     </div>
   );

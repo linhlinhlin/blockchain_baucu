@@ -4,13 +4,9 @@ import {
   ArrowRight,
   CheckCircle2,
   CircleAlert,
-  ClipboardList,
   Plus,
   QrCode,
-  ShieldCheck,
   Trash2,
-  Users,
-  Vote,
   Wallet,
   XCircle,
 } from 'lucide-react';
@@ -46,26 +42,20 @@ import {
   type Requirement,
   type RosterMode,
 } from '../utils/electionCreateFlow';
+import {
+  Button,
+  Field,
+  fieldControlClass,
+  Panel,
+  SectionCard,
+  StatusBadge,
+  SummaryRail,
+  SummaryRow,
+  Wizard,
+  type Step,
+} from '../components/ui/clay';
 
-function panelClasses(extra = '') {
-  return `clay-panel p-5 md:p-6 ${extra}`.trim();
-}
-
-function inputClasses(extra = '') {
-  return `clay-input min-h-11 px-4 py-3 text-sm ${extra}`.trim();
-}
-
-function actionButtonClasses(tone: 'accent' | 'outline' = 'outline') {
-  const base =
-    'clay-button inline-flex min-h-11 items-center justify-center gap-2 px-4 py-3 text-sm font-semibold focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--clay-primary-focus)] disabled:cursor-not-allowed disabled:opacity-65';
-
-  if (tone === 'accent') {
-    return `${base} clay-button--blueberry`;
-  }
-
-  return `${base} clay-button--matcha`;
-}
-
+// Đợt 10 (spec 010) US3: helper trình bày tự chế đã thay bằng bộ component clay.
 function getErrorMessage(error: unknown) {
   const maybeError = error as any;
   if (maybeError?.response?.data?.Error) {
@@ -80,110 +70,14 @@ function getErrorMessage(error: unknown) {
   return 'Có lỗi không xác định khi tạo nhóm bầu cử.';
 }
 
-function messagePanelClasses(message: string) {
-  const normalized = message.toLowerCase();
-  if (
-    normalized.includes('thành công') ||
-    normalized.includes('đã tạo') ||
-    normalized.includes('đã deploy')
-  ) {
-    return 'border-[rgba(0,102,204,0.24)] bg-[var(--clay-primary-light)] text-[var(--clay-text)]';
-  }
-  if (
-    normalized.includes('lỗi') ||
-    normalized.includes('error') ||
-    normalized.includes('fail') ||
-    normalized.includes('không') ||
-    normalized.includes('chưa') ||
-    normalized.includes('cần')
-  ) {
-    return 'border-[rgba(191,72,0,0.24)] bg-[#fff4ed] text-[var(--clay-text)]';
-  }
-  return 'border-[var(--clay-border)] bg-[var(--clay-surface-soft)] text-[var(--clay-text)]';
-}
-
-function MetricCard({
-  label,
-  value,
-  title,
-  mono = false,
-}: {
-  label: string;
-  value: string;
-  title?: string;
-  mono?: boolean;
-}) {
-  return (
-    <article className="min-w-0 rounded-[18px] border border-[var(--clay-border)] bg-white p-4">
-      <p className="clay-label">{label}</p>
-      <p
-        className={`mt-2 truncate text-lg font-semibold tracking-[-0.01em] text-black ${mono ? 'clay-mono text-base' : ''}`}
-        title={title ?? value}
-        translate={mono ? 'no' : undefined}
-      >
-        {value}
-      </p>
-    </article>
-  );
-}
-
-function RequirementList({ requirements }: { requirements: Requirement[] }) {
-  return (
-    <ul className="mt-3 space-y-2" aria-live="polite">
-      {requirements.map((requirement) => (
-        <li
-          key={requirement.id}
-          className="grid grid-cols-[auto_1fr] items-start gap-2 text-sm leading-6 text-[var(--clay-muted)]"
-        >
-          <span
-            className={`mt-0.5 inline-flex h-5 w-5 items-center justify-center rounded-full ${
-              requirement.ok
-                ? 'bg-[var(--clay-primary-light)] text-[var(--clay-primary)]'
-                : 'bg-[#fff4ed] text-[var(--clay-pomegranate)]'
-            }`}
-            aria-hidden="true"
-          >
-            {requirement.ok ? (
-              <CheckCircle2 className="h-3.5 w-3.5" />
-            ) : (
-              <XCircle className="h-3.5 w-3.5" />
-            )}
-          </span>
-          <span>
-            <span className="sr-only">{requirement.ok ? 'Đã đạt: ' : 'Chưa đạt: '}</span>
-            {requirement.label}
-          </span>
-        </li>
-      ))}
-    </ul>
-  );
-}
-
+// Đợt 10 (spec 010) US3: messagePanelClasses/MetricCard/RequirementList/FieldError/SummaryRow
+// đã thay bằng bộ component clay (StatusBadge/Field/SummaryRail/...).
 function FieldError({ message }: { message: string }) {
   return (
-    <p className="mt-2 flex items-start gap-2 text-sm text-[var(--clay-pomegranate)]">
-      <CircleAlert className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
+    <p className="mt-1.5 flex items-start gap-2 text-[12px] leading-snug text-[var(--state-danger)]">
+      <CircleAlert className="mt-0.5 h-3.5 w-3.5 shrink-0" aria-hidden="true" />
       {message}
     </p>
-  );
-}
-
-function SummaryRow({
-  label,
-  value,
-  fullValue,
-}: {
-  label: string;
-  value: string | number;
-  fullValue?: string | null;
-}) {
-  return (
-    <div className="grid grid-cols-[minmax(0,0.8fr)_minmax(0,1fr)] items-center gap-4">
-      <span className="text-[var(--clay-muted)]">{label}</span>
-      <span className="min-w-0 truncate text-right text-black" title={fullValue ?? String(value)}>
-        {value}
-      </span>
-    </div>
   );
 }
 
@@ -233,6 +127,8 @@ export default function TaoCuocBauCuPage() {
   const [submitAttempted, setSubmitAttempted] = useState(false);
   const [activeDraft, setActiveDraft] = useState<ElectionV1RosterDraft | null>(null);
   const [message, setMessage] = useState('Sẵn sàng tạo một ballot gồm nhiều chức vụ trên Sepolia.');
+  // Đợt 10 (spec 010) US3 — Wizard 4 bước (giữ toàn bộ state/handler bên dưới nguyên vẹn).
+  const [step, setStep] = useState<'b1' | 'b2' | 'b3' | 'b4'>('b1');
   const draftKeyFromUrl = searchParams.get('draft')?.trim() ?? '';
 
   const parsedVoterWallets = useMemo(
@@ -355,14 +251,23 @@ export default function TaoCuocBauCuPage() {
   }, [accessToken, activeDraft?.groupKey, draftKeyFromUrl]);
 
   function focusRequirement(requirement: Requirement) {
-    if (!requirement.targetId) {
+    const targetId = requirement.targetId;
+    if (!targetId) {
       return;
     }
 
+    // Panel Wizard luôn mounted ⇒ getElementById tìm được dù bước đang ẩn.
+    const target = document.getElementById(targetId);
+    const ownerStep = target
+      ?.closest<HTMLElement>('[data-wizard-step]')
+      ?.getAttribute('data-wizard-step') as 'b1' | 'b2' | 'b3' | 'b4' | undefined;
+    if (ownerStep) {
+      setStep(ownerStep);
+    }
     window.requestAnimationFrame(() => {
-      const target = document.getElementById(requirement.targetId);
-      target?.focus({ preventScroll: false });
-      target?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      const el = document.getElementById(targetId);
+      el?.focus({ preventScroll: false });
+      el?.scrollIntoView({ behavior: 'smooth', block: 'center' });
     });
   }
 
@@ -465,7 +370,9 @@ export default function TaoCuocBauCuPage() {
         description: position.description || null,
         candidates: position.candidates.map((candidate) => ({
           displayName: candidate.displayName,
-          sourceId: candidate.sourceId,
+          // Đợt 10.1: normalizePositions() gán sourceId tại runtime; type
+          // intersection pre-existing chưa lộ field — assertion type-only.
+          sourceId: (candidate as unknown as { sourceId: string }).sourceId,
           walletAddress: candidate.walletAddress || null,
         })),
       }));
@@ -486,10 +393,10 @@ export default function TaoCuocBauCuPage() {
         setMessage(`Tạo nhóm bầu cử thành công: ${response.created.groupKey}`);
         if (firstElectionAddress) {
           navigate(
-            `/app/quan-ly-smart-contract?group=${response.created.groupKey}&election=${firstElectionAddress}`,
+            `/app/dashboard?group=${response.created.groupKey}&election=${firstElectionAddress}`,
           );
         } else {
-          navigate('/app/quan-ly-smart-contract');
+          navigate('/app/dashboard');
         }
       } else {
         const payload: ElectionV1CreateRosterDraftRequest = {
@@ -512,7 +419,7 @@ export default function TaoCuocBauCuPage() {
         setMessage(
           `Đã tạo bản nháp roster xác thực ${response.draft.groupKey}. Gửi QR chung cho cử tri, sau đó deploy ballot khi đã bind ví.`,
         );
-        navigate(`/app/tao-phien-bau-cu?draft=${encodeURIComponent(response.draft.groupKey)}`, {
+        navigate(`/app/elections/new?draft=${encodeURIComponent(response.draft.groupKey)}`, {
           replace: true,
         });
       }
@@ -547,7 +454,7 @@ export default function TaoCuocBauCuPage() {
       const firstElectionAddress = response.created.created[0]?.address;
       if (firstElectionAddress) {
         navigate(
-          `/app/quan-ly-smart-contract?group=${response.created.groupKey}&election=${firstElectionAddress}`,
+          `/app/dashboard?group=${response.created.groupKey}&election=${firstElectionAddress}`,
         );
       }
     } catch (error) {
@@ -557,783 +464,659 @@ export default function TaoCuocBauCuPage() {
     }
   }
 
+  // ── Đợt 10 US3: trạng thái bước (chỉ trình bày; suy từ điều kiện inline cũ) ──
+  const stepError = {
+    b1: showInlineErrors && title.trim().length === 0,
+    b2:
+      showInlineErrors &&
+      (normalizedPositions.length === 0 || invalidCandidateWallets.length > 0),
+    b3:
+      showInlineErrors &&
+      (!scheduleState.isValid ||
+        (voterMode === 'wallets'
+          ? parsedVoterWallets.length === 0 ||
+            invalidVoterWallets.length > 0 ||
+            duplicateVoterWallets.length > 0
+          : parsedRosterVoters.length === 0 || invalidRosterRows.length > 0)),
+    b4: false,
+  };
+  const stepOrder: Array<'b1' | 'b2' | 'b3' | 'b4'> = ['b1', 'b2', 'b3', 'b4'];
+  const stepTitles: Record<'b1' | 'b2' | 'b3' | 'b4', string> = {
+    b1: 'Thông tin',
+    b2: 'Vị trí & ứng viên',
+    b3: 'Lịch & cử tri',
+    b4: 'Xác nhận & triển khai',
+  };
+  const steps: Step[] = stepOrder.map((k) => ({
+    key: k,
+    title: stepTitles[k],
+    status: stepError[k]
+      ? 'error'
+      : k === step
+        ? 'current'
+        : stepOrder.indexOf(k) < stepOrder.indexOf(step)
+          ? 'done'
+          : 'todo',
+  }));
+  const goto = (k: 'b1' | 'b2' | 'b3' | 'b4') => setStep(k);
+
+  const rail = (
+    <SummaryRail
+      title="Tóm tắt & trạng thái"
+      footer={
+        <div
+          className="rounded-[12px] border border-[var(--clay-border)] bg-[var(--clay-surface-soft)] px-3 py-2 text-[13px] leading-relaxed text-[var(--clay-text)]"
+          aria-live="polite"
+        >
+          {message}
+        </div>
+      }
+    >
+      <div className="flex flex-wrap gap-1.5">
+        <StatusBadge tone={isNetworkConnected ? 'success' : 'danger'}>
+          {isNetworkConnected ? 'Sepolia' : 'Sai mạng'}
+        </StatusBadge>
+        <StatusBadge tone={currentAccount ? 'success' : 'neutral'}>
+          {currentAccount ? 'Ví đã kết nối' : 'Chưa kết nối ví'}
+        </StatusBadge>
+        <StatusBadge tone={accessToken ? 'success' : 'warning'}>
+          JWT {accessToken ? 'sẵn sàng' : 'thiếu'}
+        </StatusBadge>
+      </div>
+      <SummaryRow label="Admin wallet" value={shortenAddress(currentAccount)} />
+      <SummaryRow
+        label="Tài khoản"
+        value={currentUser?.tenHienThi ?? currentUser?.tenDangNhap ?? 'n/a'}
+      />
+      <SummaryRow label="Số chức vụ" value={normalizedPositions.length} />
+      <SummaryRow
+        label={voterMode === 'wallets' ? 'Cử tri hợp lệ' : 'Dòng roster'}
+        value={voterMode === 'wallets' ? parsedVoterWallets.length : parsedRosterVoters.length}
+      />
+      <div className="space-y-1.5 border-t border-[var(--clay-border)] pt-3">
+        {requirements.map((r) => (
+          <div key={r.id} className="flex items-start gap-2 text-[13px]">
+            {r.ok ? (
+              <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[var(--state-success)]" aria-hidden="true" />
+            ) : (
+              <XCircle className="mt-0.5 h-4 w-4 shrink-0 text-[var(--state-danger)]" aria-hidden="true" />
+            )}
+            <span className={r.ok ? 'text-[var(--clay-muted)]' : 'text-[var(--clay-text)]'}>
+              {r.label}
+            </span>
+          </div>
+        ))}
+      </div>
+      <div className="grid gap-2 border-t border-[var(--clay-border)] pt-3">
+        <Button
+          id="connect-wallet-button"
+          type="button"
+          variant="secondary"
+          size="lg"
+          onClick={() => void connectWallet()}
+          iconLeft={<Wallet className="h-4 w-4" aria-hidden="true" />}
+        >
+          {currentAccount ? 'Đổi / kết nối lại MetaMask' : 'Kết nối MetaMask'}
+        </Button>
+        <Link
+          to="/app/dashboard"
+          className="inline-flex min-h-[44px] items-center justify-center gap-2 rounded-[12px] border border-[var(--clay-primary)] px-5 text-[15px] text-[var(--clay-primary)] hover:bg-[var(--clay-primary-light)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--clay-primary-focus)]"
+        >
+          <ArrowRight className="h-4 w-4" aria-hidden="true" />
+          Về bảng điều khiển
+        </Link>
+      </div>
+    </SummaryRail>
+  );
+
+  const stepNavButtons = (prev?: 'b1' | 'b2' | 'b3', next?: 'b2' | 'b3' | 'b4') => (
+    <div className="mt-6 flex items-center justify-between gap-3">
+      {prev ? (
+        <Button type="button" variant="ghost" onClick={() => goto(prev)}>
+          ← Quay lại
+        </Button>
+      ) : (
+        <span />
+      )}
+      {next && (
+        <Button type="button" variant="primary" onClick={() => goto(next)}>
+          Tiếp tục →
+        </Button>
+      )}
+    </div>
+  );
+
   return (
-    <div className="min-h-screen overflow-x-hidden text-[var(--clay-text)]">
-      <div className="mx-auto max-w-[1440px] px-0 py-2 sm:px-2 lg:px-4">
-        <div className="mb-6 grid gap-6 xl:grid-cols-[minmax(0,1fr)_360px]">
-          <section className={panelClasses()}>
-            <p className="clay-label">Tạo Ballot</p>
-            <h1 className="mt-1 text-2xl font-semibold tracking-[-0.015em] text-black md:text-3xl">
-              Tạo đợt bầu cử
-            </h1>
-            <p className="mt-1 text-sm leading-relaxed text-[var(--clay-muted)]">
-              Thiết lập thông tin, lịch và danh sách cử tri cho đợt bầu cử trên Sepolia.
-            </p>
-
-            <div className="mt-4 flex flex-wrap items-center gap-2">
-              <span className="clay-pill px-3 py-1 text-xs text-[var(--clay-text)]">
-                ElectionV1 · Sepolia
-              </span>
-              <span className="clay-pill inline-flex items-center px-3 py-1 text-xs text-[var(--clay-text)]">
-                <span
-                  className={`mr-1.5 inline-block h-2 w-2 rounded-full ${
-                    currentAccount ? 'bg-emerald-500' : 'bg-[var(--clay-muted-soft)]'
-                  }`}
-                  aria-hidden="true"
-                />
-                {currentAccount ? 'Ví đã kết nối' : 'Chưa kết nối ví'}
-              </span>
-              <span
-                className="clay-pill px-3 py-1 font-mono text-xs text-[var(--clay-text)]"
-                title={currentAccount ?? 'not connected'}
-              >
-                {shortenAddress(currentAccount)}
-              </span>
-              <span className="clay-pill px-3 py-1 text-xs text-[var(--clay-text)]">
-                {isNetworkConnected ? 'Sepolia' : 'Sai mạng'}
-              </span>
-              <span className="clay-pill px-3 py-1 text-xs text-[var(--clay-text)]">
-                JWT: {accessToken ? 'Sẵn sàng' : 'Thiếu'}
-              </span>
-            </div>
-          </section>
-
-          <aside className={panelClasses()}>
-            <p className="text-sm font-semibold text-black">Tóm tắt</p>
-            <dl className="mt-3 space-y-2.5 text-sm">
-              {[
-                ['Mạng', isNetworkConnected ? 'Ethereum Sepolia' : 'Sai mạng'],
-                ['Hợp đồng', 'ElectionV1'],
-                ['Ví', shortenAddress(currentAccount)],
-                ['Tài khoản', currentUser?.tenHienThi ?? currentUser?.tenDangNhap ?? 'n/a'],
-                ['JWT', accessToken ? 'Sẵn sàng' : 'Thiếu'],
-              ].map(([k, v]) => (
-                <div key={k} className="flex items-center justify-between gap-4">
-                  <dt className="text-[var(--clay-muted)]">{k}</dt>
-                  <dd className="truncate text-right font-medium text-[var(--clay-text)]">{v}</dd>
-                </div>
-              ))}
-            </dl>
-
-            <div className="mt-5 space-y-3 border-t border-[var(--clay-border)] pt-5">
-              <p className="text-sm font-semibold text-black">Hành động</p>
-              <button
-                id="connect-wallet-button"
-                type="button"
-                onClick={() => void connectWallet()}
-                className={`${actionButtonClasses('outline')} w-full`}
-              >
-                <Wallet className="h-4 w-4" aria-hidden="true" />
-                {currentAccount ? 'Đổi / kết nối lại MetaMask' : 'Kết nối MetaMask'}
-              </button>
-
-              <Link
-                to="/app/quan-ly-smart-contract"
-                className={`${actionButtonClasses('outline')} w-full`}
-              >
-                <ArrowRight className="h-4 w-4" aria-hidden="true" />
-                Về console ElectionV1
-              </Link>
-            </div>
-
-            <div
-              className={`mt-5 rounded-[18px] border px-4 py-3 text-sm leading-6 ${messagePanelClasses(message)}`}
-              aria-live="polite"
-            >
-              <p className="font-semibold text-black">Live status</p>
-              <p className="mt-1">{message}</p>
-            </div>
-
-            <div className="mt-5 rounded-[18px] border border-[var(--clay-border)] bg-white p-4 text-sm">
-              <div className="flex items-start justify-between gap-3">
-                <div>
-                  <p className="font-semibold text-black">Điều kiện submit</p>
-                  <p className="mt-1 text-xs text-[var(--clay-muted)]">
-                    {isReadyToSubmit
-                      ? 'Sẵn sàng tạo ballot.'
-                      : `Cần xử lý: ${firstInvalidRequirement?.label}.`}
-                  </p>
-                </div>
-                <ClipboardList className="h-5 w-5 text-[var(--clay-primary)]" aria-hidden="true" />
-              </div>
-              <RequirementList requirements={requirements} />
-            </div>
-          </aside>
+    <div className="text-[var(--clay-text)]">
+      <div className="mx-auto max-w-[1440px]">
+        <div className="mb-5">
+          <h1 className="text-[1.75rem] font-semibold tracking-[-0.015em] text-[var(--clay-text)]">
+            Tạo bầu cử
+          </h1>
+          <p className="mt-1 text-[15px] text-[var(--clay-muted)]">
+            Thiết lập thông tin, vị trí, lịch và danh sách cử tri cho đợt bầu cử trên Sepolia.
+          </p>
         </div>
 
-        <nav
-          aria-label="Các bước tạo bầu cử"
-          className={`${panelClasses()} mb-6 flex flex-wrap items-center gap-2 px-3 py-3`}
-        >
-          {[
-            { n: 1, label: 'Thông tin', href: '#sec-thongtin' },
-            { n: 2, label: 'Lựa chọn', href: '#positions-section' },
-            { n: 3, label: 'Cử tri', href: '#sec-cutri' },
-            { n: 4, label: 'Xác nhận', href: '#sec-xacnhan' },
-          ].map((s, i) => (
-            <a
-              key={s.n}
-              href={s.href}
-              className={`flex items-center gap-2 rounded-[10px] px-3 py-1.5 text-sm transition-colors ${
-                i === 0
-                  ? 'bg-[var(--clay-primary-light)] font-semibold text-[var(--clay-primary)]'
-                  : 'text-[var(--clay-muted)] hover:bg-[var(--clay-surface-soft)] hover:text-[var(--clay-text)]'
-              }`}
-            >
-              <span
-                className={`flex h-5 w-5 items-center justify-center rounded-full text-xs ${
-                  i === 0
-                    ? 'bg-[var(--clay-primary)] text-white'
-                    : 'bg-[var(--clay-surface-soft)] text-[var(--clay-muted)]'
-                }`}
-              >
-                {s.n}
-              </span>
-              {s.label}
-            </a>
-          ))}
-        </nav>
-
-        <form onSubmit={handleSubmit} className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_360px]">
-          <div className="space-y-6">
-            <section id="sec-thongtin" className={panelClasses()}>
-              <div className="mb-5 flex items-center gap-3">
-                <ShieldCheck className="h-5 w-5 text-[var(--clay-primary)]" aria-hidden="true" />
-                <div>
-                  <p className="clay-label">Bước 1</p>
-                  <h2 className="mt-1 text-lg font-semibold tracking-[-0.015em] text-black">
-                    Thông tin đợt bầu cử
-                  </h2>
-                </div>
-              </div>
-
-              <div className="grid gap-4 md:grid-cols-2">
-                <div className="space-y-2">
-                  <label htmlFor="ballot-title" className="text-sm font-semibold text-black">
-                    Tên cuộc bầu cử
-                  </label>
-                  <input
-                    id="ballot-title"
-                    name="ballot-title"
-                    autoComplete="off"
-                    spellCheck={false}
-                    value={title}
-                    onChange={(event) => setTitle(event.target.value)}
-                    className={inputClasses()}
-                    placeholder="Ví dụ: Bầu cử cán bộ lớp Hàng Hải K66…"
-                  />
-                  {showInlineErrors && title.trim().length === 0 && (
-                    <FieldError message="Nhập tên cuộc bầu cử để người dùng nhận diện ballot." />
-                  )}
-                </div>
-
-                <div className="space-y-2 md:col-span-2">
-                  <label htmlFor="ballot-description" className="text-sm font-semibold text-black">
-                    Mô tả
-                  </label>
-                  <textarea
-                    id="ballot-description"
-                    name="ballot-description"
-                    autoComplete="off"
-                    value={description}
-                    onChange={(event) => setDescription(event.target.value)}
-                    rows={4}
-                    className={inputClasses('rounded-[18px]')}
-                    placeholder="Mô tả ngắn về phạm vi và quy tắc của đợt bầu cử…"
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <label htmlFor="group-key" className="text-sm font-semibold text-black">
-                    Group key (tùy chọn)
-                  </label>
-                  <input
-                    id="group-key"
-                    name="group-key"
-                    autoComplete="off"
-                    spellCheck={false}
-                    value={groupKey}
-                    onChange={(event) => setGroupKey(event.target.value)}
-                    className={inputClasses()}
-                    placeholder="Để trống để backend tự sinh…"
-                  />
-                </div>
-              </div>
-            </section>
-
-            <section id="sec-cutri" className={panelClasses()}>
-              <div className="mb-5 flex items-center gap-3">
-                <Users className="h-5 w-5 text-[var(--clay-primary)]" aria-hidden="true" />
-                <div>
-                  <p className="clay-label">Bước 3</p>
-                  <h2 className="mt-1 text-lg font-semibold tracking-[-0.015em] text-black">
-                    Lịch và danh sách cử tri
-                  </h2>
-                </div>
-              </div>
-
-              <div className="grid gap-4 md:grid-cols-2">
-                <div className="space-y-2">
-                  <label htmlFor="commit-start" className="text-sm font-semibold text-black">
-                    Commit start
-                  </label>
-                  <input
-                    id="commit-start"
-                    name="commit-start"
-                    type="datetime-local"
-                    autoComplete="off"
-                    value={commitStart}
-                    onChange={(event) => setCommitStart(event.target.value)}
-                    className={inputClasses()}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <label htmlFor="commit-end" className="text-sm font-semibold text-black">
-                    Commit end
-                  </label>
-                  <input
-                    id="commit-end"
-                    name="commit-end"
-                    type="datetime-local"
-                    autoComplete="off"
-                    value={commitEnd}
-                    onChange={(event) => setCommitEnd(event.target.value)}
-                    className={inputClasses()}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <label htmlFor="reveal-end" className="text-sm font-semibold text-black">
-                    Reveal end
-                  </label>
-                  <input
-                    id="reveal-end"
-                    name="reveal-end"
-                    type="datetime-local"
-                    autoComplete="off"
-                    value={revealEnd}
-                    onChange={(event) => setRevealEnd(event.target.value)}
-                    className={inputClasses()}
-                  />
-                </div>
-              </div>
-
-              {showInlineErrors && !scheduleState.isValid && (
-                <FieldError message="Lịch phải thỏa mãn Commit start ở tương lai và Commit start < Commit end < Reveal end." />
-              )}
-
-              <fieldset className="mt-5 space-y-2">
-                <legend className="text-sm font-semibold text-black">Chế độ cử tri</legend>
-                <div
-                  className="grid gap-3 md:grid-cols-2"
-                  role="group"
-                  aria-label="Chọn chế độ nhập cử tri"
+        <form onSubmit={handleSubmit}>
+          <Wizard steps={steps} current={step} onStepChange={(k) => setStep(k as typeof step)} rail={rail}>
+            {/* ───────── Bước 1: Thông tin ───────── */}
+            <Wizard.Panel value="b1">
+              <div data-wizard-step="b1">
+                <SectionCard
+                  title="Thông tin đợt bầu cử"
+                  description="Tên và mô tả để người dùng nhận diện ballot."
                 >
-                  <button
-                    type="button"
-                    onClick={() => setVoterMode('wallets')}
-                    className={`${actionButtonClasses(voterMode === 'wallets' ? 'accent' : 'outline')} w-full`}
-                    aria-pressed={voterMode === 'wallets'}
-                    title="Nhập trực tiếp danh sách địa chỉ ví cử tri"
-                  >
-                    <Wallet className="h-4 w-4" aria-hidden="true" />
-                    Nhập ví trực tiếp
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setVoterMode('roster')}
-                    className={`${actionButtonClasses(voterMode === 'roster' ? 'accent' : 'outline')} w-full`}
-                    aria-pressed={voterMode === 'roster'}
-                    title="Tạo danh sách cử tri bằng link mời, QR và OTP"
-                  >
-                    <QrCode className="h-4 w-4" aria-hidden="true" />
-                    Roster QR / OTP
-                  </button>
-                </div>
-              </fieldset>
-
-              {voterMode === 'wallets' ? (
-                <div className="mt-5 space-y-2">
-                  <label htmlFor="voter-wallets-input" className="text-sm font-semibold text-black">
-                    Danh sách ví cử tri
-                  </label>
-                  <textarea
-                    id="voter-wallets-input"
-                    name="voter-wallets-input"
-                    autoComplete="off"
-                    spellCheck={false}
-                    value={voterWalletsInput}
-                    onChange={(event) => setVoterWalletsInput(event.target.value)}
-                    rows={5}
-                    className={inputClasses('rounded-[18px] clay-mono')}
-                    placeholder="Mỗi dòng một địa chỉ ví, ví dụ: 0x1234…abcd"
-                  />
-                  {showInlineErrors && parsedVoterWallets.length === 0 && (
-                    <FieldError message="Thêm ít nhất 1 địa chỉ ví cử tri." />
-                  )}
-                  {showInlineErrors && invalidVoterWallets.length > 0 && (
-                    <FieldError
-                      message={`Có ${invalidVoterWallets.length} địa chỉ ví cử tri sai định dạng.`}
-                    />
-                  )}
-                  {showInlineErrors && duplicateVoterWallets.length > 0 && (
-                    <FieldError
-                      message={`Có ${duplicateVoterWallets.length} địa chỉ ví cử tri bị trùng.`}
-                    />
-                  )}
-                </div>
-              ) : (
-                <div className="mt-5 space-y-2">
-                  <label htmlFor="roster-input" className="text-sm font-semibold text-black">
-                    Danh sách cử tri
-                  </label>
-                  <textarea
-                    id="roster-input"
-                    name="roster-input"
-                    autoComplete="off"
-                    spellCheck={false}
-                    value={rosterInput}
-                    onChange={(event) => setRosterInput(event.target.value)}
-                    rows={7}
-                    className={inputClasses('rounded-[18px]')}
-                    placeholder="Mỗi dòng: Họ tên,email,mã sinh viên…"
-                  />
-                  <p className="text-sm leading-6 text-[var(--clay-muted)]">
-                    Hệ thống tạo bản nháp roster và một QR chung để cử tri tự xác thực email bằng
-                    OTP, sau đó bind MetaMask trước khi admin deploy ballot on-chain.
-                  </p>
-                  {showInlineErrors && parsedRosterVoters.length === 0 && (
-                    <FieldError message="Thêm ít nhất 1 dòng roster." />
-                  )}
-                  {showInlineErrors && invalidRosterRows.length > 0 && (
-                    <FieldError
-                      message={`Dòng roster cần có họ tên và email hợp lệ: ${invalidRosterRows
-                        .slice(0, 4)
-                        .map((row) => row.rowNumber)
-                        .join(', ')}${invalidRosterRows.length > 4 ? '…' : ''}.`}
-                    />
-                  )}
-                </div>
-              )}
-            </section>
-
-            <section id="positions-section" tabIndex={-1} className={panelClasses()}>
-              <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                <div className="flex items-center gap-3">
-                  <Vote className="h-5 w-5 text-[var(--clay-primary)]" aria-hidden="true" />
-                  <div>
-                    <p className="clay-label">Bước 2</p>
-                    <h2 className="mt-1 text-lg font-semibold tracking-[-0.015em] text-black">
-                      Lựa chọn / ứng viên
-                    </h2>
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <Field label="Tên cuộc bầu cử" className="md:col-span-2">
+                      <input
+                        id="ballot-title"
+                        name="ballot-title"
+                        autoComplete="off"
+                        spellCheck={false}
+                        value={title}
+                        onChange={(event) => setTitle(event.target.value)}
+                        className={fieldControlClass}
+                        placeholder="Ví dụ: Bầu cử cán bộ lớp Hàng Hải K66…"
+                      />
+                    </Field>
+                    {showInlineErrors && title.trim().length === 0 && (
+                      <div className="md:col-span-2 -mt-2">
+                        <FieldError message="Nhập tên cuộc bầu cử để người dùng nhận diện ballot." />
+                      </div>
+                    )}
+                    <Field label="Mô tả" className="md:col-span-2">
+                      <textarea
+                        id="ballot-description"
+                        name="ballot-description"
+                        autoComplete="off"
+                        value={description}
+                        onChange={(event) => setDescription(event.target.value)}
+                        rows={4}
+                        className={fieldControlClass}
+                        placeholder="Mô tả ngắn về phạm vi và quy tắc của đợt bầu cử…"
+                      />
+                    </Field>
+                    <Field label="Group key (tùy chọn)" className="md:col-span-2">
+                      <input
+                        id="group-key"
+                        name="group-key"
+                        autoComplete="off"
+                        spellCheck={false}
+                        value={groupKey}
+                        onChange={(event) => setGroupKey(event.target.value)}
+                        className={fieldControlClass}
+                        placeholder="Để trống để backend tự sinh…"
+                      />
+                    </Field>
                   </div>
-                </div>
-
-                <button
-                  type="button"
-                  onClick={addPosition}
-                  className={actionButtonClasses('outline')}
-                >
-                  <Plus className="h-4 w-4" aria-hidden="true" />
-                  Thêm chức vụ
-                </button>
+                  {stepNavButtons(undefined, 'b2')}
+                </SectionCard>
               </div>
+            </Wizard.Panel>
 
-              {showInlineErrors && normalizedPositions.length === 0 && (
-                <FieldError message="Thêm ít nhất 1 chức vụ có tên và từ 2 ứng viên." />
-              )}
-              {showInlineErrors && invalidCandidateWallets.length > 0 && (
-                <FieldError
-                  message={`Có ${invalidCandidateWallets.length} ví ứng viên sai định dạng.`}
-                />
-              )}
+            {/* ───────── Bước 2: Vị trí & ứng viên ───────── */}
+            <Wizard.Panel value="b2">
+              <div data-wizard-step="b2" id="positions-section">
+                <SectionCard
+                  title="Vị trí & ứng viên"
+                  description="Mỗi chức vụ cần ≥ 2 ứng viên có tên."
+                  actions={
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      onClick={addPosition}
+                      iconLeft={<Plus className="h-4 w-4" aria-hidden="true" />}
+                    >
+                      Thêm chức vụ
+                    </Button>
+                  }
+                >
+                  {showInlineErrors && normalizedPositions.length === 0 && (
+                    <FieldError message="Thêm ít nhất 1 chức vụ có tên và từ 2 ứng viên." />
+                  )}
+                  {showInlineErrors && invalidCandidateWallets.length > 0 && (
+                    <FieldError
+                      message={`Có ${invalidCandidateWallets.length} ví ứng viên sai định dạng.`}
+                    />
+                  )}
 
-              <div className="mt-5 space-y-5">
-                {positions.map((position, positionIndex) => (
-                  <article
-                    key={position.id}
-                    className="rounded-[18px] border border-[var(--clay-border)] bg-white p-4 md:p-5"
-                  >
-                    <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                      <div className="min-w-0">
-                        <p className="clay-label">Chức vụ {positionIndex + 1}</p>
-                        <p className="mt-1 truncate text-lg font-semibold text-black">
-                          {position.title || 'Chưa đặt tên chức vụ'}
-                        </p>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => removePosition(position.id)}
-                        className={actionButtonClasses('outline')}
-                      >
-                        <Trash2 className="h-4 w-4" aria-hidden="true" />
-                        Xóa chức vụ
-                      </button>
-                    </div>
-
-                    <div className="grid gap-4 md:grid-cols-2">
-                      <div className="space-y-2">
-                        <label
-                          htmlFor={`${position.id}-title`}
-                          className="text-sm font-semibold text-black"
-                        >
-                          Tên chức vụ
-                        </label>
-                        <input
-                          id={`${position.id}-title`}
-                          name={`${position.id}-title`}
-                          autoComplete="off"
-                          value={position.title}
-                          onChange={(event) =>
-                            updatePosition(position.id, { title: event.target.value })
-                          }
-                          className={inputClasses()}
-                          placeholder="Ví dụ: Lớp trưởng…"
-                        />
-                      </div>
-
-                      <div className="space-y-2">
-                        <label
-                          htmlFor={`${position.id}-description`}
-                          className="text-sm font-semibold text-black"
-                        >
-                          Mô tả chức vụ
-                        </label>
-                        <input
-                          id={`${position.id}-description`}
-                          name={`${position.id}-description`}
-                          autoComplete="off"
-                          value={position.description}
-                          onChange={(event) =>
-                            updatePosition(position.id, { description: event.target.value })
-                          }
-                          className={inputClasses()}
-                          placeholder="Ví dụ: Bầu 1 người cho vai trò này…"
-                        />
-                      </div>
-                    </div>
-
-                    <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                      <p className="text-sm font-semibold text-black">
-                        Ứng viên cho {position.title || `chức vụ ${positionIndex + 1}`}
-                      </p>
-                      <button
-                        type="button"
-                        onClick={() => addCandidate(position.id)}
-                        className={actionButtonClasses('outline')}
-                      >
-                        <Plus className="h-4 w-4" aria-hidden="true" />
-                        Thêm ứng viên
-                      </button>
-                    </div>
-
-                    {showInlineErrors &&
-                      position.title.trim().length > 0 &&
-                      position.candidates.filter(
-                        (candidate) => candidate.displayName.trim().length > 0,
-                      ).length < 2 && (
-                        <FieldError message="Mỗi chức vụ cần ít nhất 2 ứng viên có tên." />
-                      )}
-
-                    <div className="mt-4 space-y-3">
-                      {position.candidates.map((candidate, candidateIndex) => (
-                        <div
-                          key={candidate.id}
-                          className="grid gap-3 rounded-[18px] border border-[var(--clay-border)] bg-[var(--clay-surface-soft)] p-3 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto]"
-                        >
-                          <div className="space-y-2">
-                            <label htmlFor={`${candidate.id}-name`} className="clay-label">
-                              Tên ứng viên {candidateIndex + 1}
-                            </label>
-                            <input
-                              id={`${candidate.id}-name`}
-                              name={`${candidate.id}-name`}
-                              autoComplete="off"
-                              value={candidate.displayName}
-                              onChange={(event) =>
-                                updateCandidate(position.id, candidate.id, {
-                                  displayName: event.target.value,
-                                })
-                              }
-                              className={inputClasses()}
-                              placeholder="Ví dụ: Nguyễn Văn A…"
-                            />
+                  <div className="mt-4 space-y-5">
+                    {positions.map((position, positionIndex) => (
+                      <Panel key={position.id} className="bg-[var(--clay-surface-soft)]">
+                        <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                          <div className="min-w-0">
+                            <p className="text-xs font-semibold uppercase tracking-[-0.01em] text-[var(--clay-muted)]">
+                              Chức vụ {positionIndex + 1}
+                            </p>
+                            <p className="mt-1 truncate text-[17px] font-semibold text-[var(--clay-text)]">
+                              {position.title || 'Chưa đặt tên chức vụ'}
+                            </p>
                           </div>
-
-                          <div className="space-y-2">
-                            <label htmlFor={`${candidate.id}-wallet`} className="clay-label">
-                              Ví ứng viên (tùy chọn)
-                            </label>
-                            <input
-                              id={`${candidate.id}-wallet`}
-                              name={`${candidate.id}-wallet`}
-                              autoComplete="off"
-                              spellCheck={false}
-                              value={candidate.walletAddress}
-                              onChange={(event) =>
-                                updateCandidate(position.id, candidate.id, {
-                                  walletAddress: event.target.value,
-                                })
-                              }
-                              className={inputClasses('clay-mono')}
-                              placeholder="0x1234…abcd"
-                            />
-                          </div>
-
-                          <div className="flex items-end">
-                            <button
-                              type="button"
-                              onClick={() => removeCandidate(position.id, candidate.id)}
-                              className={actionButtonClasses('outline')}
-                            >
-                              <Trash2 className="h-4 w-4" aria-hidden="true" />
-                              Xóa
-                            </button>
-                          </div>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            onClick={() => removePosition(position.id)}
+                            iconLeft={<Trash2 className="h-4 w-4" aria-hidden="true" />}
+                          >
+                            Xóa chức vụ
+                          </Button>
                         </div>
-                      ))}
-                    </div>
-                  </article>
-                ))}
-              </div>
-            </section>
-          </div>
 
-          <aside className="space-y-6 xl:sticky xl:top-6 xl:self-start">
-            <section className={panelClasses()}>
-              <p className="clay-label">Summary</p>
-              <h2 className="mt-2 text-2xl font-semibold tracking-[-0.015em] text-black">
-                Tóm tắt payload
-              </h2>
+                        <div className="grid gap-4 md:grid-cols-2">
+                          <Field label="Tên chức vụ">
+                            <input
+                              id={`${position.id}-title`}
+                              name={`${position.id}-title`}
+                              autoComplete="off"
+                              value={position.title}
+                              onChange={(event) =>
+                                updatePosition(position.id, { title: event.target.value })
+                              }
+                              className={fieldControlClass}
+                              placeholder="Ví dụ: Lớp trưởng…"
+                            />
+                          </Field>
+                          <Field label="Mô tả chức vụ">
+                            <input
+                              id={`${position.id}-description`}
+                              name={`${position.id}-description`}
+                              autoComplete="off"
+                              value={position.description}
+                              onChange={(event) =>
+                                updatePosition(position.id, { description: event.target.value })
+                              }
+                              className={fieldControlClass}
+                              placeholder="Ví dụ: Bầu 1 người cho vai trò này…"
+                            />
+                          </Field>
+                        </div>
 
-              <div className="mt-5 space-y-3 text-sm">
-                <SummaryRow
-                  label="Admin wallet"
-                  value={shortenAddress(currentAccount)}
-                  fullValue={currentAccount}
-                />
-                <SummaryRow label="Số chức vụ" value={normalizedPositions.length} />
-                <SummaryRow
-                  label={voterMode === 'wallets' ? 'Cử tri hợp lệ' : 'Dòng roster'}
-                  value={
-                    voterMode === 'wallets' ? parsedVoterWallets.length : parsedRosterVoters.length
-                  }
-                />
-                <SummaryRow label="Mạng ví" value={isNetworkConnected ? 'Sepolia' : 'Mismatch'} />
-              </div>
-            </section>
-
-            <section className={panelClasses()}>
-              <p className="text-sm font-semibold text-black">Xác thực</p>
-              <div className="mt-3 space-y-2.5 text-sm">
-                <div className="flex items-center justify-between gap-4">
-                  <span className="text-[var(--clay-muted)]">Email</span>
-                  <span className="inline-flex items-center gap-1.5 font-medium text-[var(--clay-text)]">
-                    <span className="h-2 w-2 rounded-full bg-emerald-500" aria-hidden="true" />
-                    Sẵn sàng
-                  </span>
-                </div>
-                <div className="flex items-center justify-between gap-4">
-                  <span className="text-[var(--clay-muted)]">QR / OTP</span>
-                  <span className="inline-flex items-center gap-1.5 font-medium text-[var(--clay-text)]">
-                    <span
-                      className={`h-2 w-2 rounded-full ${
-                        voterMode === 'roster' ? 'bg-emerald-500' : 'bg-[var(--clay-muted-soft)]'
-                      }`}
-                      aria-hidden="true"
-                    />
-                    {voterMode === 'roster' ? 'Sẵn sàng' : 'Tắt (nhập ví)'}
-                  </span>
-                </div>
-              </div>
-            </section>
-
-            <section id="sec-xacnhan" className={panelClasses()}>
-              <p className="clay-label">Bước 4</p>
-              <h2 className="mt-1 text-lg font-semibold tracking-[-0.015em] text-black">
-                {voterMode === 'wallets' ? 'Xác nhận & tạo ballot' : 'Xác nhận & tạo roster'}
-              </h2>
-              <p className="mt-3 text-sm leading-6 text-[var(--clay-muted)]">
-                {voterMode === 'wallets'
-                  ? 'Sau khi tạo xong, hệ thống chuyển sang command center và mở child election đầu tiên.'
-                  : 'Ở chế độ roster, hệ thống chỉ tạo bản nháp xác thực và QR mời cử tri. Ballot on-chain chỉ được deploy sau khi cử tri OTP và bind ví.'}
-              </p>
-
-              <button
-                type="submit"
-                disabled={submitting}
-                className={`${actionButtonClasses(isReadyToSubmit ? 'accent' : 'outline')} mt-5 w-full`}
-              >
-                {submitting
-                  ? voterMode === 'wallets'
-                    ? 'Đang deploy trên Sepolia…'
-                    : 'Đang tạo roster xác thực…'
-                  : !isReadyToSubmit
-                    ? 'Kiểm tra điều kiện submit'
-                    : voterMode === 'wallets'
-                      ? 'Tạo election trên Sepolia'
-                      : 'Tạo roster + QR xác thực'}
-              </button>
-            </section>
-          </aside>
-        </form>
-
-        {activeDraft && voterMode === 'roster' && (
-          <div className="mt-6 space-y-6">
-            <section className={panelClasses()}>
-              {activeDraft.status === 'deployed' ? (
-                <div className="rounded-[18px] border border-[rgba(132,231,165,0.28)] bg-[rgba(132,231,165,0.14)] p-5">
-                  <p className="clay-label">Hướng dẫn QR / OTP</p>
-                  <h2 className="mt-2 text-2xl font-semibold tracking-[-0.015em] text-black">
-                    Ballot đã deploy on-chain
-                  </h2>
-                  <p className="mt-3 max-w-3xl text-sm leading-6 text-[var(--clay-text)]">
-                    QR onboarding đã hoàn tất nhiệm vụ xác thực roster. Từ thời điểm này admin nên
-                    quản lý ballot ở command center và không phát tiếp QR xác thực trước deploy.
-                  </p>
-                </div>
-              ) : (
-                <div className="grid gap-6 xl:grid-cols-[minmax(0,360px)_minmax(0,1fr)]">
-                  <QRCodeGenerator
-                    inviteLink={buildSharedRosterInviteUrl(activeDraft)}
-                    title="QR mời xác thực cử tri"
-                    description="QR chỉ dùng cho bước xác thực roster trước deploy; chưa phải QR của ballot on-chain."
-                    downloadFileName={`${activeDraft.groupKey}-shared-qr`}
-                  />
-
-                  <div className="min-w-0">
-                    <p className="clay-label">Hướng dẫn QR / OTP</p>
-                    <h2 className="mt-2 text-2xl font-semibold tracking-[-0.015em] text-black">
-                      Bước 1/2: xác thực cử tri trước deploy
-                    </h2>
-                    <p className="mt-3 max-w-3xl text-sm leading-6 text-[var(--clay-muted)]">
-                      QR này được tạo sau khi admin bấm{' '}
-                      <span className="font-semibold text-black">Tạo roster + QR xác thực</span>. Nó
-                      chỉ mở luồng onboarding cho roster, giúp không phải phát từng mã cho từng cử
-                      tri. Token riêng vẫn được backend cấp sau bước nhập email để chống nhận nhầm
-                      định danh, chống bind ví thay người khác và giữ audit trail. Phiên bầu cử
-                      on-chain chỉ được tạo ở bước deploy bên dưới.
-                    </p>
-                    <ol className="mt-5 grid gap-3 text-sm text-[var(--clay-muted)] md:grid-cols-2">
-                      <li className="rounded-[16px] border border-[var(--clay-border)] bg-white p-4">
-                        <span className="font-semibold text-black">1. Tạo bản nháp roster</span>
-                        <p className="mt-1 leading-6">
-                          Admin nhập danh sách cử tri, lịch commit/reveal và các chức vụ.
-                        </p>
-                      </li>
-                      <li className="rounded-[16px] border border-[var(--clay-border)] bg-white p-4">
-                        <span className="font-semibold text-black">2. Công bố một QR chung</span>
-                        <p className="mt-1 leading-6">
-                          In hoặc gửi một QR theo roster này cho toàn bộ cử tri đủ điều kiện.
-                        </p>
-                      </li>
-                      <li className="rounded-[16px] border border-[var(--clay-border)] bg-white p-4">
-                        <span className="font-semibold text-black">3. Cử tri tự định danh</span>
-                        <p className="mt-1 leading-6">
-                          Cử tri nhập email trong roster; hệ thống chỉ gửi OTP về email đó.
-                        </p>
-                      </li>
-                      <li className="rounded-[16px] border border-[var(--clay-border)] bg-white p-4">
-                        <span className="font-semibold text-black">4. Bind ví rồi deploy</span>
-                        <p className="mt-1 leading-6">
-                          Chỉ ví đã bind sau OTP mới được đưa vào ballot khi admin deploy.
-                        </p>
-                      </li>
-                    </ol>
-                  </div>
-                </div>
-              )}
-            </section>
-
-            <section className={panelClasses()}>
-              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                <div className="min-w-0">
-                  <p className="clay-label">Bản nháp danh sách cử tri</p>
-                  <h2 className="mt-2 truncate text-2xl font-semibold tracking-[-0.015em] text-black">
-                    {activeDraft.title}
-                  </h2>
-                  <p className="mt-2 break-all text-sm text-[var(--clay-muted)]">
-                    Group key: {activeDraft.groupKey}
-                  </p>
-                  {activeDraft.status === 'deployed' ? (
-                    <p className="mt-1 text-sm text-[var(--clay-muted)]">
-                      Onboarding đã chốt; không phát tiếp QR xác thực trước deploy.
-                    </p>
-                  ) : (
-                    <p className="mt-1 break-all text-sm text-[var(--clay-muted)]">
-                      QR xác thực trước deploy: {buildSharedRosterInviteUrl(activeDraft)}
-                    </p>
-                  )}
-                  <span className="mt-3 inline-flex rounded-full border border-[var(--clay-border)] bg-white px-3 py-1 text-xs font-semibold text-[var(--clay-muted)]">
-                    {activeDraft.status === 'deployed'
-                      ? 'Đã deploy ballot on-chain'
-                      : 'Chưa deploy ballot on-chain'}
-                  </span>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => void handleDeployVerifiedRoster()}
-                  disabled={
-                    submitting ||
-                    activeDraft.walletBoundCount === 0 ||
-                    activeDraft.status === 'deployed'
-                  }
-                  className={actionButtonClasses('accent')}
-                >
-                  {activeDraft.status === 'deployed'
-                    ? 'Đã deploy'
-                    : 'Deploy ballot từ cử tri đã xác thực'}
-                </button>
-              </div>
-
-              <div className="mt-5 grid gap-4 md:grid-cols-3">
-                <MetricCard label="Tổng invite" value={String(activeDraft.totalInviteCount)} />
-                <MetricCard label="OTP verified" value={String(activeDraft.otpVerifiedCount)} />
-                <MetricCard label="Wallet bound" value={String(activeDraft.walletBoundCount)} />
-              </div>
-
-              <div className="mt-5 space-y-4">
-                {activeDraft.invites.map((invite) => (
-                  <article
-                    key={invite.inviteId}
-                    className="rounded-[18px] border border-[var(--clay-border)] bg-white p-4"
-                  >
-                    <div className="grid gap-4 lg:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)_auto] lg:items-center">
-                      <div className="min-w-0 flex-1">
-                        <p className="truncate text-lg font-semibold text-black">
-                          {invite.fullName}
-                        </p>
-                        <p className="mt-1 truncate text-sm text-[var(--clay-muted)]">
-                          {invite.email}
-                        </p>
-                        {invite.studentCode && (
-                          <p className="text-sm text-[var(--clay-muted)]">
-                            MSSV: {invite.studentCode}
+                        <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                          <p className="text-sm font-semibold text-[var(--clay-text)]">
+                            Ứng viên cho {position.title || `chức vụ ${positionIndex + 1}`}
                           </p>
-                        )}
-                      </div>
-                      <div className="min-w-0">
-                        <p className="clay-label">Link riêng dự phòng</p>
-                        <p className="mt-2 break-all text-xs leading-5 text-[var(--clay-muted)]">
-                          {invite.inviteUrl}
-                        </p>
-                      </div>
-                      <div className="flex flex-wrap gap-2 text-xs lg:justify-end">
-                        <span className="clay-badge">
-                          OTP {invite.otpVerified ? 'verified' : 'pending'}
-                        </span>
-                        <span className="clay-badge" title={invite.walletAddress ?? undefined}>
-                          {invite.walletAddress
-                            ? shortenAddress(invite.walletAddress)
-                            : 'Chưa bind wallet'}
-                        </span>
-                      </div>
-                    </div>
-                  </article>
-                ))}
+                          <Button
+                            type="button"
+                            variant="secondary"
+                            onClick={() => addCandidate(position.id)}
+                            iconLeft={<Plus className="h-4 w-4" aria-hidden="true" />}
+                          >
+                            Thêm ứng viên
+                          </Button>
+                        </div>
+
+                        {showInlineErrors &&
+                          position.title.trim().length > 0 &&
+                          position.candidates.filter(
+                            (candidate) => candidate.displayName.trim().length > 0,
+                          ).length < 2 && (
+                            <FieldError message="Mỗi chức vụ cần ít nhất 2 ứng viên có tên." />
+                          )}
+
+                        <div className="mt-4 space-y-3">
+                          {position.candidates.map((candidate, candidateIndex) => (
+                            <div
+                              key={candidate.id}
+                              className="grid gap-3 rounded-[14px] border border-[var(--clay-border)] bg-[var(--clay-surface)] p-3 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto]"
+                            >
+                              <Field label={`Tên ứng viên ${candidateIndex + 1}`}>
+                                <input
+                                  id={`${candidate.id}-name`}
+                                  name={`${candidate.id}-name`}
+                                  autoComplete="off"
+                                  value={candidate.displayName}
+                                  onChange={(event) =>
+                                    updateCandidate(position.id, candidate.id, {
+                                      displayName: event.target.value,
+                                    })
+                                  }
+                                  className={fieldControlClass}
+                                  placeholder="Ví dụ: Nguyễn Văn A…"
+                                />
+                              </Field>
+                              <Field label="Ví ứng viên (tùy chọn)">
+                                <input
+                                  id={`${candidate.id}-wallet`}
+                                  name={`${candidate.id}-wallet`}
+                                  autoComplete="off"
+                                  spellCheck={false}
+                                  value={candidate.walletAddress}
+                                  onChange={(event) =>
+                                    updateCandidate(position.id, candidate.id, {
+                                      walletAddress: event.target.value,
+                                    })
+                                  }
+                                  className={`${fieldControlClass} font-mono`}
+                                  placeholder="0x1234…abcd"
+                                />
+                              </Field>
+                              <div className="flex items-end">
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  onClick={() => removeCandidate(position.id, candidate.id)}
+                                  iconLeft={<Trash2 className="h-4 w-4" aria-hidden="true" />}
+                                >
+                                  Xóa
+                                </Button>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </Panel>
+                    ))}
+                  </div>
+                  {stepNavButtons('b1', 'b3')}
+                </SectionCard>
               </div>
-            </section>
-          </div>
-        )}
+            </Wizard.Panel>
+
+            {/* ───────── Bước 3: Lịch & cử tri ───────── */}
+            <Wizard.Panel value="b3">
+              <div data-wizard-step="b3">
+                <SectionCard
+                  title="Lịch & danh sách cử tri"
+                  description="Commit start ở tương lai và Commit start < Commit end < Reveal end."
+                >
+                  <div className="grid gap-4 md:grid-cols-3">
+                    <Field label="Commit start">
+                      <input
+                        id="commit-start"
+                        name="commit-start"
+                        type="datetime-local"
+                        autoComplete="off"
+                        value={commitStart}
+                        onChange={(event) => setCommitStart(event.target.value)}
+                        className={fieldControlClass}
+                      />
+                    </Field>
+                    <Field label="Commit end">
+                      <input
+                        id="commit-end"
+                        name="commit-end"
+                        type="datetime-local"
+                        autoComplete="off"
+                        value={commitEnd}
+                        onChange={(event) => setCommitEnd(event.target.value)}
+                        className={fieldControlClass}
+                      />
+                    </Field>
+                    <Field label="Reveal end">
+                      <input
+                        id="reveal-end"
+                        name="reveal-end"
+                        type="datetime-local"
+                        autoComplete="off"
+                        value={revealEnd}
+                        onChange={(event) => setRevealEnd(event.target.value)}
+                        className={fieldControlClass}
+                      />
+                    </Field>
+                  </div>
+                  {showInlineErrors && !scheduleState.isValid && (
+                    <FieldError message="Lịch phải thỏa mãn Commit start ở tương lai và Commit start < Commit end < Reveal end." />
+                  )}
+
+                  <fieldset className="mt-5">
+                    <legend className="mb-2 text-sm font-semibold text-[var(--clay-text)]">
+                      Chế độ cử tri
+                    </legend>
+                    <div className="grid gap-3 md:grid-cols-2" role="group" aria-label="Chọn chế độ nhập cử tri">
+                      <Button
+                        type="button"
+                        variant={voterMode === 'wallets' ? 'primary' : 'secondary'}
+                        size="lg"
+                        aria-pressed={voterMode === 'wallets'}
+                        onClick={() => setVoterMode('wallets')}
+                        iconLeft={<Wallet className="h-4 w-4" aria-hidden="true" />}
+                      >
+                        Nhập ví trực tiếp
+                      </Button>
+                      <Button
+                        type="button"
+                        variant={voterMode === 'roster' ? 'primary' : 'secondary'}
+                        size="lg"
+                        aria-pressed={voterMode === 'roster'}
+                        onClick={() => setVoterMode('roster')}
+                        iconLeft={<QrCode className="h-4 w-4" aria-hidden="true" />}
+                      >
+                        Roster QR / OTP
+                      </Button>
+                    </div>
+                  </fieldset>
+
+                  {voterMode === 'wallets' ? (
+                    <div className="mt-5">
+                      <Field label="Danh sách ví cử tri" hint="Mỗi dòng một địa chỉ ví.">
+                        <textarea
+                          id="voter-wallets-input"
+                          name="voter-wallets-input"
+                          autoComplete="off"
+                          spellCheck={false}
+                          value={voterWalletsInput}
+                          onChange={(event) => setVoterWalletsInput(event.target.value)}
+                          rows={5}
+                          className={`${fieldControlClass} font-mono`}
+                          placeholder="0x1234…abcd"
+                        />
+                      </Field>
+                      {showInlineErrors && parsedVoterWallets.length === 0 && (
+                        <FieldError message="Thêm ít nhất 1 địa chỉ ví cử tri." />
+                      )}
+                      {showInlineErrors && invalidVoterWallets.length > 0 && (
+                        <FieldError
+                          message={`Có ${invalidVoterWallets.length} địa chỉ ví cử tri sai định dạng.`}
+                        />
+                      )}
+                      {showInlineErrors && duplicateVoterWallets.length > 0 && (
+                        <FieldError
+                          message={`Có ${duplicateVoterWallets.length} địa chỉ ví cử tri bị trùng.`}
+                        />
+                      )}
+                    </div>
+                  ) : (
+                    <div className="mt-5">
+                      <Field
+                        label="Danh sách cử tri"
+                        hint="Mỗi dòng: Họ tên,email,mã sinh viên. Hệ thống tạo QR chung để cử tri tự xác thực OTP & bind ví trước khi deploy."
+                      >
+                        <textarea
+                          id="roster-input"
+                          name="roster-input"
+                          autoComplete="off"
+                          spellCheck={false}
+                          value={rosterInput}
+                          onChange={(event) => setRosterInput(event.target.value)}
+                          rows={7}
+                          className={fieldControlClass}
+                          placeholder="Nguyễn Văn A,a@example.com,SV001"
+                        />
+                      </Field>
+                      {showInlineErrors && parsedRosterVoters.length === 0 && (
+                        <FieldError message="Thêm ít nhất 1 dòng roster." />
+                      )}
+                      {showInlineErrors && invalidRosterRows.length > 0 && (
+                        <FieldError
+                          message={`Dòng roster cần có họ tên và email hợp lệ: ${invalidRosterRows
+                            .slice(0, 4)
+                            .map((row) => row.rowNumber)
+                            .join(', ')}${invalidRosterRows.length > 4 ? '…' : ''}.`}
+                        />
+                      )}
+                    </div>
+                  )}
+                  {stepNavButtons('b2', 'b4')}
+                </SectionCard>
+              </div>
+            </Wizard.Panel>
+
+            {/* ───────── Bước 4: Xác nhận & triển khai ───────── */}
+            <Wizard.Panel value="b4">
+              <div data-wizard-step="b4" className="space-y-6">
+                <SectionCard
+                  title={voterMode === 'wallets' ? 'Xác nhận & tạo ballot' : 'Xác nhận & tạo roster'}
+                  description={
+                    voterMode === 'wallets'
+                      ? 'Sau khi tạo xong, hệ thống chuyển sang bảng điều khiển và mở child election đầu tiên.'
+                      : 'Chế độ roster chỉ tạo bản nháp xác thực và QR mời. Ballot on-chain chỉ deploy sau khi cử tri OTP và bind ví.'
+                  }
+                >
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    <SummaryRow label="Admin wallet" value={shortenAddress(currentAccount)} />
+                    <SummaryRow label="Mạng ví" value={isNetworkConnected ? 'Sepolia' : 'Sai mạng'} />
+                    <SummaryRow label="Số chức vụ" value={normalizedPositions.length} />
+                    <SummaryRow
+                      label={voterMode === 'wallets' ? 'Cử tri hợp lệ' : 'Dòng roster'}
+                      value={
+                        voterMode === 'wallets'
+                          ? parsedVoterWallets.length
+                          : parsedRosterVoters.length
+                      }
+                    />
+                  </div>
+                  <div className="mt-5">
+                    <Button
+                      type="submit"
+                      variant={isReadyToSubmit ? 'primary' : 'secondary'}
+                      size="lg"
+                      loading={submitting}
+                      className="w-full"
+                    >
+                      {submitting
+                        ? voterMode === 'wallets'
+                          ? 'Đang deploy trên Sepolia…'
+                          : 'Đang tạo roster xác thực…'
+                        : !isReadyToSubmit
+                          ? 'Kiểm tra điều kiện submit'
+                          : voterMode === 'wallets'
+                            ? 'Tạo election trên Sepolia'
+                            : 'Tạo roster + QR xác thực'}
+                    </Button>
+                  </div>
+                  <div className="mt-4">
+                    <Button type="button" variant="ghost" onClick={() => goto('b3')}>
+                      ← Quay lại
+                    </Button>
+                  </div>
+                </SectionCard>
+
+                {activeDraft && voterMode === 'roster' && (
+                  <>
+                    <SectionCard
+                      title={
+                        activeDraft.status === 'deployed'
+                          ? 'Ballot đã deploy on-chain'
+                          : 'Bước 1/2: xác thực cử tri trước deploy'
+                      }
+                      description={
+                        activeDraft.status === 'deployed'
+                          ? 'QR onboarding đã hoàn tất. Quản lý ballot ở bảng điều khiển; không phát tiếp QR trước deploy.'
+                          : 'QR chung chỉ mở luồng onboarding roster. Token riêng vẫn được backend cấp sau bước nhập email để chống nhận nhầm định danh, chống bind ví thay người khác và giữ audit trail.'
+                      }
+                    >
+                      {activeDraft.status !== 'deployed' && (
+                        <div className="grid gap-6 xl:grid-cols-[minmax(0,320px)_minmax(0,1fr)]">
+                          <QRCodeGenerator
+                            inviteLink={buildSharedRosterInviteUrl(activeDraft)}
+                            title="QR mời xác thực cử tri"
+                            description="QR chỉ dùng cho bước xác thực roster trước deploy; chưa phải QR của ballot on-chain."
+                            downloadFileName={`${activeDraft.groupKey}-shared-qr`}
+                          />
+                          <ol className="grid gap-3 text-sm text-[var(--clay-muted)] md:grid-cols-2">
+                            {[
+                              ['1. Tạo bản nháp roster', 'Admin nhập danh sách cử tri, lịch commit/reveal và các chức vụ.'],
+                              ['2. Công bố một QR chung', 'In hoặc gửi một QR theo roster này cho toàn bộ cử tri đủ điều kiện.'],
+                              ['3. Cử tri tự định danh', 'Cử tri nhập email trong roster; hệ thống chỉ gửi OTP về email đó.'],
+                              ['4. Bind ví rồi deploy', 'Chỉ ví đã bind sau OTP mới được đưa vào ballot khi admin deploy.'],
+                            ].map(([t, d]) => (
+                              <li
+                                key={t}
+                                className="rounded-[14px] border border-[var(--clay-border)] bg-[var(--clay-surface)] p-4"
+                              >
+                                <span className="font-semibold text-[var(--clay-text)]">{t}</span>
+                                <p className="mt-1 leading-6">{d}</p>
+                              </li>
+                            ))}
+                          </ol>
+                        </div>
+                      )}
+                    </SectionCard>
+
+                    <SectionCard
+                      title={activeDraft.title}
+                      description={`Group key: ${activeDraft.groupKey}`}
+                      actions={
+                        <Button
+                          type="button"
+                          variant="primary"
+                          onClick={() => void handleDeployVerifiedRoster()}
+                          disabled={
+                            submitting ||
+                            activeDraft.walletBoundCount === 0 ||
+                            activeDraft.status === 'deployed'
+                          }
+                        >
+                          {activeDraft.status === 'deployed'
+                            ? 'Đã deploy'
+                            : 'Deploy ballot từ cử tri đã xác thực'}
+                        </Button>
+                      }
+                    >
+                      <div className="mb-4">
+                        <StatusBadge tone={activeDraft.status === 'deployed' ? 'success' : 'warning'}>
+                          {activeDraft.status === 'deployed'
+                            ? 'Đã deploy ballot on-chain'
+                            : 'Chưa deploy ballot on-chain'}
+                        </StatusBadge>
+                      </div>
+                      <div className="grid gap-3 sm:grid-cols-3">
+                        <SummaryRow label="Tổng invite" value={String(activeDraft.totalInviteCount)} />
+                        <SummaryRow label="OTP verified" value={String(activeDraft.otpVerifiedCount)} />
+                        <SummaryRow label="Wallet bound" value={String(activeDraft.walletBoundCount)} />
+                      </div>
+                      <div className="mt-5 space-y-3">
+                        {activeDraft.invites.map((invite) => (
+                          <div
+                            key={invite.inviteId}
+                            className="grid gap-3 rounded-[14px] border border-[var(--clay-border)] bg-[var(--clay-surface)] p-4 lg:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)_auto] lg:items-center"
+                          >
+                            <div className="min-w-0">
+                              <p className="truncate text-[15px] font-semibold text-[var(--clay-text)]">
+                                {invite.fullName}
+                              </p>
+                              <p className="mt-0.5 truncate text-sm text-[var(--clay-muted)]">
+                                {invite.email}
+                              </p>
+                              {invite.studentCode && (
+                                <p className="text-sm text-[var(--clay-muted)]">
+                                  MSSV: {invite.studentCode}
+                                </p>
+                              )}
+                            </div>
+                            <p className="min-w-0 break-all text-xs leading-5 text-[var(--clay-muted)]">
+                              {invite.inviteUrl}
+                            </p>
+                            <div className="flex flex-wrap gap-2 lg:justify-end">
+                              <StatusBadge tone={invite.otpVerified ? 'success' : 'warning'}>
+                                OTP {invite.otpVerified ? 'verified' : 'pending'}
+                              </StatusBadge>
+                              <StatusBadge tone={invite.walletAddress ? 'success' : 'neutral'}>
+                                {invite.walletAddress
+                                  ? shortenAddress(invite.walletAddress)
+                                  : 'Chưa bind wallet'}
+                              </StatusBadge>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </SectionCard>
+                  </>
+                )}
+              </div>
+            </Wizard.Panel>
+          </Wizard>
+        </form>
       </div>
     </div>
   );

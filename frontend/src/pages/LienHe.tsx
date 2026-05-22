@@ -89,13 +89,13 @@ export default function LienHePage() {
   }
 
   return (
-    <div className="relative min-h-screen bg-gray-50">
+    <div className="relative min-h-screen bg-[var(--clay-surface-soft)]">
       <SEO {...seoData} />
 
       {/* Header */}
-      <header className="sticky top-0 z-10 bg-white shadow-md px-6 md:px-10 py-5 flex justify-between items-center border-b border-gray-200">
+      <header className="sticky top-0 z-10 bg-white shadow-md px-6 md:px-10 py-5 flex justify-between items-center border-b border-[var(--clay-border)]">
         <div className="flex items-center space-x-3">
-          <div className="w-8 h-8 rounded-full bg-[#0288D1] flex items-center justify-center">
+          <div className="w-8 h-8 rounded-full bg-[var(--clay-primary)] flex items-center justify-center">
             <svg
               width="16"
               height="16"
@@ -126,13 +126,13 @@ export default function LienHePage() {
               />
             </svg>
           </div>
-          <h1 className="text-gray-900 font-bold text-xl md:text-2xl tracking-tight">
+          <h1 className="text-[var(--clay-text)] font-bold text-xl md:text-2xl tracking-tight">
             Blockchain Holihu
           </h1>
         </div>
         <Link
           to="/"
-          className="flex items-center px-4 py-2 bg-[#0288D1] hover:bg-[#01579B] text-white rounded-lg transition-all duration-300 transform hover:scale-105 shadow-lg"
+          className="flex items-center px-4 py-2 bg-[var(--clay-primary)] hover:bg-[var(--clay-primary-dark)] text-white rounded-lg transition-all duration-300 transform hover:scale-105 shadow-lg"
         >
           <ArrowLeft className="w-4 h-4 mr-2" />
           <span className="font-medium text-sm">Về Trang Chủ</span>
@@ -147,10 +147,10 @@ export default function LienHePage() {
             isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-10'
           }`}
         >
-          <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-gray-900 relative inline-block">
+          <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-[var(--clay-text)] relative inline-block">
             Liên Hệ Với Chúng Tôi
           </h2>
-          <p className="mt-4 text-gray-600 max-w-2xl mx-auto">
+          <p className="mt-4 text-[var(--clay-muted)] max-w-2xl mx-auto">
             Hãy để lại thông tin của bạn, chúng tôi sẽ liên hệ lại trong thời gian sớm nhất. Mọi
             thông tin của bạn đều được bảo mật trên blockchain.
           </p>
@@ -158,13 +158,13 @@ export default function LienHePage() {
 
         {/* Success Message */}
         {success && (
-          <div className="mb-8 bg-green-50 border border-[#4CAF50] rounded-xl p-6 text-center transition-all duration-500 opacity-100 translate-y-0">
+          <div className="mb-8 bg-[var(--state-success-soft)] border border-[#4CAF50] rounded-xl p-6 text-center transition-all duration-500 opacity-100 translate-y-0">
             <div className="flex items-center justify-center mb-2">
               <CheckCircle2 className="w-6 h-6 text-[#4CAF50] mr-2" />
               <h3 className="text-[#4CAF50] text-xl font-bold">Gửi Thành Công!</h3>
             </div>
-            <p className="text-gray-600">
-              Cảm ơn <span className="text-gray-900 font-medium">{submittedName}</span>,{' '}
+            <p className="text-[var(--clay-muted)]">
+              Cảm ơn <span className="text-[var(--clay-text)] font-medium">{submittedName}</span>,{' '}
               {message || 'chúng tôi đã nhận được thông tin của bạn và sẽ liên hệ lại sớm.'}
             </p>
           </div>
@@ -172,12 +172,12 @@ export default function LienHePage() {
 
         {/* Error Message */}
         {error && (
-          <div className="mb-8 bg-red-50 border border-[#F44336] rounded-xl p-6 text-center transition-all duration-500 opacity-100 translate-y-0">
+          <div className="mb-8 bg-[var(--state-danger-soft)] border border-[#F44336] rounded-xl p-6 text-center transition-all duration-500 opacity-100 translate-y-0">
             <div className="flex items-center justify-center mb-2">
               <AlertCircle className="w-6 h-6 text-[#F44336] mr-2" />
               <h3 className="text-[#F44336] text-xl font-bold">Gửi Không Thành Công</h3>
             </div>
-            <p className="text-gray-600">{error}</p>
+            <p className="text-[var(--clay-muted)]">{error}</p>
           </div>
         )}
 
@@ -189,16 +189,16 @@ export default function LienHePage() {
               isLoaded ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-10'
             }`}
           >
-            <div className="bg-white rounded-xl p-6 shadow-lg border border-gray-200 h-full">
-              <h3 className="text-gray-900 text-xl font-bold mb-6 border-b border-gray-200 pb-4">
+            <div className="bg-white rounded-xl p-6 shadow-lg border border-[var(--clay-border)] h-full">
+              <h3 className="text-[var(--clay-text)] text-xl font-bold mb-6 border-b border-[var(--clay-border)] pb-4">
                 Thông Tin Liên Hệ
               </h3>
 
               <div className="space-y-6">
                 <div className="flex items-start">
-                  <div className="w-10 h-10 rounded-full bg-[#0288D1] bg-opacity-10 flex items-center justify-center mr-4 mt-1">
+                  <div className="w-10 h-10 rounded-full bg-[var(--clay-primary)] bg-opacity-10 flex items-center justify-center mr-4 mt-1">
                     <svg
-                      className="w-5 h-5 text-[#0288D1]"
+                      className="w-5 h-5 text-[var(--clay-primary)]"
                       fill="none"
                       stroke="currentColor"
                       viewBox="0 0 24 24"
@@ -213,15 +213,15 @@ export default function LienHePage() {
                     </svg>
                   </div>
                   <div>
-                    <h4 className="text-gray-900 font-medium">Email</h4>
-                    <p className="text-gray-600 mt-1">contact@blockchain-election.com</p>
+                    <h4 className="text-[var(--clay-text)] font-medium">Email</h4>
+                    <p className="text-[var(--clay-muted)] mt-1">contact@blockchain-election.com</p>
                   </div>
                 </div>
 
                 <div className="flex items-start">
-                  <div className="w-10 h-10 rounded-full bg-[#6A1B9A] bg-opacity-10 flex items-center justify-center mr-4 mt-1">
+                  <div className="w-10 h-10 rounded-full bg-[var(--clay-primary-dark)] bg-opacity-10 flex items-center justify-center mr-4 mt-1">
                     <svg
-                      className="w-5 h-5 text-[#6A1B9A]"
+                      className="w-5 h-5 text-[var(--clay-primary-dark)]"
                       fill="none"
                       stroke="currentColor"
                       viewBox="0 0 24 24"
@@ -236,8 +236,8 @@ export default function LienHePage() {
                     </svg>
                   </div>
                   <div>
-                    <h4 className="text-gray-900 font-medium">Điện Thoại</h4>
-                    <p className="text-gray-600 mt-1">+84 123 456 789</p>
+                    <h4 className="text-[var(--clay-text)] font-medium">Điện Thoại</h4>
+                    <p className="text-[var(--clay-muted)] mt-1">+84 123 456 789</p>
                   </div>
                 </div>
 
@@ -265,26 +265,26 @@ export default function LienHePage() {
                     </svg>
                   </div>
                   <div>
-                    <h4 className="text-gray-900 font-medium">Địa Chỉ</h4>
-                    <p className="text-gray-600 mt-1">
+                    <h4 className="text-[var(--clay-text)] font-medium">Địa Chỉ</h4>
+                    <p className="text-[var(--clay-muted)] mt-1">
                       Tòa nhà Innovation, 123 Đường Công Nghệ, Quận 1, TP.HCM
                     </p>
                   </div>
                 </div>
               </div>
 
-              <div className="mt-8 pt-6 border-t border-gray-200">
-                <h4 className="text-gray-900 font-medium mb-4">Kết Nối Với Chúng Tôi</h4>
+              <div className="mt-8 pt-6 border-t border-[var(--clay-border)]">
+                <h4 className="text-[var(--clay-text)] font-medium mb-4">Kết Nối Với Chúng Tôi</h4>
                 <div className="flex space-x-4">
                   <a
                     href="#"
-                    className="w-10 h-10 rounded-full bg-[#0288D1] bg-opacity-10 flex items-center justify-center text-[#0288D1] hover:bg-opacity-20 transition-all duration-300"
+                    className="w-10 h-10 rounded-full bg-[var(--clay-primary)] bg-opacity-10 flex items-center justify-center text-[var(--clay-primary)] hover:bg-opacity-20 transition-all duration-300"
                   >
                     <Twitter className="w-5 h-5" />
                   </a>
                   <a
                     href="#"
-                    className="w-10 h-10 rounded-full bg-[#6A1B9A] bg-opacity-10 flex items-center justify-center text-[#6A1B9A] hover:bg-opacity-20 transition-all duration-300"
+                    className="w-10 h-10 rounded-full bg-[var(--clay-primary-dark)] bg-opacity-10 flex items-center justify-center text-[var(--clay-primary-dark)] hover:bg-opacity-20 transition-all duration-300"
                   >
                     <Github className="w-5 h-5" />
                   </a>
@@ -305,8 +305,8 @@ export default function LienHePage() {
               isLoaded ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-10'
             }`}
           >
-            <div className="bg-white rounded-xl p-6 shadow-lg border border-gray-200">
-              <h3 className="text-gray-900 text-xl font-bold mb-6 border-b border-gray-200 pb-4">
+            <div className="bg-white rounded-xl p-6 shadow-lg border border-[var(--clay-border)]">
+              <h3 className="text-[var(--clay-text)] text-xl font-bold mb-6 border-b border-[var(--clay-border)] pb-4">
                 Gửi Tin Nhắn
               </h3>
 
@@ -314,7 +314,7 @@ export default function LienHePage() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   {/* Tên */}
                   <div className="space-y-2">
-                    <label htmlFor="ten" className="text-gray-900 font-medium flex items-center">
+                    <label htmlFor="ten" className="text-[var(--clay-text)] font-medium flex items-center">
                       Tên của bạn <span className="text-[#F44336] ml-1">*</span>
                     </label>
                     <input
@@ -322,9 +322,9 @@ export default function LienHePage() {
                       id="ten"
                       placeholder="Nhập tên của bạn"
                       {...register('ten', { required: 'Bạn phải nhập tên của mình' })}
-                      className={`w-full bg-gray-50 border ${
-                        errors.ten ? 'border-[#F44336]' : 'border-gray-200'
-                      } rounded-lg p-3 text-gray-900 placeholder-gray-400 focus:border-[#0288D1] focus:ring-1 focus:ring-[#0288D1] transition-all duration-300`}
+                      className={`w-full bg-[var(--clay-surface-soft)] border ${
+                        errors.ten ? 'border-[#F44336]' : 'border-[var(--clay-border)]'
+                      } rounded-lg p-3 text-[var(--clay-text)] placeholder-gray-400 focus:border-[var(--clay-primary)] focus:ring-1 focus:ring-[var(--clay-primary)] transition-all duration-300`}
                     />
                     {errors.ten && (
                       <p className="text-[#F44336] text-sm mt-1">{errors.ten.message}</p>
@@ -333,7 +333,7 @@ export default function LienHePage() {
 
                   {/* Tuổi */}
                   <div className="space-y-2">
-                    <label htmlFor="tuoi" className="text-gray-900 font-medium flex items-center">
+                    <label htmlFor="tuoi" className="text-[var(--clay-text)] font-medium flex items-center">
                       Tuổi của bạn <span className="text-[#F44336] ml-1">*</span>
                     </label>
                     <input
@@ -351,9 +351,9 @@ export default function LienHePage() {
                           message: 'Bạn phải nhiều nhất 120 tuổi',
                         },
                       })}
-                      className={`w-full bg-gray-50 border ${
-                        errors.tuoi ? 'border-[#F44336]' : 'border-gray-200'
-                      } rounded-lg p-3 text-gray-900 placeholder-gray-400 focus:border-[#0288D1] focus:ring-1 focus:ring-[#0288D1] transition-all duration-300`}
+                      className={`w-full bg-[var(--clay-surface-soft)] border ${
+                        errors.tuoi ? 'border-[#F44336]' : 'border-[var(--clay-border)]'
+                      } rounded-lg p-3 text-[var(--clay-text)] placeholder-gray-400 focus:border-[var(--clay-primary)] focus:ring-1 focus:ring-[var(--clay-primary)] transition-all duration-300`}
                     />
                     {errors.tuoi && (
                       <p className="text-[#F44336] text-sm mt-1">{errors.tuoi.message}</p>
@@ -363,7 +363,7 @@ export default function LienHePage() {
 
                 {/* Email */}
                 <div className="space-y-2">
-                  <label htmlFor="email" className="text-gray-900 font-medium flex items-center">
+                  <label htmlFor="email" className="text-[var(--clay-text)] font-medium flex items-center">
                     Địa chỉ email <span className="text-[#F44336] ml-1">*</span>
                   </label>
                   <input
@@ -377,9 +377,9 @@ export default function LienHePage() {
                         message: 'Giá trị nhập vào không khớp với định dạng email',
                       },
                     })}
-                    className={`w-full bg-gray-50 border ${
-                      errors.email ? 'border-[#F44336]' : 'border-gray-200'
-                    } rounded-lg p-3 text-gray-900 placeholder-gray-400 focus:border-[#0288D1] focus:ring-1 focus:ring-[#0288D1] transition-all duration-300`}
+                    className={`w-full bg-[var(--clay-surface-soft)] border ${
+                      errors.email ? 'border-[#F44336]' : 'border-[var(--clay-border)]'
+                    } rounded-lg p-3 text-[var(--clay-text)] placeholder-gray-400 focus:border-[var(--clay-primary)] focus:ring-1 focus:ring-[var(--clay-primary)] transition-all duration-300`}
                   />
                   {errors.email && (
                     <p className="text-[#F44336] text-sm mt-1">{errors.email.message}</p>
@@ -388,7 +388,7 @@ export default function LienHePage() {
 
                 {/* Lý do */}
                 <div className="space-y-2">
-                  <label htmlFor="lyDo" className="text-gray-900 font-medium flex items-center">
+                  <label htmlFor="lyDo" className="text-[var(--clay-text)] font-medium flex items-center">
                     Lý do liên hệ <span className="text-[#F44336] ml-1">*</span>
                   </label>
                   <select
@@ -396,9 +396,9 @@ export default function LienHePage() {
                     {...register('lyDo', {
                       required: 'Bạn phải chọn một lý do',
                     })}
-                    className={`w-full bg-gray-50 border ${
-                      errors.lyDo ? 'border-[#F44336]' : 'border-gray-200'
-                    } rounded-lg p-3 text-gray-900 focus:border-[#0288D1] focus:ring-1 focus:ring-[#0288D1] transition-all duration-300`}
+                    className={`w-full bg-[var(--clay-surface-soft)] border ${
+                      errors.lyDo ? 'border-[#F44336]' : 'border-[var(--clay-border)]'
+                    } rounded-lg p-3 text-[var(--clay-text)] focus:border-[var(--clay-primary)] focus:ring-1 focus:ring-[var(--clay-primary)] transition-all duration-300`}
                   >
                     <option value="" hidden>
                       Chọn lý do liên hệ
@@ -415,7 +415,7 @@ export default function LienHePage() {
 
                 {/* Ghi chú */}
                 <div className="space-y-2">
-                  <label htmlFor="ghiChu" className="text-gray-900 font-medium">
+                  <label htmlFor="ghiChu" className="text-[var(--clay-text)] font-medium">
                     Nội dung tin nhắn
                   </label>
                   <textarea
@@ -423,7 +423,7 @@ export default function LienHePage() {
                     rows={5}
                     placeholder="Nhập nội dung tin nhắn của bạn..."
                     {...register('ghiChu')}
-                    className="w-full bg-gray-50 border border-gray-200 rounded-lg p-3 text-gray-900 placeholder-gray-400 focus:border-[#0288D1] focus:ring-1 focus:ring-[#0288D1] transition-all duration-300"
+                    className="w-full bg-[var(--clay-surface-soft)] border border-[var(--clay-border)] rounded-lg p-3 text-[var(--clay-text)] placeholder-gray-400 focus:border-[var(--clay-primary)] focus:ring-1 focus:ring-[var(--clay-primary)] transition-all duration-300"
                   />
                 </div>
 
@@ -432,7 +432,7 @@ export default function LienHePage() {
                   <button
                     type="submit"
                     disabled={loading}
-                    className={`flex items-center justify-center w-full md:w-auto px-8 py-3 bg-gradient-to-r from-[#0288D1] to-[#6A1B9A] text-white font-medium rounded-lg shadow-lg transition-all duration-300 transform ${
+                    className={`flex items-center justify-center w-full md:w-auto px-8 py-3 bg-gradient-to-r from-[var(--clay-primary)] to-[var(--clay-primary-dark)] text-white font-medium rounded-lg shadow-lg transition-all duration-300 transform ${
                       loading
                         ? 'opacity-70 cursor-not-allowed'
                         : 'hover:shadow-xl hover:scale-[1.02]'
@@ -477,30 +477,30 @@ export default function LienHePage() {
       </main>
 
       {/* Footer */}
-      <footer className="bg-white border-t border-gray-200 py-10 text-center mt-16 relative z-1">
+      <footer className="bg-white border-t border-[var(--clay-border)] py-10 text-center mt-16 relative z-1">
         <div className="max-w-3xl mx-auto px-4">
-          <h3 className="text-gray-900 font-bold text-lg mb-4">Blockchain Holihu</h3>
+          <h3 className="text-[var(--clay-text)] font-bold text-lg mb-4">Blockchain Holihu</h3>
           <div className="flex justify-center space-x-6 mb-6">
             <a
               href="#"
-              className="text-[#0288D1] hover:text-[#6A1B9A] transition-all duration-300 transform hover:scale-125"
+              className="text-[var(--clay-primary)] hover:text-[var(--clay-primary-dark)] transition-all duration-300 transform hover:scale-125"
             >
               <Twitter className="w-6 h-6" />
             </a>
             <a
               href="#"
-              className="text-[#0288D1] hover:text-[#6A1B9A] transition-all duration-300 transform hover:scale-125"
+              className="text-[var(--clay-primary)] hover:text-[var(--clay-primary-dark)] transition-all duration-300 transform hover:scale-125"
             >
               <Github className="w-6 h-6" />
             </a>
             <a
               href="#"
-              className="text-[#0288D1] hover:text-[#6A1B9A] transition-all duration-300 transform hover:scale-125"
+              className="text-[var(--clay-primary)] hover:text-[var(--clay-primary-dark)] transition-all duration-300 transform hover:scale-125"
             >
               <Linkedin className="w-6 h-6" />
             </a>
           </div>
-          <p className="text-gray-600 text-sm">Powered by Web3 Technology</p>
+          <p className="text-[var(--clay-muted)] text-sm">Powered by Web3 Technology</p>
         </div>
       </footer>
     </div>

@@ -6,7 +6,7 @@ Nguồn: `AUDIT_2026-05-18.md`. Quy trình: Spec-Kit (`.specify/`). Mỗi đợt
 |---|---|---|---|---|
 | **1 — Bảo mật khẩn (Critical)** | `.specify/specs/001-security-remediation-critical/` | S1 S2 S3 S4 S5 | ✅ Scaffolded (spec+plan+tasks), chờ team duyệt → `/speckit-implement` | Chặn lộ key / forge phiếu / forge JWT |
 | **2 — Bảo mật cao (High)** | `002-security-remediation-high` *(chưa tạo)* | S6 S7 S8 S9 S10 S13 | ⏳ Chờ scope | Brute-force OTP, định danh yếu, XSS, finalize không quorum, CORS, bind authz |
-| **3 — Dọn legacy** | `003-legacy-cleanup` *(chưa tạo)* | S11 + xóa `src/test/**`, `ContractABIs.tsx`, `utils/blockchain.ts`, `ThamGiaBauCuPage`, deps chết; tắt `LegacyBlockchainSettings.Enabled` | ⏳ Chờ scope | Giảm bề mặt tấn công & bundle, hết cần `--legacy-peer-deps` |
+| **3 - Don legacy** | `.specify/specs/003-legacy-cleanup/` | S11 + removed frontend/backend AA/private-chain legacy, dead deps, and `LegacyBlockchainSettings` | Completed/follow-up 2026-05-20 | Reduce attack surface and bundle |
 | **4 — Hạ tầng** | `004-infra-hardening` *(chưa tạo)* | S15 S16 S17 S19 S20 + healthcheck, Anvil profile, .env template | ⏳ Chờ scope | One-command bring-up, CI tin cậy |
 | **5 — Migration** | `005-data-migration` *(chưa tạo)* | S12 + MinIO/IObjectStorage + EF migrations ElectionV1Store | ⏳ Chờ scope | Cloud-agnostic theo roadmap |
 
