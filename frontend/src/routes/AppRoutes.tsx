@@ -1,6 +1,7 @@
 import type React from 'react';
-import { createBrowserRouter, Navigate, RouterProvider, useParams } from 'react-router-dom';
+import { createBrowserRouter, Navigate, RouterProvider, useLocation, useParams } from 'react-router-dom';
 import { lazy, Suspense } from 'react';
+import { useSelector } from 'react-redux';
 
 // Đợt 14: redirect giữ params cho luồng forgot-password (legacy VN → EN canonical).
 const ForgotOptionsRedirect = () => {
@@ -19,6 +20,18 @@ const RulesRedirect = () => {
   const { id } = useParams<{ id: string }>();
   return <Navigate to={`/app/elections/${id}/rules`} replace />;
 };
+const VoterVerificationPublicEntry = () => {
+  const location = useLocation();
+  const hasSession = useSelector((state: RootState) =>
+    Boolean(state.dangNhapTaiKhoan.accessToken || state.dangNhapTaiKhoan.taiKhoan),
+  );
+
+  if (hasSession) {
+    return <Navigate to={`/app/verify-voter${location.search}`} replace />;
+  }
+
+  return <VoterVerificationPage />;
+};
 import { GoogleReCaptchaProvider } from 'react-google-recaptcha-v3';
 
 // Đợt 13 (hiệu năng): route-level code-splitting. Shell/ErrorPage/HOC/provider
@@ -34,6 +47,7 @@ import { ThemeProvider } from '../context/ThemeContext';
 import { ToastProvider } from '../components/ui/Use-toast';
 import { ReCaptchaProvider } from '../components/ui/Use-recaptcha';
 import { isRecaptchaEnabled } from '../config/runtimeFlags';
+import type { RootState } from '../store/store';
 
 const CacPhienBauCuPage = lazy(() => import('../pages/CacCuocBauCuPage'));
 const LoginPage = lazy(() => import('../pages/LoginPage'));
@@ -76,10 +90,17 @@ const AppWithProviders = ({
 }: {
   children: React.ReactNode;
   useRecaptcha?: boolean;
-}) => (
-  <ThemeProvider>
-    <ToastProvider>
-      {useRecaptcha && isRecaptchaEnabled ? (
+}) => {
+  const content = (
+    <Web3Provider>
+      <Suspense fallback={<RouteFallback />}>{children}</Suspense>
+    </Web3Provider>
+  );
+
+  return (
+    <ThemeProvider>
+      <ToastProvider>
+        {useRecaptcha && isRecaptchaEnabled ? (
         <GoogleReCaptchaProvider
           reCaptchaKey={import.meta.env.VITE_RECAPTCHA_SITE_KEY ?? ''}
           scriptProps={{
@@ -95,17 +116,16 @@ const AppWithProviders = ({
           }}
         >
           <ReCaptchaProvider>
-            <Web3Provider>
-              <Suspense fallback={<RouteFallback />}>{children}</Suspense>
-            </Web3Provider>
+            {content}
           </ReCaptchaProvider>
         </GoogleReCaptchaProvider>
       ) : (
-        <Web3Provider>{children}</Web3Provider>
-      )}
-    </ToastProvider>
-  </ThemeProvider>
-);
+          content
+        )}
+      </ToastProvider>
+    </ThemeProvider>
+  );
+};
 
 const router = createBrowserRouter([
   {
@@ -137,6 +157,10 @@ const router = createBrowserRouter([
       {
         path: 'elections',
         element: <CacPhienBauCuPage />,
+      },
+      {
+        path: 'verify-voter',
+        element: <VoterVerificationPublicEntry />,
       },
       // === Forgot password flow (canonical EN, Đợt 14) ===
       {
@@ -183,20 +207,6 @@ const router = createBrowserRouter([
         ),
       },
     ],
-  },
-  // Thêm route mới cho trang xác thực cử tri
-  {
-    path: 'verify-voter',
-    element: (
-      <AppWithProviders>
-        <VoterVerificationPage />
-      </AppWithProviders>
-    ),
-    errorElement: (
-      <AppWithProviders>
-        <ErrorPage />
-      </AppWithProviders>
-    ),
   },
   {
     path: 'login',
@@ -427,6 +437,10 @@ const router = createBrowserRouter([
         element: <QuetMaQRPage />,
       },
       { path: 'quet-ma-qr', element: <Navigate to="/app/scan" replace /> },
+      {
+        path: 'verify-voter',
+        element: <VoterVerificationPage />,
+      },
       {
         path: 'elections',
         element: <UserElectionsPage />,

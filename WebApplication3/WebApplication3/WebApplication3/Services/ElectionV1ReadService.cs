@@ -41,6 +41,7 @@ public sealed class ElectionV1ReadService
     private readonly ILogger<ElectionV1ReadService> _logger;
     private readonly string _deploymentsDirectory;
     private readonly string _factoryLatestPath;
+    private readonly string? _configuredFactoryAddress;
     private readonly string _rpcUrl;
     private readonly string _explorerBaseUrl;
     private readonly int _chainId;
@@ -64,6 +65,9 @@ public sealed class ElectionV1ReadService
             "deployments",
             "sepolia",
             "factory-latest.json");
+        _configuredFactoryAddress =
+            configuration["ElectionV1Settings:FactoryAddress"] ??
+            configuration["FACTORY_ADDRESS"];
         _rpcUrl = configuration["ElectionV1Settings:RpcUrl"] ?? "https://ethereum-sepolia-rpc.publicnode.com";
         _explorerBaseUrl = configuration["ElectionV1Settings:ExplorerBaseUrl"] ?? "https://sepolia.etherscan.io";
         _chainId = int.TryParse(configuration["ElectionV1Settings:ChainId"], out var parsedChainId)
@@ -212,19 +216,35 @@ public sealed class ElectionV1ReadService
     {
         if (!File.Exists(_factoryLatestPath))
         {
-            return null;
+            return NormalizeConfiguredFactoryAddress();
         }
 
         try
         {
             var raw = JsonConvert.DeserializeObject<ElectionV1FactoryRecord>(File.ReadAllText(_factoryLatestPath));
-            return raw?.Address is null ? null : NormalizeAddress(raw.Address);
+            return raw?.Address is null ? NormalizeConfiguredFactoryAddress() : NormalizeAddress(raw.Address);
         }
         catch (Exception ex)
         {
             _logger.LogWarning(ex, "Khong the doc factory latest record tu {FactoryLatestPath}", _factoryLatestPath);
+            return NormalizeConfiguredFactoryAddress();
+        }
+    }
+
+    private string? NormalizeConfiguredFactoryAddress()
+    {
+        if (string.IsNullOrWhiteSpace(_configuredFactoryAddress))
+        {
             return null;
         }
+
+        if (!AddressUtil.Current.IsValidEthereumAddressHexFormat(_configuredFactoryAddress))
+        {
+            _logger.LogWarning("ElectionV1 factory address tu cau hinh khong hop le.");
+            return null;
+        }
+
+        return AddressUtil.Current.ConvertToChecksumAddress(_configuredFactoryAddress);
     }
 
     private ElectionV1NormalizedRecord? ResolveRecord(string identifier)

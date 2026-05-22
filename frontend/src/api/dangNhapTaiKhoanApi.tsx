@@ -3,6 +3,14 @@ import type { TaiKhoan, PhienDangNhap } from '../store/types';
 
 const API_URL = '/api/tai-khoan';
 
+export interface MetaMaskLoginChallenge {
+  success: boolean;
+  diaChiVi: string;
+  nonce: string;
+  message: string;
+  expiresAtUtc: string;
+}
+
 export const dangNhap = async (
   tenDangNhap: string,
   matKhau: string,
@@ -28,6 +36,16 @@ export const dangNhapBangMetaMask = async (
     nonce,
     signature,
     recaptchaToken,
+  });
+
+  return response.data;
+};
+
+export const layMetaMaskLoginChallenge = async (
+  diaChiVi: string,
+): Promise<MetaMaskLoginChallenge> => {
+  const response = await publicApiClient.post(`${API_URL}/login-metamask/nonce`, {
+    diaChiVi,
   });
 
   return response.data;

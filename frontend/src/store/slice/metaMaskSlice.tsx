@@ -42,7 +42,7 @@ export const loginWithMetaMask = createAsyncThunk(
       }
 
       // Lấy phiên đăng nhập mới nhất
-      const latestSession = await getLatestSession(data.user.id.toString());
+      const latestSession = await getLatestSession(data.user.id.toString(), data.accessToken);
 
       // Đồng bộ dữ liệu với dangNhapTaiKhoanSlice
       dispatch(

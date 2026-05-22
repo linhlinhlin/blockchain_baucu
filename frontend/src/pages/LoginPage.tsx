@@ -15,18 +15,19 @@ import {
   KeyRound,
   Loader2,
   LockKeyhole,
-  ShieldCheck,
   UserRound,
   WalletCards,
 } from 'lucide-react';
 import type { AppDispatch, RootState } from '../store/store';
 import { login, loginWithMetaMask, refreshJwtToken } from '../store/slice/dangNhapTaiKhoanSlice';
 import { fetchLatestSession } from '../store/slice/phienDangNhapSlice';
+import { layMetaMaskLoginChallenge } from '../api/dangNhapTaiKhoanApi';
 import { useWeb3 } from '../context/Web3Context';
 import { useToast } from '../components/ui/Use-toast';
 import { useGoogleReCaptcha } from 'react-google-recaptcha-v3';
 import { isRecaptchaEnabled } from '../config/runtimeFlags';
 import { clearAllAccessCache, resetSecurityState } from '../utils/authUtils';
+import { normalizeLoginRedirect } from '../utils/loginRedirect';
 import SEO from '../components/SEO';
 
 declare global {
@@ -37,12 +38,6 @@ declare global {
 
 type LoginMode = 'credentials' | 'metamask';
 type MetaMaskPhase = 'idle' | 'connecting' | 'signing' | 'submitting';
-
-const trustNotes = [
-  'Phiên đăng nhập dùng cookie refresh token, không lưu access token lâu dài.',
-  'MetaMask chỉ được yêu cầu khi người dùng chủ động chọn đăng nhập bằng ví.',
-  'Các thao tác on-chain được tách riêng để tránh ký nhầm giao dịch.',
-];
 
 const metaMaskSteps = [
   {
@@ -98,7 +93,7 @@ export default function LoginPage() {
 
   const redirectAfterLogin = useCallback(() => {
     const redirectTo = searchParams.get('redirectTo');
-    navigate(redirectTo ? decodeURIComponent(redirectTo) : '/app');
+    navigate(normalizeLoginRedirect(redirectTo));
   }, [navigate, searchParams]);
 
   const getRecaptchaToken = useCallback(async () => {
@@ -282,11 +277,14 @@ export default function LoginPage() {
         duration: 10000,
       });
 
-      const authNonce = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
-      const nonce = `HoLiHu BlockVote Login\nAddress: ${walletAddress}\nNonce: ${authNonce}`;
+      const challenge = await layMetaMaskLoginChallenge(walletAddress);
+      if (!challenge.message || !challenge.diaChiVi) {
+        throw new Error('Không thể tạo phiên xác minh MetaMask. Vui lòng thử lại.');
+      }
+
       const signature = await window.ethereum.request({
         method: 'personal_sign',
-        params: [nonce, walletAddress],
+        params: [challenge.message, walletAddress],
       });
 
       if (typeof signature !== 'string' || !signature) {
@@ -296,8 +294,8 @@ export default function LoginPage() {
       setMetaMaskPhase('submitting');
       const result = await dispatch(
         loginWithMetaMask({
-          diaChiVi: walletAddress,
-          nonce,
+          diaChiVi: challenge.diaChiVi,
+          nonce: challenge.message,
           signature,
           recaptchaToken: token ?? '',
         }),
@@ -357,7 +355,7 @@ export default function LoginPage() {
       : 'Cần cài MetaMask';
 
   return (
-    <div className="min-h-screen bg-[var(--clay-bg)] px-4 py-10 text-[var(--clay-text)] sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-[var(--clay-bg)] px-4 py-4 text-[var(--clay-text)] sm:px-6 sm:py-6 lg:flex lg:items-center lg:justify-center lg:px-8">
       <SEO
         title="Đăng Nhập | HoLiHu BlockVote"
         description="Đăng nhập vào HoLiHu BlockVote bằng tài khoản hoặc MetaMask."
@@ -366,53 +364,24 @@ export default function LoginPage() {
         url={window.location.href}
       />
 
-      <div className="mx-auto grid max-w-6xl overflow-hidden rounded-[18px] border border-[var(--clay-border)] bg-white lg:grid-cols-[0.9fr_1.1fr]">
-        <aside className="relative hidden min-h-[680px] overflow-hidden bg-[var(--surface-black)] p-8 text-white lg:flex lg:flex-col lg:justify-between">
-          <div className="relative z-10">
-            <div className="inline-flex items-center gap-2 rounded-full border border-white/20 px-3 py-1 text-xs font-bold uppercase tracking-[0.16em] text-white/70">
-              <ShieldCheck className="h-3.5 w-3.5" aria-hidden="true" />
-              Secure Access
-            </div>
-            <h1 className="clay-display mt-6 text-balance text-5xl font-bold leading-[0.96]">
-              Vào hệ thống bằng cách ít gây rối nhất.
-            </h1>
-            <p className="mt-5 text-pretty text-sm leading-7 text-white/70">
-              Tài khoản dùng cho quản trị và nghiệp vụ. MetaMask dùng khi bạn muốn xác minh ví hoặc
-              thao tác on-chain. Hai luồng được tách rõ để tránh ký nhầm.
-            </p>
-          </div>
-
-          <div className="relative z-10 grid gap-3">
-            {trustNotes.map((note) => (
-              <div key={note} className="flex items-start gap-3 rounded-[18px] border border-white/10 bg-white/[0.04] p-4">
-                <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[var(--state-success)]" />
-                <p className="text-sm leading-6 text-white/70">{note}</p>
-              </div>
-            ))}
-          </div>
-        </aside>
-
-        <main className="p-5 sm:p-8 lg:p-10">
+      <div className="mx-auto w-full max-w-2xl overflow-hidden rounded-[18px] border border-[var(--clay-border)] bg-white">
+        <main className="p-4 sm:p-6">
           <div className="mx-auto max-w-xl">
-            <div className="mb-8">
-              <Link to="/" className="clay-link">
+            <div className="mb-5">
+              <Link to="/" className="clay-link text-sm">
                 Về trang giới thiệu
               </Link>
-              <h2 className="clay-display mt-5 text-4xl font-bold leading-tight md:text-5xl">
+              <h2 className="mt-3 text-3xl font-bold leading-tight md:text-4xl">
                 Đăng nhập
               </h2>
-              <p className="mt-3 text-sm leading-6 text-[var(--clay-muted)]">
-                Chọn đúng cách vào hệ thống. Nếu chỉ quản lý dữ liệu, dùng tài khoản. Nếu cần xác
-                minh ví, dùng MetaMask.
-              </p>
             </div>
 
-            <div className="mb-6 grid rounded-[22px] border border-[var(--clay-border)] bg-[var(--clay-surface-soft)] p-1 sm:grid-cols-2">
+            <div className="mb-4 grid rounded-[16px] border border-[var(--clay-border)] bg-[var(--clay-surface-soft)] p-1 sm:grid-cols-2">
               <button
                 type="button"
                 onClick={() => setMode('credentials')}
                 aria-pressed={mode === 'credentials'}
-                className={`inline-flex min-h-12 items-center justify-center gap-2 rounded-[18px] px-4 py-3 text-sm font-semibold transition-colors duration-150 ${
+                className={`inline-flex min-h-11 items-center justify-center gap-2 rounded-[12px] px-4 py-2.5 text-sm font-semibold transition-colors duration-150 ${
                   mode === 'credentials'
                     ? 'bg-white text-black'
                     : 'text-[var(--clay-muted)] hover:text-black'
@@ -425,7 +394,7 @@ export default function LoginPage() {
                 type="button"
                 onClick={() => setMode('metamask')}
                 aria-pressed={mode === 'metamask'}
-                className={`inline-flex min-h-12 items-center justify-center gap-2 rounded-[18px] px-4 py-3 text-sm font-semibold transition-colors duration-150 ${
+                className={`inline-flex min-h-11 items-center justify-center gap-2 rounded-[12px] px-4 py-2.5 text-sm font-semibold transition-colors duration-150 ${
                   mode === 'metamask'
                     ? 'bg-white text-black'
                     : 'text-[var(--clay-muted)] hover:text-black'
@@ -445,10 +414,10 @@ export default function LoginPage() {
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -8 }}
                   transition={{ duration: 0.18 }}
-                  className="space-y-5"
+                  className="space-y-4"
                 >
                   <div>
-                    <label htmlFor="username" className="mb-2 block text-sm font-semibold text-black">
+                    <label htmlFor="username" className="mb-1.5 block text-sm font-semibold text-black">
                       Tên đăng nhập
                     </label>
                     <div className="relative">
@@ -464,14 +433,14 @@ export default function LoginPage() {
                         value={username}
                         onChange={(event) => setUsername(event.target.value)}
                         aria-invalid={!!error && !username.trim()}
-                        className="clay-input min-h-12 pl-11 pr-4 text-sm"
+                        className="clay-input min-h-11 pl-11 pr-4 text-sm"
                         placeholder="Ví dụ: nguyenvana…"
                       />
                     </div>
                   </div>
 
                   <div>
-                    <label htmlFor="password" className="mb-2 block text-sm font-semibold text-black">
+                    <label htmlFor="password" className="mb-1.5 block text-sm font-semibold text-black">
                       Mật khẩu
                     </label>
                     <div className="relative">
@@ -486,7 +455,7 @@ export default function LoginPage() {
                         value={password}
                         onChange={(event) => setPassword(event.target.value)}
                         aria-invalid={!!error && !!username.trim() && !password}
-                        className="clay-input min-h-12 pl-11 pr-12 text-sm"
+                        className="clay-input min-h-11 pl-11 pr-12 text-sm"
                         placeholder="Nhập mật khẩu…"
                       />
                       <button
@@ -500,7 +469,7 @@ export default function LoginPage() {
                     </div>
                   </div>
 
-                  <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                  <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                     <label className="inline-flex cursor-pointer items-center gap-3 text-sm text-[var(--clay-muted)]">
                       <input
                         id="remember-me"
@@ -522,7 +491,7 @@ export default function LoginPage() {
                   <button
                     type="submit"
                     disabled={isBusy}
-                    className="clay-button clay-button--blueberry inline-flex min-h-12 w-full items-center justify-center gap-2 px-5 py-3 text-sm font-semibold"
+                    className="clay-button clay-button--blueberry inline-flex min-h-11 w-full items-center justify-center gap-2 px-5 py-2.5 text-sm font-semibold"
                   >
                     {isBusy ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> : null}
                     {isBusy ? 'Đang kiểm tra phiên…' : 'Đăng nhập vào bảng điều khiển'}
@@ -535,25 +504,25 @@ export default function LoginPage() {
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -8 }}
                   transition={{ duration: 0.18 }}
-                  className="space-y-5"
+                  className="space-y-4"
                 >
-                  <div className="rounded-[24px] border border-[var(--clay-border)] bg-[var(--clay-surface-soft)] p-5">
-                    <div className="flex items-start gap-4">
-                      <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-[var(--clay-primary-light)] text-[var(--clay-primary)]">
+                  <div className="rounded-[18px] border border-[var(--clay-border)] bg-[var(--clay-surface-soft)] p-4">
+                    <div className="flex items-start gap-3">
+                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[var(--clay-primary-light)] text-[var(--clay-primary)]">
                         <WalletCards className="h-5 w-5" />
                       </div>
                       <div>
-                        <h3 className="text-xl font-extrabold tracking-[-0.035em] text-black">
+                        <h3 className="text-lg font-extrabold text-black">
                           Đăng nhập bằng ví
                         </h3>
-                        <p className="mt-2 text-sm leading-6 text-[var(--clay-muted)]">
+                        <p className="mt-1 text-sm leading-5 text-[var(--clay-muted)]">
                           Bạn sẽ ký một thông điệp xác minh. Không có giao dịch và không tốn gas ở
                           bước đăng nhập.
                         </p>
                       </div>
                     </div>
 
-                    <div className="mt-5 rounded-[18px] border border-[var(--clay-border)] bg-white p-4">
+                    <div className="mt-4 rounded-[14px] border border-[var(--clay-border)] bg-white p-3">
                       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                         <div>
                           <p className="text-xs font-semibold uppercase tracking-[0.12em] text-[var(--clay-muted)]">
@@ -585,7 +554,7 @@ export default function LoginPage() {
                       onClick={handleMetaMaskLogin}
                       disabled={isMetaMaskActionPending}
                       aria-busy={isMetaMaskActionPending}
-                      className="metamask-login-action mt-5 inline-flex min-h-12 w-full items-center justify-center gap-2 px-5 py-3 text-sm font-semibold"
+                      className="metamask-login-action mt-4 inline-flex min-h-11 w-full items-center justify-center gap-2 px-5 py-2.5 text-sm font-semibold"
                     >
                       {isMetaMaskActionPending ? (
                         <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
@@ -595,22 +564,18 @@ export default function LoginPage() {
                       {metaMaskActionLabel}
                     </button>
 
-                    <p className="mt-3 text-center text-xs leading-5 text-[var(--clay-muted)]">
-                      Ký xong hệ thống sẽ xác minh ví, tạo phiên đăng nhập và chuyển vào bảng điều khiển.
-                    </p>
-
-                    <ol className="mt-5 grid gap-2">
+                    <ol className="mt-4 grid gap-2 sm:grid-cols-2">
                       {metaMaskSteps.map((step, index) => (
                         <li
                           key={step.title}
-                          className="flex gap-3 rounded-[18px] border border-[var(--clay-border)] bg-white px-4 py-3"
+                          className="flex gap-3 rounded-[14px] border border-[var(--clay-border)] bg-white px-3 py-2"
                         >
                           <span className="clay-mono mt-0.5 inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[var(--clay-primary-light)] text-xs font-bold text-[var(--clay-primary)]">
                             {index + 1}
                           </span>
                           <span>
                             <span className="block text-sm font-semibold text-black">{step.title}</span>
-                            <span className="mt-1 block text-sm leading-6 text-[var(--clay-muted)]">
+                            <span className="mt-0.5 block text-xs leading-5 text-[var(--clay-muted)]">
                               {step.description}
                             </span>
                           </span>
@@ -622,14 +587,11 @@ export default function LoginPage() {
               )}
             </AnimatePresence>
 
-            <div className="mt-8 rounded-[24px] border border-[var(--clay-border)] bg-[var(--clay-surface-soft)] p-5">
+            <div className="mt-5 flex flex-col gap-2 rounded-[16px] border border-[var(--clay-border)] bg-[var(--clay-surface-soft)] px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
               <p className="text-sm font-semibold text-black">Chưa có tài khoản?</p>
-              <p className="mt-1 text-sm leading-6 text-[var(--clay-muted)]">
-                Tạo tài khoản nếu bạn muốn dùng tên đăng nhập và mật khẩu cho nghiệp vụ quản trị.
-              </p>
               <Link
                 to="/register"
-                className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-[var(--clay-blueberry)] hover:underline"
+                className="inline-flex items-center gap-2 text-sm font-semibold text-[var(--clay-blueberry)] hover:underline"
               >
                 Tạo tài khoản
                 <ArrowRight className="h-4 w-4" aria-hidden="true" />

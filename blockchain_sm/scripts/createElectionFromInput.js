@@ -7,7 +7,8 @@ const { getOptionalEnv } = require("./lib/env");
 const { loadLatestDeployment, saveDeployment } = require("./lib/deployments");
 const { ensureDir, readJson, resolveFromCwd, writeJson } = require("./lib/io");
 
-dotenv.config();
+dotenv.config({ path: path.resolve(process.cwd(), "..", ".env") });
+dotenv.config({ override: true });
 
 function requireEnv(name) {
   const value = getOptionalEnv(name);
@@ -99,7 +100,7 @@ async function main() {
   const writtenArtifacts = writeElectionPackageArtifacts(outputDir, electionPackage, requestPayload);
 
   const artifact = JSON.parse(fs.readFileSync(resolveFromCwd(artifactPath), "utf8"));
-  const rpcUrl = requireEnv("SEPOLIA_RPC_URL");
+  const rpcUrl = getOptionalEnv("SEPOLIA_RPC_URL") ?? "https://ethereum-sepolia-rpc.publicnode.com";
   const provider = new ethers.JsonRpcProvider(rpcUrl, 11155111);
   const wallet = new ethers.Wallet(getPrivateKey(), provider);
   const factory = new ethers.Contract(factoryAddress, artifact.abi, wallet);

@@ -1,19 +1,17 @@
 const { ethers } = require("ethers");
 const dotenv = require("dotenv");
+const path = require("node:path");
 const { fileExists, resolveFromCwd } = require("./lib/io");
 
-dotenv.config();
+dotenv.config({ path: path.resolve(process.cwd(), "..", ".env") });
+dotenv.config({ override: true });
 
 async function main() {
-  const rpcUrl = process.env.SEPOLIA_RPC_URL;
+  const rpcUrl = process.env.SEPOLIA_RPC_URL || "https://ethereum-sepolia-rpc.publicnode.com";
   const privateKeys = (process.env.SEPOLIA_PRIVATE_KEYS ?? "")
     .split(",")
     .map((value) => value.trim())
     .filter(Boolean);
-
-  if (!rpcUrl) {
-    throw new Error("SEPOLIA_RPC_URL is missing. Create .env from .env.example first.");
-  }
 
   if (privateKeys.length === 0) {
     throw new Error("SEPOLIA_PRIVATE_KEYS is missing. Add at least one funded Sepolia private key.");

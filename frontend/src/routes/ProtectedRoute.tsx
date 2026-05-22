@@ -15,6 +15,7 @@ import {
   hasUserChanged,
   getCurrentUserId,
 } from '../utils/authUtils';
+import { buildLoginRedirectPath } from '../utils/loginRedirect';
 
 type ProtectedRouteProps = {
   children: React.ReactNode;
@@ -98,6 +99,11 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
 
   // Tạo key duy nhất cho route hiện tại
   const routeKey = location.pathname;
+  const loginRedirectPath = buildLoginRedirectPath(
+    location.pathname,
+    location.search,
+    location.hash,
+  );
 
   // Kiểm tra đăng xuất
   useEffect(() => {
@@ -120,13 +126,13 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
           const result = await dispatch(refreshJwtToken());
           if (!refreshJwtToken.fulfilled.match(result)) {
             redirectingRef.current = true;
-            navigate('/login');
+            navigate(loginRedirectPath, { replace: true });
             return;
           }
         } catch (err) {
           console.error('Auto login failed:', err);
           redirectingRef.current = true;
-          navigate('/login');
+          navigate(loginRedirectPath, { replace: true });
           return;
         }
       }
@@ -298,7 +304,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
 
   // Kiểm tra đăng nhập
   if (!accessToken || !user) {
-    return <Navigate to="/login" />;
+    return <Navigate to={loginRedirectPath} replace />;
   }
 
   // Kiểm tra vai trò

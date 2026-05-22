@@ -16,6 +16,7 @@
     "validate": "npm run test && npm run test:foundry && npm run analyze:slither",
     "check:sepolia": "node ./scripts/checkSepoliaReadiness.js",
     "build:election": "node ./scripts/buildElectionPackage.js",
+    "setup:factory": "node ./scripts/setupSepoliaFactory.js",
     "create:election:input": "node ./scripts/createElectionFromInput.js",
     "generate:quick-election": "node ./scripts/generateQuickElectionInput.js",
     "generate:metamask-election": "node ./scripts/generateMetaMaskElectionInput.js",

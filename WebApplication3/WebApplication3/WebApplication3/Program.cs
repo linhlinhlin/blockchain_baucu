@@ -111,6 +111,8 @@ builder.Services.AddSingleton<ElectionV1ReadService>();
 builder.Services.AddScoped<ElectionV1CreateService>();
 builder.Services.AddScoped<ElectionV1RosterService>();
 builder.Services.AddScoped<DevelopmentAuthStore>();
+builder.Services.AddDistributedMemoryCache();
+builder.Services.AddSingleton<WalletLoginChallengeService>();
 builder.Services.AddWalletLookupServices();
 
 builder.Services.AddScoped<PinataService>();

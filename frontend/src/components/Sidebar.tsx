@@ -112,7 +112,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isSidebarOpen, toggleSidebar }) => {
       {
         title: 'Cử tri',
         items: [
-          { to: '/verify-voter', label: 'Xác minh cử tri', icon: <UserCheck className="h-[18px] w-[18px]" /> },
+          { to: '/app/verify-voter', label: 'Xác minh cử tri', icon: <UserCheck className="h-[18px] w-[18px]" /> },
           { to: '/app/scan', label: 'Quét mã QR', icon: <QrCode className="h-[18px] w-[18px]" /> },
         ],
       },
