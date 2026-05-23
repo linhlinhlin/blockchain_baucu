@@ -259,11 +259,8 @@ export default function LoginPage() {
       }
 
       clearAllAccessCache();
-      let walletAddress = currentAccount;
-      if (!walletAddress) {
-        setMetaMaskPhase('connecting');
-        walletAddress = await connectWallet();
-      }
+      setMetaMaskPhase('connecting');
+      const walletAddress = await connectWallet({ forceSelection: true });
 
       if (!walletAddress) {
         setError('Không thể kết nối MetaMask. Vui lòng kiểm tra ví và thử lại.');
@@ -346,10 +343,10 @@ export default function LoginPage() {
         : isMetaMaskSubmitting
           ? 'Đang xác minh chữ ký…'
           : currentAccount
-            ? 'Ký để đăng nhập bằng MetaMask'
+            ? 'Chọn ví và ký bằng MetaMask'
             : 'Kết nối MetaMask để tiếp tục';
   const metaMaskStatusLabel = currentAccount
-    ? 'Ví đã kết nối'
+    ? 'Ví đang cấp quyền cho trang này'
     : isMetaMaskInstalled
       ? 'Chưa kết nối ví'
       : 'Cần cài MetaMask';
@@ -540,7 +537,7 @@ export default function LoginPage() {
                         {currentAccount ? (
                           <span className="inline-flex w-fit items-center gap-2 rounded-full bg-[var(--clay-primary-light)] px-3 py-1 text-xs font-semibold text-[var(--clay-primary)]">
                             <CheckCircle2 className="h-3.5 w-3.5" aria-hidden="true" />
-                            Sẵn sàng ký
+                            Có thể đổi khi ký
                           </span>
                         ) : null}
                       </div>
