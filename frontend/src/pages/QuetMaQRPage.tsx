@@ -6,7 +6,15 @@ import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import jsQR from 'jsqr';
 import { Button, Panel, StatusBadge, fieldControlClass } from '../components/ui/clay';
-import { AlertTriangle, Upload, QrCode, ImageIcon } from 'lucide-react';
+import {
+  AlertTriangle,
+  ArrowRight,
+  ImageIcon,
+  Link2,
+  QrCode,
+  ShieldCheck,
+  Upload,
+} from 'lucide-react';
 import Html5QrcodeWrapper from '../components/Html5QrcodeWrapper';
 import ModalOTP from '../components/ModalOTP';
 import { xacThucPhieuMoi, thamGiaPhienBauCu } from '../store/slice/phieuMoiPhienBauCuSlice';
@@ -54,6 +62,7 @@ const QuetMaQRPage: React.FC = () => {
   const [scanning, setScanning] = useState(false);
   const [scannedData, setScannedData] = useState<QRData | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [manualPayload, setManualPayload] = useState('');
   const [processingImage, setProcessingImage] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [token, setToken] = useState<string | null>(null);
@@ -110,11 +119,23 @@ const QuetMaQRPage: React.FC = () => {
     setError(null); // Reset error when scanning is successful
   };
 
-  const handleError = (message: string, error: any) => {
-    console.error('QR Error:', error);
+  const handleError = (message: string, _error?: unknown) => {
     setError(message);
     setIsValidating(true); // Ẩn ô input khi có lỗi
     setProcessingImage(false);
+  };
+
+  const handleScannerError = (message: string) => {
+    const normalized = message.toLowerCase();
+    const cameraProblem =
+      normalized.includes('permission') ||
+      normalized.includes('notallowed') ||
+      normalized.includes('camera') ||
+      normalized.includes('device');
+
+    if (cameraProblem) {
+      handleError('Không mở được camera. Hãy cấp quyền camera hoặc tải ảnh QR lên để kiểm tra.');
+    }
   };
 
   // Hàm tiền xử lý hình ảnh trước khi phân tích QR
@@ -268,9 +289,6 @@ const QuetMaQRPage: React.FC = () => {
       let type: QRDataType = 'TEXT';
       const trimmedData = data.trim();
 
-      // Nhật ký dữ liệu đầu vào để gỡ lỗi
-      console.log('QR Data content:', trimmedData);
-
       if (trimmedData.startsWith('http://') || trimmedData.startsWith('https://')) {
         type = 'URL';
       } else if (trimmedData.startsWith('mailto:')) {
@@ -290,8 +308,6 @@ const QuetMaQRPage: React.FC = () => {
       if (type === 'URL') {
         try {
           const url = new URL(trimmedData);
-          console.log('URL parsed:', url.toString());
-          console.log('URL params:', Array.from(url.searchParams.entries()));
 
           const verificationTarget = extractVerifyTransactionTarget(url);
           if (verificationTarget) {
@@ -314,7 +330,6 @@ const QuetMaQRPage: React.FC = () => {
             }
 
             setToken(tokenParam);
-            console.log('Token found:', tokenParam);
 
             dispatch(xacThucPhieuMoi(tokenParam))
               .unwrap()
@@ -332,7 +347,6 @@ const QuetMaQRPage: React.FC = () => {
             const possibleToken = urlParts[urlParts.length - 1];
 
             if (possibleToken && possibleToken.length > 10) {
-              console.log('Trying alternative token from path:', possibleToken);
               if (isElectionV1Invite) {
                 navigate(buildVoterVerificationPath({ token: possibleToken }));
                 return;
@@ -356,8 +370,6 @@ const QuetMaQRPage: React.FC = () => {
             }
           }
         } catch (urlError) {
-          console.error('URL parsing error:', urlError);
-
           // Nếu URL không hợp lệ, kiểm tra xem dữ liệu có phải là token trực tiếp không
           if (isTransactionHash(trimmedData)) {
             navigate(buildVerifyTransactionPath(trimmedData));
@@ -365,7 +377,6 @@ const QuetMaQRPage: React.FC = () => {
           }
 
           if (trimmedData.length > 10 && !trimmedData.includes(' ')) {
-            console.log('Trying direct token:', trimmedData);
             setToken(trimmedData);
 
             dispatch(xacThucPhieuMoi(trimmedData))
@@ -391,7 +402,6 @@ const QuetMaQRPage: React.FC = () => {
         }
 
         if (trimmedData.length > 10 && !trimmedData.includes(' ')) {
-          console.log('Trying direct token from text:', trimmedData);
           setToken(trimmedData);
 
           dispatch(xacThucPhieuMoi(trimmedData))
@@ -463,17 +473,30 @@ const QuetMaQRPage: React.FC = () => {
     }
   };
 
+  const handleManualSubmit = () => {
+    const value = manualPayload.trim();
+    if (!value) {
+      setError('Hãy dán đường dẫn QR, mã mời hoặc mã giao dịch trước khi kiểm tra.');
+      return;
+    }
+
+    processQRData(value);
+  };
+
   return (
-    <div className="flex min-h-[70vh] items-start justify-center px-4 py-8 text-[var(--clay-text)]">
-      <div className="w-full max-w-md">
-        <div className="mb-5 text-center">
-          <h1 className="text-[1.75rem] font-semibold tracking-[-0.015em] text-[var(--clay-text)]">
-            Quét mã QR
-          </h1>
-          <p className="mt-1 text-[15px] text-[var(--clay-muted)]">
-            Quét hoặc tải lên mã QR mời để tham gia phiên bầu cử.
-          </p>
-        </div>
+    <div className="mx-auto max-w-5xl px-4 py-6 text-[var(--clay-text)]">
+      <div className="mb-5">
+        <p className="text-xs font-semibold uppercase text-[var(--clay-muted)]">Cửa vào QR</p>
+        <h1 className="mt-1 text-[1.75rem] font-semibold tracking-[-0.015em] text-[var(--clay-text)]">
+          Quét mã QR
+        </h1>
+        <p className="mt-1 max-w-2xl text-[15px] leading-6 text-[var(--clay-muted)]">
+          Dùng cho QR mời cử tri để xác thực OTP, hoặc QR/mã giao dịch để kiểm chứng giao dịch trên Sepolia.
+        </p>
+      </div>
+
+      <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_340px]">
+        <div>
         <Panel>
           {scanning ? (
             <div>
@@ -483,7 +506,7 @@ const QuetMaQRPage: React.FC = () => {
                 disableFlip={false}
                 verbose={false}
                 onScan={handleScan}
-                onError={handleError}
+                onError={handleScannerError}
               />
               <div className="mt-4 grid grid-cols-2 gap-3">
                 <Button
@@ -539,6 +562,32 @@ const QuetMaQRPage: React.FC = () => {
               />
             </div>
           )}
+
+          <div className="mt-5 rounded-[14px] border border-[var(--clay-border)] bg-[var(--clay-surface-soft)] p-4">
+            <div className="flex items-center gap-2">
+              <Link2 className="h-4 w-4 text-[var(--clay-primary)]" aria-hidden="true" />
+              <p className="text-sm font-semibold text-[var(--clay-text)]">Không dùng được camera?</p>
+            </div>
+            <div className="mt-3 flex flex-col gap-2 sm:flex-row">
+              <input
+                type="text"
+                value={manualPayload}
+                onChange={(event) => setManualPayload(event.target.value)}
+                className={fieldControlClass}
+                placeholder="Dán link /verify-voter, link Etherscan hoặc mã giao dịch..."
+                aria-label="Dán nội dung QR hoặc mã giao dịch"
+              />
+              <Button
+                type="button"
+                variant="secondary"
+                className="shrink-0"
+                onClick={handleManualSubmit}
+                iconRight={<ArrowRight className="h-4 w-4" aria-hidden="true" />}
+              >
+                Kiểm tra
+              </Button>
+            </div>
+          </div>
 
           {scannedData && (
             <div className="mt-4 rounded-[14px] border border-[var(--clay-border)] bg-[var(--clay-surface-soft)] p-4">
@@ -599,6 +648,35 @@ const QuetMaQRPage: React.FC = () => {
             </div>
           )}
         </Panel>
+        </div>
+
+        <aside className="space-y-4">
+          <Panel className="p-4">
+            <div className="flex items-center gap-2">
+              <ShieldCheck className="h-4 w-4 text-[var(--clay-primary)]" aria-hidden="true" />
+              <p className="text-sm font-semibold text-[var(--clay-text)]">Mã được hỗ trợ</p>
+            </div>
+            <div className="mt-3 space-y-3 text-sm leading-6 text-[var(--clay-muted)]">
+              <div className="rounded-[12px] border border-[var(--clay-border)] bg-[var(--clay-surface)] p-3">
+                <p className="font-semibold text-[var(--clay-text)]">QR mời cử tri</p>
+                <p>Mở luồng xác minh OTP và liên kết MetaMask trước khi bỏ phiếu.</p>
+              </div>
+              <div className="rounded-[12px] border border-[var(--clay-border)] bg-[var(--clay-surface)] p-3">
+                <p className="font-semibold text-[var(--clay-text)]">QR giao dịch</p>
+                <p>Mở trang kiểm chứng HoLiHu, sau đó có thể đối chiếu thêm trên Etherscan.</p>
+              </div>
+            </div>
+          </Panel>
+
+          <Panel className="p-4">
+            <p className="text-sm font-semibold text-[var(--clay-text)]">Sau khi quét</p>
+            <ol className="mt-3 space-y-2 text-sm leading-6 text-[var(--clay-muted)]">
+              <li>1. QR mời chuyển sang trang xác minh cử tri.</li>
+              <li>2. Cử tri nhận OTP qua email trong danh sách.</li>
+              <li>3. Sau OTP, cử tri liên kết đúng ví MetaMask để được đưa vào danh sách cử tri.</li>
+            </ol>
+          </Panel>
+        </aside>
       </div>
 
       <ModalOTP

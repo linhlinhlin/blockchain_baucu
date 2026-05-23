@@ -27,10 +27,13 @@ import {
   describeGroupPositions,
   describePositionCount,
   describeVoterCount,
+  type ElectionListScope,
   filterElectionGroups,
   getElectionGroupMilestone,
   getElectionListLoadMessage,
   getElectionListStats,
+  getViewerRoleLabel,
+  getViewerRoleTone,
 } from '../utils/electionListPresentation';
 import {
   Button,
@@ -63,21 +66,25 @@ export default function CuocBauCuCuaNguoiDungPage() {
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState('Đang tải danh sách bầu cử...');
   const [searchTerm, setSearchTerm] = useState('');
-  const [mineOnly, setMineOnly] = useState(false);
+  const [scope, setScope] = useState<ElectionListScope>('all');
 
   const knownWallets = useMemo(() => {
     const values = [currentAccount, currentUser?.diaChiVi].map(normalizeAddress).filter(Boolean);
     return new Set(values);
   }, [currentAccount, currentUser?.diaChiVi]);
+  const viewerAddress = useMemo(
+    () => normalizeAddress(currentAccount ?? currentUser?.diaChiVi),
+    [currentAccount, currentUser?.diaChiVi],
+  );
 
   useEffect(() => {
     void load();
-  }, []);
+  }, [viewerAddress]);
 
   async function load() {
     setLoading(true);
     try {
-      const response = await listElectionV1Groups();
+      const response = await listElectionV1Groups(viewerAddress || null);
       setItems(response);
       setMessage(getElectionListLoadMessage(response.length));
     } catch (error) {
@@ -88,12 +95,20 @@ export default function CuocBauCuCuaNguoiDungPage() {
   }
 
   const filteredItems = useMemo(
-    () => filterElectionGroups(items, searchTerm, mineOnly, knownWallets),
-    [items, knownWallets, mineOnly, searchTerm],
+    () => filterElectionGroups(items, searchTerm, scope, knownWallets),
+    [items, knownWallets, scope, searchTerm],
   );
 
   const stats = useMemo(() => getElectionListStats(filteredItems), [filteredItems]);
-  const canFilterMine = knownWallets.size > 0;
+  const scopeCounts = useMemo(
+    () => ({
+      all: items.length,
+      managed: filterElectionGroups(items, '', 'managed', knownWallets).length,
+      eligible: filterElectionGroups(items, '', 'eligible', knownWallets).length,
+    }),
+    [items, knownWallets],
+  );
+  const canUsePersonalScopes = Boolean(viewerAddress);
 
   const columns: Column<ElectionV1GroupListItem>[] = [
     {
@@ -145,13 +160,16 @@ export default function CuocBauCuCuaNguoiDungPage() {
     },
     {
       key: 'admin',
-      header: 'Ví tạo',
+      header: 'Vai trò',
       sortable: true,
-      value: (r) => r.admin,
+      value: (r) => getViewerRoleLabel(r),
       render: (r) => (
-        <span className="font-mono text-[12px]" title={r.admin}>
-          {ownerLabel(r, knownWallets)}
-        </span>
+        <div className="space-y-1">
+          <StatusBadge tone={getViewerRoleTone(r)}>{getViewerRoleLabel(r)}</StatusBadge>
+          <p className="font-mono text-[12px] text-[var(--clay-muted)]" title={r.admin}>
+            Quản trị: {ownerLabel(r, knownWallets)}
+          </p>
+        </div>
       ),
     },
     {
@@ -180,10 +198,10 @@ export default function CuocBauCuCuaNguoiDungPage() {
             variant="secondary"
             size="sm"
             onClick={() => navigate(buildElectionDetailPath(r.groupKey))}
-            aria-label={`Xem chi tiết bầu cử ${r.title}`}
+            aria-label={`Xem bầu cử ${r.title}`}
             iconRight={<ArrowRight className="h-4 w-4" aria-hidden="true" />}
           >
-            Xem chi tiết
+            Xem bầu cử
           </Button>
         );
       },
@@ -198,8 +216,8 @@ export default function CuocBauCuCuaNguoiDungPage() {
             Danh sách bầu cử
           </h1>
           <p className="mt-1 max-w-3xl text-[15px] text-[var(--clay-muted)]">
-            Theo dõi các đợt đã triển khai trên Sepolia, kiểm tra trạng thái và mở bảng điều
-            khiển khi cần commit, kiểm phiếu hoặc xem kết quả.
+            Danh mục các đợt ElectionV1 đã triển khai trên Sepolia. Cột vai trò cho biết bạn
+            quản trị, có quyền bỏ phiếu hay chỉ đang xem công khai.
           </p>
           <div className="mt-2 flex flex-wrap gap-1.5">
             <StatusBadge tone="neutral">
@@ -249,7 +267,7 @@ export default function CuocBauCuCuaNguoiDungPage() {
       </div>
 
       <Panel>
-        <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+        <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
           <div className="relative max-w-2xl flex-1">
             <Search
               className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--clay-muted)]"
@@ -266,20 +284,36 @@ export default function CuocBauCuCuaNguoiDungPage() {
               className="w-full rounded-[8px] border border-[rgba(0,0,0,0.08)] bg-[var(--clay-surface)] py-3 pl-10 pr-4 text-sm focus:outline focus:outline-2 focus:outline-offset-2 focus:outline-[var(--clay-primary-focus)]"
             />
           </div>
-          <label className="inline-flex min-h-[44px] items-center gap-3 rounded-[8px] border border-[var(--clay-border)] bg-[var(--clay-surface)] px-4 text-sm text-[var(--clay-text)]">
-            <input
-              type="checkbox"
-              checked={mineOnly}
-              disabled={!canFilterMine}
-              onChange={(event) => setMineOnly(event.target.checked)}
-              className="h-4 w-4 rounded border-[var(--clay-border)] disabled:opacity-40"
-            />
-            Chỉ hiện đợt tôi tạo
-          </label>
+          <div className="flex flex-wrap gap-2" role="group" aria-label="Lọc bầu cử theo vai trò">
+            {[
+              ['all', 'Tất cả', scopeCounts.all],
+              ['managed', 'Tôi quản trị', scopeCounts.managed],
+              ['eligible', 'Tôi bỏ phiếu', scopeCounts.eligible],
+            ].map(([key, label, count]) => {
+              const itemScope = key as ElectionListScope;
+              const active = scope === itemScope;
+              const disabled = itemScope !== 'all' && !canUsePersonalScopes;
+              return (
+                <button
+                  key={itemScope}
+                  type="button"
+                  disabled={disabled}
+                  onClick={() => setScope(itemScope)}
+                  className={`min-h-[40px] rounded-[10px] border px-3 text-sm transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--clay-primary-focus)] disabled:cursor-not-allowed disabled:opacity-50 ${
+                    active
+                      ? 'border-[var(--clay-primary)] bg-[var(--clay-primary-light)] text-[var(--clay-primary)]'
+                      : 'border-[var(--clay-border)] bg-[var(--clay-surface)] text-[var(--clay-text)] hover:bg-[var(--clay-surface-soft)]'
+                  }`}
+                >
+                  {label} <span className="font-semibold">{count}</span>
+                </button>
+              );
+            })}
+          </div>
         </div>
         <p aria-live="polite" className="mt-3 text-[13px] text-[var(--clay-muted)]">
-          {!canFilterMine
-            ? 'Kết nối hoặc đăng nhập bằng ví để dùng bộ lọc theo ví tạo.'
+          {!canUsePersonalScopes
+            ? 'Kết nối hoặc đăng nhập bằng ví để phân loại bầu cử bạn quản trị và bầu cử bạn có quyền bỏ phiếu.'
             : message}
         </p>
       </Panel>

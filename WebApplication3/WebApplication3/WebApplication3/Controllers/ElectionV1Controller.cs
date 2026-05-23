@@ -40,11 +40,20 @@ public sealed class ElectionV1Controller : ControllerBase
     }
 
     [HttpGet("election-groups")]
-    public IActionResult ListElectionGroups()
+    public IActionResult ListElectionGroups([FromQuery] string? viewerAddress = null)
     {
+        if (!string.IsNullOrWhiteSpace(viewerAddress) &&
+            !AddressUtil.Current.IsValidEthereumAddressHexFormat(viewerAddress))
+        {
+            return BadRequest(new
+            {
+                Error = "Dia chi vi khong hop le."
+            });
+        }
+
         return Ok(new ElectionV1GroupListResponseDto
         {
-            Items = _electionService.ListElectionGroups()
+            Items = _electionService.ListElectionGroups(viewerAddress)
         });
     }
 
@@ -73,9 +82,18 @@ public sealed class ElectionV1Controller : ControllerBase
     }
 
     [HttpGet("election-groups/{identifier}")]
-    public IActionResult GetElectionGroup(string identifier)
+    public IActionResult GetElectionGroup(string identifier, [FromQuery] string? viewerAddress = null)
     {
-        var group = _electionService.GetElectionGroup(identifier);
+        if (!string.IsNullOrWhiteSpace(viewerAddress) &&
+            !AddressUtil.Current.IsValidEthereumAddressHexFormat(viewerAddress))
+        {
+            return BadRequest(new
+            {
+                Error = "Dia chi vi khong hop le."
+            });
+        }
+
+        var group = _electionService.GetElectionGroup(identifier, viewerAddress);
         if (group is null)
         {
             return NotFound(new

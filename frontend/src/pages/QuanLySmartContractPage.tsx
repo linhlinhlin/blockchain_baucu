@@ -37,7 +37,11 @@ import {
   type StatusTone,
 } from '../components/ui/clay';
 import { buildVerifyTransactionUrl } from '../utils/transactionVerification';
-import { buildElectionDetailPath } from '../utils/electionListPresentation';
+import {
+  buildElectionDetailPath,
+  getViewerRoleLabel,
+  getViewerRoleTone,
+} from '../utils/electionListPresentation';
 
 const TARGET_CHAIN_ID = 11155111;
 const TARGET_CHAIN_ID_HEX = '0xaa36a7';
@@ -216,6 +220,23 @@ function transactionKindLabel(kind: ElectionV1TransactionKind) {
       return 'Hủy bầu cử';
     default:
       return 'Giao dịch';
+  }
+}
+
+function displayPhaseLabel(phase?: string | null) {
+  switch ((phase ?? '').toLowerCase()) {
+    case 'commit':
+      return 'Đang nhận phiếu';
+    case 'reveal':
+      return 'Đang mở phiếu';
+    case 'ended':
+      return 'Chờ chốt kết quả';
+    case 'finalized':
+      return 'Đã chốt kết quả';
+    case 'canceled':
+      return 'Đã hủy';
+    default:
+      return phase || 'Chưa xác định';
   }
 }
 
@@ -556,28 +577,28 @@ function getCommitReason(detail: ElectionV1Detail | null, walletAddress: string 
   if (busy) return 'Đang xử lý giao dịch hoặc tải dữ liệu.';
   if (!walletAddress) return 'Hãy kết nối MetaMask trước.';
   if (!detail?.onChain?.viewer?.eligible) return 'Ví hiện tại không nằm trong danh sách cử tri của chức vụ này.';
-  if (detail.onChain.viewer.hasCommitted) return 'Ví này đã commit cho chức vụ này.';
-  if (detail.onChain.phaseLabel !== 'Commit') return `Giai đoạn hiện tại là ${detail.onChain.phaseLabel}, chưa thể commit.`;
+  if (detail.onChain.viewer.hasCommitted) return 'Ví này đã ghi nhận phiếu cho chức vụ này.';
+  if (detail.onChain.phaseLabel !== 'Commit') return `Giai đoạn hiện tại là ${displayPhaseLabel(detail.onChain.phaseLabel)}, chưa thể ghi nhận phiếu.`;
   return null;
 }
 
 function getRevealReason(detail: ElectionV1Detail | null, walletAddress: string | null, voteEnvelope: StoredVoteEnvelope | null, busy: boolean) {
   if (busy) return 'Đang xử lý giao dịch hoặc tải dữ liệu.';
   if (!walletAddress) return 'Hãy kết nối MetaMask trước.';
-  if (!voteEnvelope) return 'Không tìm thấy vote package cục bộ cho ví/thiết bị này. Reveal phải dùng đúng ví và trình duyệt đã commit.';
-  if (!detail?.onChain?.viewer?.hasCommitted) return 'Ví này chưa commit.';
-  if (detail.onChain.viewer.hasRevealed) return 'Ví này đã reveal rồi.';
-  if (detail.onChain.phaseLabel !== 'Reveal') return `Giai đoạn hiện tại là ${detail.onChain.phaseLabel}, chưa thể reveal.`;
+  if (!voteEnvelope) return 'Không tìm thấy gói phiếu cục bộ cho ví/thiết bị này. Bước mở phiếu phải dùng đúng ví và trình duyệt đã ghi nhận phiếu.';
+  if (!detail?.onChain?.viewer?.hasCommitted) return 'Ví này chưa ghi nhận phiếu.';
+  if (detail.onChain.viewer.hasRevealed) return 'Ví này đã mở phiếu rồi.';
+  if (detail.onChain.phaseLabel !== 'Reveal') return `Giai đoạn hiện tại là ${displayPhaseLabel(detail.onChain.phaseLabel)}, chưa thể mở phiếu.`;
   return null;
 }
 
 function getFinalizeReason(detail: ElectionV1Detail | null, walletAddress: string | null, busy: boolean) {
   if (busy) return 'Đang xử lý giao dịch hoặc tải dữ liệu.';
   if (!walletAddress) return 'Hãy kết nối MetaMask trước.';
-  if (!detail?.onChain) return 'Chưa tải được trạng thái election.';
-  if (detail.onChain.finalized) return 'Election đã finalized.';
-  if (detail.onChain.canceled) return 'Election đã bị hủy.';
-  if (detail.onChain.phaseLabel !== 'Ended') return `Giai đoạn hiện tại là ${detail.onChain.phaseLabel}, chưa thể finalize.`;
+  if (!detail?.onChain) return 'Chưa tải được trạng thái bầu cử.';
+  if (detail.onChain.finalized) return 'Bầu cử đã chốt kết quả.';
+  if (detail.onChain.canceled) return 'Bầu cử đã bị hủy.';
+  if (detail.onChain.phaseLabel !== 'Ended') return `Giai đoạn hiện tại là ${displayPhaseLabel(detail.onChain.phaseLabel)}, chưa thể chốt kết quả.`;
   return null;
 }
 
@@ -837,7 +858,7 @@ export default function QuanLySmartContractPage() {
       return;
     }
     void refreshGroup(selectedGroupKey);
-  }, [selectedGroupKey]);
+  }, [selectedGroupKey, connectedAccount]);
 
   useEffect(() => {
     if (!groupDetail) {
@@ -884,6 +905,7 @@ export default function QuanLySmartContractPage() {
       setConnectedAccount(nextAccount);
       setVotePackageRevision((current) => current + 1);
       setMessage(nextAccount ? `Đã chuyển ví sang ${shortenAddress(nextAccount)}.` : 'MetaMask đã ngắt kết nối.');
+      void refreshAll(selectedElectionAddress, selectedGroupKey, nextAccount);
     };
 
     const handleChainChanged = () => {
@@ -903,24 +925,28 @@ export default function QuanLySmartContractPage() {
 
   async function bootstrap() {
     try {
-      const [config, groups] = await Promise.all([getElectionV1PublicConfig(), listElectionV1Groups()]);
+      const config = await getElectionV1PublicConfig();
       setPublicConfig(config);
-      setGroupItems(groups);
-      const requestedGroup = searchParams.get('group');
-      const preferredGroup =
-        groups.find((item) => item.groupKey.toLowerCase() === requestedGroup?.toLowerCase())?.groupKey ??
-        groups[0]?.groupKey ??
-        null;
-      setSelectedGroupKey(preferredGroup);
 
+      let account: string | null = null;
       const ethereum = getEthereum();
       if (ethereum) {
         const accounts = (await ethereum.request({ method: 'eth_accounts' })) as string[];
         if (accounts.length > 0) {
-          setConnectedAccount(accounts[0]);
-          await loadWalletBalance(accounts[0], config.rpcUrl ?? DEFAULT_RPC_URL);
+          account = accounts[0];
+          setConnectedAccount(account);
+          await loadWalletBalance(account, config.rpcUrl ?? DEFAULT_RPC_URL);
         }
       }
+
+      const groups = await listElectionV1Groups(account);
+      setGroupItems(groups);
+      const requestedGroup = searchParams.get('group');
+      const preferredGroup =
+        requestedGroup
+          ? groups.find((item) => item.groupKey.toLowerCase() === requestedGroup.toLowerCase())?.groupKey ?? null
+          : null;
+      setSelectedGroupKey(preferredGroup);
     } catch (error) {
       setMessage(getErrorMessage(error));
     }
@@ -928,7 +954,7 @@ export default function QuanLySmartContractPage() {
 
   async function refreshGroup(groupKey: string) {
     try {
-      const payload = await getElectionV1GroupDetail(groupKey);
+      const payload = await getElectionV1GroupDetail(groupKey, connectedAccount);
       setGroupDetail(payload);
     } catch (error) {
       setMessage(getErrorMessage(error));
@@ -962,7 +988,7 @@ export default function QuanLySmartContractPage() {
         payload = { ...payload, onChain: directOnChain };
       } catch (error) {
         if (!payload.onChain) {
-          setMessage(`Không đồng bộ được on-chain state từ frontend: ${getErrorMessage(error)}`);
+      setMessage(`Không đồng bộ được trạng thái blockchain từ trình duyệt: ${getErrorMessage(error)}`);
         }
       }
       setDetail(payload);
@@ -974,18 +1000,22 @@ export default function QuanLySmartContractPage() {
     }
   }
 
-  async function refreshAll(addressToKeep?: string | null, groupToKeep?: string | null) {
-    const groups = await listElectionV1Groups();
+  async function refreshAll(
+    addressToKeep?: string | null,
+    groupToKeep?: string | null,
+    viewerAddress = connectedAccount,
+  ) {
+    const groups = await listElectionV1Groups(viewerAddress);
     setGroupItems(groups);
-    const nextGroup = groupToKeep ?? selectedGroupKey ?? groups[0]?.groupKey ?? null;
+    const nextGroup = groupToKeep ?? selectedGroupKey ?? null;
     setSelectedGroupKey(nextGroup);
     if (nextGroup) {
-      const group = await getElectionV1GroupDetail(nextGroup);
+      const group = await getElectionV1GroupDetail(nextGroup, viewerAddress);
       setGroupDetail(group);
       const nextElection = addressToKeep ?? selectedElectionAddress ?? group.positions[0]?.address ?? null;
       setSelectedElectionAddress(nextElection);
       if (nextElection) {
-        await refreshElection(nextElection, connectedAccount);
+        await refreshElection(nextElection, viewerAddress);
       }
     } else {
       setGroupDetail(null);
@@ -1077,8 +1107,8 @@ export default function QuanLySmartContractPage() {
       await refreshElection(detail.address, address);
       await refreshTransactionHistory(detail);
       await loadWalletBalance(address, publicConfig?.rpcUrl ?? DEFAULT_RPC_URL);
-      setMessage(`Commit thành công: ${tx.hash}`);
-      toast.success('Commit phiếu thành công.');
+      setMessage(`Đã ghi nhận phiếu: ${tx.hash}`);
+      toast.success('Đã ghi nhận phiếu.');
     } catch (error) {
       const msg = getErrorMessage(error);
       setMessage(msg);
@@ -1097,16 +1127,16 @@ export default function QuanLySmartContractPage() {
     try {
       const { signer, address } = await getSignerContext();
       const envelope = loadStoredVoteEnvelope(detail.address, address);
-      // S5: vote package phai thuoc dung vi dang ket noi.
+      // S5: goi phieu phai thuoc dung vi dang ket noi.
       if (!envelope || envelope.voter.toLowerCase() !== address.toLowerCase()) {
-        throw new Error('Vote package không thuộc ví đang kết nối. Hãy dùng đúng ví và trình duyệt đã commit.');
+        throw new Error('Gói phiếu không thuộc ví đang kết nối. Hãy dùng đúng ví và trình duyệt đã ghi nhận phiếu.');
       }
       let secret: VoteSecret;
       try {
         const voteKey = await deriveVoteAesKey(signer, detail.address, address);
         secret = await decryptVoteSecret(voteKey, envelope.iv, envelope.ciphertext);
       } catch {
-        throw new Error('Không giải mã được vote package. Phải dùng đúng ví và trình duyệt đã commit.');
+        throw new Error('Không giải mã được gói phiếu. Phải dùng đúng ví và trình duyệt đã ghi nhận phiếu.');
       }
       const contract = new ethers.Contract(detail.address, electionV1Abi, signer);
       const tx = await contract.revealVote(secret.candidateId, secret.salt);
@@ -1122,8 +1152,8 @@ export default function QuanLySmartContractPage() {
       await refreshElection(detail.address, address);
       await refreshTransactionHistory(detail);
       await loadWalletBalance(address, publicConfig?.rpcUrl ?? DEFAULT_RPC_URL);
-      setMessage(`Reveal thành công: ${tx.hash}`);
-      toast.success('Reveal phiếu thành công.');
+      setMessage(`Đã mở phiếu: ${tx.hash}`);
+      toast.success('Đã mở phiếu.');
     } catch (error) {
       const msg = getErrorMessage(error);
       setMessage(msg);
@@ -1147,8 +1177,8 @@ export default function QuanLySmartContractPage() {
       await refreshElection(detail.address, address);
       await refreshTransactionHistory(detail);
       await loadWalletBalance(address, publicConfig?.rpcUrl ?? DEFAULT_RPC_URL);
-      setMessage(`Finalize thành công: ${tx.hash}`);
-      toast.success('Finalize election thành công.');
+      setMessage(`Đã chốt kết quả: ${tx.hash}`);
+      toast.success('Đã chốt kết quả.');
     } catch (error) {
       const msg = getErrorMessage(error);
       setMessage(msg);
@@ -1196,6 +1226,7 @@ export default function QuanLySmartContractPage() {
   const revealReason = getRevealReason(detail, connectedAccount, storedVoteEnvelope, busy);
   const finalizeReason = getFinalizeReason(detail, connectedAccount, busy);
   const phaseLabel = detail?.onChain?.phaseLabel ?? 'Unknown';
+  const phaseDisplayLabel = displayPhaseLabel(phaseLabel);
   const maxResultCount = Math.max(1, ...(detail?.onChain?.results ?? []).map((item) => item.count));
   const currentPositionTitle = detail?.positionTitle || detail?.manifest?.positionTitle || detail?.title;
   const currentPositionLabel = currentPositionTitle ? String(currentPositionTitle) : null;
@@ -1235,41 +1266,37 @@ export default function QuanLySmartContractPage() {
     <Panel padded={false} className="overflow-hidden">
       <div className="border-b border-[var(--clay-border)] p-4">
         <div className="flex items-center justify-between gap-3">
-          <p className="text-sm font-semibold text-[var(--clay-text)]">Bầu cử</p>
-          <StatusBadge tone="neutral">{groupItems.length}</StatusBadge>
+          <p className="text-sm font-semibold text-[var(--clay-text)]">Bầu cử đang vận hành</p>
+          {selectedGroup && (
+            <StatusBadge tone={getViewerRoleTone(selectedGroup)}>
+              {getViewerRoleLabel(selectedGroup)}
+            </StatusBadge>
+          )}
         </div>
+        {selectedGroup ? (
+          <div className="mt-3 rounded-[12px] border border-[var(--clay-border)] bg-[var(--clay-surface-soft)] p-3">
+            <p className="truncate text-sm font-semibold text-[var(--clay-text)]">
+              {selectedGroup.title}
+            </p>
+            <p className="mt-1 text-xs text-[var(--clay-muted)]">
+              {selectedGroup.positionCount} chức vụ · {selectedGroup.voterCount} cử tri
+            </p>
+          </div>
+        ) : (
+          <p className="mt-3 text-sm leading-relaxed text-[var(--clay-muted)]">
+            Hãy chọn một bầu cử từ trang danh sách trước khi ghi nhận phiếu, mở phiếu hoặc
+            chốt kết quả.
+          </p>
+        )}
       </div>
 
-      <div className="max-h-[300px] space-y-2 overflow-auto p-3">
-        {groupItems.map((group) => {
-          const active = selectedGroupKey === group.groupKey;
-          return (
-            <button
-              key={group.groupKey}
-              type="button"
-              onClick={() => openGroup(group.groupKey)}
-              className={`w-full rounded-[12px] border p-3 text-left transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-[var(--clay-primary-focus)] ${
-                active
-                  ? 'border-[var(--clay-primary)] bg-[var(--clay-primary-light)]'
-                  : 'border-[var(--clay-border)] bg-[var(--clay-surface)] hover:bg-[var(--clay-surface-soft)]'
-              }`}
-            >
-              <div className="flex items-start justify-between gap-3">
-                <div className="min-w-0">
-                  <p className="truncate text-sm font-semibold text-[var(--clay-text)]">
-                    {group.title}
-                  </p>
-                  <p className="mt-0.5 text-xs text-[var(--clay-muted)]">
-                    {group.positionCount} chức vụ · {group.voterCount} cử tri
-                  </p>
-                </div>
-                <span className="max-w-[112px] shrink-0 truncate rounded-full border border-[var(--clay-border)] bg-[var(--clay-surface)] px-2 py-0.5 text-[11px] text-[var(--clay-muted)]">
-                  {group.groupKey}
-                </span>
-              </div>
-            </button>
-          );
-        })}
+      <div className="border-b border-[var(--clay-border)] p-4">
+        <Link
+          to="/app/elections"
+          className="inline-flex min-h-[40px] w-full items-center justify-center gap-2 rounded-[12px] border border-[var(--clay-primary)] px-4 text-sm text-[var(--clay-primary)] hover:bg-[var(--clay-primary-light)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--clay-primary-focus)]"
+        >
+          Đổi bầu cử từ danh sách
+        </Link>
       </div>
 
       <div className="border-t border-[var(--clay-border)] p-4">
@@ -1374,7 +1401,7 @@ export default function QuanLySmartContractPage() {
             role="alert"
             className="mb-4 rounded-[12px] border border-[var(--state-warning)] bg-[var(--state-warning-soft)] p-3 text-xs text-[var(--state-warning)]"
           >
-            Chưa phát hiện MetaMask. Cần ví MetaMask để kết nối và bỏ phiếu on-chain.{' '}
+            Chưa phát hiện MetaMask. Cần ví MetaMask để kết nối và bỏ phiếu trên blockchain.{' '}
             <a
               href="https://metamask.io/download/"
               target="_blank"
@@ -1447,6 +1474,45 @@ export default function QuanLySmartContractPage() {
               </p>
             </Panel>
           </div>
+        ) : !selectedGroupKey ? (
+          <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_360px]">
+            <EmptyState
+              className="min-h-[360px]"
+              icon={<ListChecks className="h-6 w-6" aria-hidden="true" />}
+              title="Chọn bầu cử từ danh sách"
+              description="Bảng điều khiển chỉ mở màn vận hành cho một bầu cử cụ thể. Hãy vào danh sách, lọc theo vai trò rồi chọn bầu cử cần xử lý."
+              action={
+                <Link
+                  to="/app/elections"
+                  className="inline-flex min-h-[44px] items-center justify-center gap-2 rounded-[12px] bg-[var(--clay-primary)] px-5 text-[15px] text-white hover:bg-[var(--clay-primary-focus)]"
+                >
+                  Danh sách bầu cử
+                </Link>
+              }
+            />
+            <Panel className="p-4">
+              <p className="text-sm font-semibold text-[var(--clay-text)]">Tổng quan hệ thống</p>
+              <div className="mt-3 space-y-2 text-sm">
+                <div className="flex items-center justify-between gap-4">
+                  <span className="text-[var(--clay-muted)]">Bầu cử đã triển khai</span>
+                  <span className="font-semibold">{groupItems.length}</span>
+                </div>
+                <div className="flex items-center justify-between gap-4">
+                  <span className="text-[var(--clay-muted)]">Chức vụ</span>
+                  <span className="font-semibold">{totalPositions}</span>
+                </div>
+                <div className="flex items-center justify-between gap-4">
+                  <span className="text-[var(--clay-muted)]">Ví hiện tại</span>
+                  <span className="max-w-[160px] truncate font-mono text-[12px]" title={connectedAccount ?? undefined}>
+                    {walletLabel}
+                  </span>
+                </div>
+              </div>
+              <p className="mt-4 border-t border-[var(--clay-border)] pt-3 text-[13px] leading-relaxed text-[var(--clay-muted)]">
+                Luồng đúng là Danh sách bầu cử → Chi tiết bầu cử → Bảng điều khiển. Màn này không tự chọn bầu cử đầu tiên để tránh thao tác nhầm khi có nhiều đợt.
+              </p>
+            </Panel>
+          </div>
         ) : (
           <div className="grid gap-6 lg:grid-cols-[320px_minmax(0,1fr)]">
             <div className="space-y-4 lg:sticky lg:top-6 lg:self-start">
@@ -1474,15 +1540,15 @@ export default function QuanLySmartContractPage() {
                       {detail.description || 'Không có mô tả.'}
                     </p>
                   </div>
-                  <StatusBadge tone={phaseTone}>{phaseLabel}</StatusBadge>
+                  <StatusBadge tone={phaseTone}>{phaseDisplayLabel}</StatusBadge>
                 </div>
 
                 <div className="mb-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
                   {[
-                    ['Hết commit', formatUnix(detail.commitEnd)],
-                    ['Hết reveal', formatUnix(detail.revealEnd)],
-                    ['Đã commit', String(detail.onChain?.totalCommits ?? '0')],
-                    ['Đã reveal', String(detail.onChain?.totalReveals ?? '0')],
+                    ['Hết nhận phiếu', formatUnix(detail.commitEnd)],
+                    ['Hết mở phiếu', formatUnix(detail.revealEnd)],
+                    ['Đã ghi nhận', String(detail.onChain?.totalCommits ?? '0')],
+                    ['Đã mở phiếu', String(detail.onChain?.totalReveals ?? '0')],
                   ].map(([k, v]) => (
                     <div
                       key={k}
@@ -1541,8 +1607,8 @@ export default function QuanLySmartContractPage() {
                                 loading={committingCandidateId === candidate.candidateId}
                               >
                                 {committingCandidateId === candidate.candidateId
-                                  ? 'Đang commit…'
-                                  : 'Commit cho ứng viên này'}
+                                  ? 'Đang ghi nhận phiếu…'
+                                  : 'Ghi nhận phiếu cho ứng viên này'}
                               </Button>
                             </div>
                           ))}
@@ -1573,11 +1639,11 @@ export default function QuanLySmartContractPage() {
                                 {yesNo(detail.onChain?.viewer?.eligible)}
                               </div>
                               <div className="flex items-center justify-between gap-4">
-                                <span className="text-[var(--clay-muted)]">Đã commit</span>
+                                <span className="text-[var(--clay-muted)]">Đã ghi nhận</span>
                                 {yesNo(detail.onChain?.viewer?.hasCommitted)}
                               </div>
                               <div className="flex items-center justify-between gap-4">
-                                <span className="text-[var(--clay-muted)]">Đã reveal</span>
+                                <span className="text-[var(--clay-muted)]">Đã mở phiếu</span>
                                 {yesNo(detail.onChain?.viewer?.hasRevealed)}
                               </div>
                             </div>
@@ -1597,15 +1663,15 @@ export default function QuanLySmartContractPage() {
                                 disabled={revealReason !== null}
                                 loading={busy}
                               >
-                                Reveal phiếu
+                                Mở phiếu đã ghi nhận
                               </Button>
                               <p className="text-xs text-[var(--clay-muted)]">
-                                {revealReason ?? 'Sẵn sàng reveal cho chức vụ này.'}
+                                {revealReason ?? 'Sẵn sàng mở phiếu cho chức vụ này.'}
                               </p>
                               <p className="text-[11px] text-[var(--state-warning)]">
-                                Lưu ý: bí mật phiếu được mã hoá cục bộ bằng chữ ký ví. Reveal phải dùng{' '}
-                                <strong>đúng ví và đúng trình duyệt/thiết bị</strong> đã commit; xoá
-                                dữ liệu trình duyệt sẽ mất khả năng reveal.
+                                Lưu ý: bí mật phiếu được mã hoá cục bộ bằng chữ ký ví. Bước mở phiếu phải dùng{' '}
+                                <strong>đúng ví và đúng trình duyệt/thiết bị</strong> đã ghi nhận phiếu; xoá
+                                dữ liệu trình duyệt sẽ mất khả năng mở phiếu.
                               </p>
                               <Button
                                 type="button"
@@ -1616,10 +1682,10 @@ export default function QuanLySmartContractPage() {
                                 disabled={finalizeReason !== null}
                                 loading={busy}
                               >
-                                Finalize
+                                Chốt kết quả
                               </Button>
                               <p className="text-xs text-[var(--clay-muted)]">
-                                {finalizeReason ?? 'Sẵn sàng finalize.'}
+                                {finalizeReason ?? 'Sẵn sàng chốt kết quả.'}
                               </p>
                             </div>
                           </Panel>
@@ -1634,7 +1700,7 @@ export default function QuanLySmartContractPage() {
                                 className={`inline-flex min-h-[44px] flex-1 items-center justify-center gap-2 rounded-[12px] border border-[var(--clay-primary)] px-4 text-sm text-[var(--clay-primary)] hover:bg-[var(--clay-primary-light)] ${!detail.links?.contract ? 'pointer-events-none opacity-50' : ''}`}
                               >
                                 <ExternalLink className="h-4 w-4" aria-hidden="true" />
-                                Mở contract
+                                Mở hợp đồng
                               </a>
                               <a
                                 href={detail.links?.transaction ?? '#'}
@@ -1667,7 +1733,7 @@ export default function QuanLySmartContractPage() {
                 className="min-h-[360px]"
                 icon={<Vote className="h-6 w-6" aria-hidden="true" />}
                 title="Chọn chức vụ"
-                description="Mở một chức vụ trong ballot để xem trạng thái on-chain và thao tác."
+                description="Mở một chức vụ trong bầu cử để xem trạng thái blockchain và thao tác."
               />
             )}
             </div>

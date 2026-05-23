@@ -7,6 +7,7 @@ import {
   getElectionGroupMilestone,
   getElectionListLoadMessage,
   getElectionListStats,
+  getViewerRoleLabel,
 } from '../utils/electionListPresentation';
 
 const adminA = '0xea6e374d6ccaa2223e9bab43022a4a4a5e123456';
@@ -24,6 +25,8 @@ function makeGroup(overrides: Partial<ElectionV1GroupListItem>): ElectionV1Group
     voterCount: 12,
     positionCount: 2,
     blockNumber: 1,
+    viewerRole: 'unknown',
+    viewerEligiblePositionCount: 0,
     positions: [
       {
         address: '0x2222222222222222222222222222222222222222',
@@ -72,8 +75,19 @@ describe('election list presentation', () => {
   test('filters owned elections only when a known wallet is available', () => {
     const items = [makeGroup({ admin: adminA }), makeGroup({ groupKey: 'khac', admin: adminB })];
 
-    expect(filterElectionGroups(items, '', true, new Set())).toEqual([]);
-    expect(filterElectionGroups(items, '', true, new Set([adminA.toUpperCase()]))).toHaveLength(1);
+    expect(filterElectionGroups(items, '', 'managed', new Set())).toEqual([]);
+    expect(filterElectionGroups(items, '', 'managed', new Set([adminA.toUpperCase()]))).toHaveLength(1);
+  });
+
+  test('filters elections where the current wallet can vote', () => {
+    const items = [
+      makeGroup({ groupKey: 'managed', viewerRole: 'owner' }),
+      makeGroup({ groupKey: 'vote', admin: adminB, viewerRole: 'voter', viewerEligiblePositionCount: 2 }),
+      makeGroup({ groupKey: 'watch', admin: adminB, viewerRole: 'observer' }),
+    ];
+
+    expect(filterElectionGroups(items, '', 'eligible', new Set()).map((item) => item.groupKey)).toEqual(['vote']);
+    expect(getViewerRoleLabel(items[1])).toBe('Có quyền bỏ phiếu 2 chức vụ');
   });
 
   test('searches by election text and position titles', () => {
@@ -101,10 +115,10 @@ describe('election list presentation', () => {
       }),
     ];
 
-    expect(filterElectionGroups(items, 'bí thư', false, new Set()).map((item) => item.groupKey)).toEqual([
+    expect(filterElectionGroups(items, 'bí thư', 'all', new Set()).map((item) => item.groupKey)).toEqual([
       'bau-cu-lop',
     ]);
-    expect(filterElectionGroups(items, 'hoi-dong', false, new Set()).map((item) => item.groupKey)).toEqual([
+    expect(filterElectionGroups(items, 'hoi-dong', 'all', new Set()).map((item) => item.groupKey)).toEqual([
       'hoi-dong',
     ]);
   });
