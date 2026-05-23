@@ -199,8 +199,8 @@ const UserMenu: React.FC<UserMenuProps> = ({
     try {
       setShowLogoutConfirm(false);
       setIsAccountMenuOpen(false);
-      await store.dispatch(logoutThat());
-      toast.success('Đăng xuất thành công');
+      const message = await store.dispatch(logoutThat()).unwrap();
+      toast.success(message || 'Đăng xuất thành công');
       navigate('/');
     } catch {
       toast.error('Có lỗi xảy ra khi đăng xuất');
