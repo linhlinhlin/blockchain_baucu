@@ -43,6 +43,10 @@ interface EthereumProvider {
   removeListener?: (event: string, listener: (...args: any[]) => void) => void;
 }
 
+interface WalletConnectOptions {
+  forceSelection?: boolean;
+}
+
 interface Web3ContextType {
   currentAccount: string | null;
   chainId: string | null;
@@ -50,7 +54,7 @@ interface Web3ContextType {
   isMetaMaskInstalled: boolean;
   isNetworkConnected: boolean;
   isTokenAdded: boolean;
-  connectWallet: () => Promise<string | null>;
+  connectWallet: (options?: WalletConnectOptions) => Promise<string | null>;
   disconnectWallet: () => void;
   signMessage: (message: string) => Promise<string | null>;
   addTokenToMetaMask: () => Promise<boolean>;
@@ -94,6 +98,9 @@ const getEthereumProvider = (): EthereumProvider | undefined => {
 
   return (window as typeof window & { ethereum?: EthereumProvider }).ethereum;
 };
+
+const getFirstAccount = (accounts: unknown): string | null =>
+  Array.isArray(accounts) && accounts.length > 0 ? String(accounts[0]) : null;
 
 export const Web3Provider: React.FC<Web3ProviderProps> = ({ children }) => {
   const ethereum = useMemo(() => getEthereumProvider(), []);
@@ -139,7 +146,7 @@ export const Web3Provider: React.FC<Web3ProviderProps> = ({ children }) => {
 
     try {
       const accounts = await ethereum.request({ method: 'eth_accounts' });
-      const nextAccount = Array.isArray(accounts) && accounts.length > 0 ? String(accounts[0]) : null;
+      const nextAccount = getFirstAccount(accounts);
       setCurrentAccount(nextAccount);
       return nextAccount;
     } catch (error) {
@@ -160,7 +167,7 @@ export const Web3Provider: React.FC<Web3ProviderProps> = ({ children }) => {
     void syncAccounts();
 
     const handleAccountsChanged = (accounts: string[]) => {
-      setCurrentAccount(Array.isArray(accounts) && accounts.length > 0 ? accounts[0] : null);
+      setCurrentAccount(getFirstAccount(accounts));
     };
 
     const handleChainChanged = (nextChainId: string) => {
@@ -173,9 +180,25 @@ export const Web3Provider: React.FC<Web3ProviderProps> = ({ children }) => {
     ethereum.on?.('accountsChanged', handleAccountsChanged);
     ethereum.on?.('chainChanged', handleChainChanged);
 
+    const syncFromMetaMask = () => {
+      void syncAccounts();
+      void syncNetworkState();
+    };
+
+    const handleVisibilityChange = () => {
+      if (!document.hidden) {
+        syncFromMetaMask();
+      }
+    };
+
+    window.addEventListener('focus', syncFromMetaMask);
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
     return () => {
       ethereum.removeListener?.('accountsChanged', handleAccountsChanged);
       ethereum.removeListener?.('chainChanged', handleChainChanged);
+      window.removeEventListener('focus', syncFromMetaMask);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
   }, [ethereum, syncAccounts, syncNetworkState]);
 
@@ -255,7 +278,7 @@ export const Web3Provider: React.FC<Web3ProviderProps> = ({ children }) => {
     return checkAndAddToken();
   }, [checkAndAddToken, checkAndSwitchNetwork]);
 
-  const connectWallet = useCallback(async (): Promise<string | null> => {
+  const connectWallet = useCallback(async (options: WalletConnectOptions = {}): Promise<string | null> => {
     if (!ethereum) {
       toast.error('MetaMask chưa được cài đặt.');
       return null;
@@ -263,9 +286,21 @@ export const Web3Provider: React.FC<Web3ProviderProps> = ({ children }) => {
 
     setIsConnecting(true);
     try {
+      if (options.forceSelection) {
+        try {
+          await ethereum.request({
+            method: 'wallet_requestPermissions',
+            params: [{ eth_accounts: {} }],
+          });
+        } catch (permissionError: any) {
+          if (permissionError?.code === 4001) {
+            throw permissionError;
+          }
+        }
+      }
+
       const accounts = await ethereum.request({ method: 'eth_requestAccounts' });
-      const selectedAccount =
-        Array.isArray(accounts) && accounts.length > 0 ? String(accounts[0]) : null;
+      const selectedAccount = getFirstAccount(accounts);
 
       setCurrentAccount(selectedAccount);
 
@@ -298,7 +333,7 @@ export const Web3Provider: React.FC<Web3ProviderProps> = ({ children }) => {
       }
 
       try {
-        const account = currentAccount ?? (await connectWallet());
+        const account = (await syncAccounts()) ?? (await connectWallet());
         if (!account) {
           return null;
         }
@@ -309,7 +344,7 @@ export const Web3Provider: React.FC<Web3ProviderProps> = ({ children }) => {
         }
 
         const provider = new BrowserProvider(ethereum as any);
-        const signer = await provider.getSigner();
+        const signer = await provider.getSigner(account);
         return await signer.signMessage(message);
       } catch (error) {
         console.error('Không thể ký thông điệp bằng MetaMask:', error);
@@ -317,7 +352,7 @@ export const Web3Provider: React.FC<Web3ProviderProps> = ({ children }) => {
         return null;
       }
     },
-    [connectWallet, currentAccount, ensureNetworkAndToken, ethereum],
+    [connectWallet, ensureNetworkAndToken, ethereum, syncAccounts],
   );
 
   const setupEnvironment = useCallback(async (): Promise<boolean> => {
@@ -326,13 +361,13 @@ export const Web3Provider: React.FC<Web3ProviderProps> = ({ children }) => {
       return false;
     }
 
-    const account = currentAccount ?? (await connectWallet());
+    const account = (await syncAccounts()) ?? (await connectWallet());
     if (!account) {
       return false;
     }
 
     return ensureNetworkAndToken();
-  }, [connectWallet, currentAccount, ensureNetworkAndToken, ethereum]);
+  }, [connectWallet, ensureNetworkAndToken, ethereum, syncAccounts]);
 
   const contextValue = useMemo<Web3ContextType>(
     () => ({

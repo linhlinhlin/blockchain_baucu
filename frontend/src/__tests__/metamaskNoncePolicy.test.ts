@@ -11,4 +11,11 @@ describe('MetaMask login nonce policy', () => {
     expect(loginPage).not.toContain('Math.random().toString(36)');
     expect(loginPage).not.toContain('HoLiHu BlockVote Login\\nAddress');
   });
+
+  test('refreshes the selected MetaMask account before creating a login challenge', () => {
+    const loginPage = readFileSync(join(__dirname, '..', 'pages', 'LoginPage.tsx'), 'utf8');
+
+    expect(loginPage).toContain('connectWallet({ forceSelection: true })');
+    expect(loginPage).not.toContain('let walletAddress = currentAccount');
+  });
 });
