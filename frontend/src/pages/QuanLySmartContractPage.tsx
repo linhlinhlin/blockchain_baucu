@@ -368,6 +368,10 @@ function saveStoredVoteEnvelope(env: StoredVoteEnvelope) {
   window.localStorage.setItem(buildVotePackageKey(env.electionAddress, env.voter), JSON.stringify(env));
 }
 
+function removeStoredVoteEnvelope(electionAddress: string, walletAddress: string) {
+  window.localStorage.removeItem(buildVotePackageKey(electionAddress, walletAddress));
+}
+
 function createRandomBytes32() {
   return ethers.hexlify(ethers.randomBytes(32));
 }
@@ -1072,6 +1076,8 @@ export default function QuanLySmartContractPage() {
     if (!detail?.address) {
       return;
     }
+    let savedEnvelope: StoredVoteEnvelope | null = null;
+    let txSubmitted = false;
     setBusy(true);
     setCommittingCandidateId(candidate.candidateId);
     try {
@@ -1083,26 +1089,35 @@ export default function QuanLySmartContractPage() {
       const contract = new ethers.Contract(detail.address, electionV1Abi, signer);
       const salt = createRandomBytes32();
       const commitment = await contract.computeCommitment(address, candidate.candidateId, salt);
-      const tx = await contract.commitVote(commitment, proofPayload.proof);
-      await tx.wait();
-      setSelectedTxHash(tx.hash);
 
       // S4: ma hoa secret bang khoa dan xuat tu chu ky vi truoc khi luu localStorage.
+      // Chuan bi va luu goi mo phieu truoc khi gui tx de tranh commit thanh cong nhung mat salt.
       const voteKey = await deriveVoteAesKey(signer, detail.address, address);
       const sealed = await encryptVoteSecret(voteKey, {
         candidateId: candidate.candidateId,
         salt,
         commitment: String(commitment),
       });
-      saveStoredVoteEnvelope({
+      savedEnvelope = {
         electionAddress: detail.address,
         voter: address,
         candidateName: candidate.candidateName,
         committedAt: new Date().toISOString(),
         iv: sealed.iv,
         ciphertext: sealed.ciphertext,
-      });
+      };
+      saveStoredVoteEnvelope(savedEnvelope);
+      setVotePackageRevision((current) => current + 1);
 
+      const tx = await contract.commitVote(commitment, proofPayload.proof);
+      txSubmitted = true;
+      await tx.wait();
+      setSelectedTxHash(tx.hash);
+
+      saveStoredVoteEnvelope({
+        ...savedEnvelope,
+        committedAt: new Date().toISOString(),
+      });
       setVotePackageRevision((current) => current + 1);
       await refreshElection(detail.address, address);
       await refreshTransactionHistory(detail);
@@ -1110,6 +1125,10 @@ export default function QuanLySmartContractPage() {
       setMessage(`Đã ghi nhận phiếu: ${tx.hash}`);
       toast.success('Đã ghi nhận phiếu.');
     } catch (error) {
+      if (savedEnvelope && !txSubmitted) {
+        removeStoredVoteEnvelope(savedEnvelope.electionAddress, savedEnvelope.voter);
+        setVotePackageRevision((current) => current + 1);
+      }
       const msg = getErrorMessage(error);
       setMessage(msg);
       toast.error(msg);
@@ -1228,6 +1247,11 @@ export default function QuanLySmartContractPage() {
   const phaseLabel = detail?.onChain?.phaseLabel ?? 'Unknown';
   const phaseDisplayLabel = displayPhaseLabel(phaseLabel);
   const maxResultCount = Math.max(1, ...(detail?.onChain?.results ?? []).map((item) => item.count));
+  const viewerState = detail?.onChain?.viewer ?? null;
+  const hasViewerCommitted = Boolean(viewerState?.hasCommitted);
+  const hasViewerRevealed = Boolean(viewerState?.hasRevealed);
+  const storedVoteCandidateName = storedVoteEnvelope?.candidateName?.trim() || null;
+  const shouldShowLocalVoteState = Boolean(detail?.address && (hasViewerCommitted || storedVoteEnvelope));
   const currentPositionTitle = detail?.positionTitle || detail?.manifest?.positionTitle || detail?.title;
   const currentPositionLabel = currentPositionTitle ? String(currentPositionTitle) : null;
   const selectedGroup = groupItems.find((item) => item.groupKey === selectedGroupKey) ?? null;
@@ -1571,6 +1595,54 @@ export default function QuanLySmartContractPage() {
                       label: 'Ứng viên & kết quả',
                       content: (
                         <div className="space-y-3">
+                          {shouldShowLocalVoteState && (
+                            <div className="rounded-[14px] border border-[var(--clay-border)] bg-[var(--clay-surface-soft)] p-4">
+                              <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                                <div className="min-w-0">
+                                  <p className="text-sm font-semibold text-[var(--clay-text)]">
+                                    Phiếu của ví này
+                                  </p>
+                                  {storedVoteCandidateName ? (
+                                    <p className="mt-1 text-sm text-[var(--clay-muted)]">
+                                      Bạn đã ghi nhận phiếu cho:{' '}
+                                      <span className="font-semibold text-[var(--clay-text)]">
+                                        {storedVoteCandidateName}
+                                      </span>
+                                    </p>
+                                  ) : hasViewerCommitted ? (
+                                    <p className="mt-1 text-sm leading-6 text-[var(--state-warning)]">
+                                      Ví này đã có commitment trên chain, nhưng trình duyệt hiện tại không có gói mở phiếu cục bộ.
+                                      Nếu gói này bị mất, không thể khôi phục salt để mở phiếu.
+                                    </p>
+                                  ) : (
+                                    <p className="mt-1 text-sm leading-6 text-[var(--clay-muted)]">
+                                      Trình duyệt này có gói phiếu cục bộ cho chức vụ này; hãy kết nối đúng ví để đồng bộ trạng thái on-chain.
+                                    </p>
+                                  )}
+                                </div>
+                                <StatusBadge tone={hasViewerRevealed ? 'success' : storedVoteEnvelope ? 'info' : 'warning'}>
+                                  {hasViewerRevealed ? 'Đã mở phiếu' : storedVoteEnvelope ? 'Có gói mở phiếu' : 'Thiếu gói mở phiếu'}
+                                </StatusBadge>
+                              </div>
+                              {hasViewerCommitted && !hasViewerRevealed && (
+                                <div className="mt-3 grid gap-2 sm:grid-cols-[minmax(0,220px)_1fr] sm:items-center">
+                                  <Button
+                                    type="button"
+                                    variant="secondary"
+                                    size="lg"
+                                    onClick={() => void handleRevealVote()}
+                                    disabled={revealReason !== null}
+                                    loading={busy}
+                                  >
+                                    Mở phiếu đã ghi nhận
+                                  </Button>
+                                  <p className="text-xs leading-5 text-[var(--clay-muted)]">
+                                    {revealReason ?? 'Đang ở giai đoạn mở phiếu, có thể gửi giao dịch reveal ngay.'}
+                                  </p>
+                                </div>
+                              )}
+                            </div>
+                          )}
                           {(detail.onChain?.results ?? []).map((candidate) => (
                             <div
                               key={candidate.candidateId}
